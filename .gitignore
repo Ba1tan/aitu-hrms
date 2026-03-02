@@ -1,0 +1,38 @@
+### Maven
+target/
+!.mvn/wrapper/maven-wrapper.jar
+!**/src/main/**/target/
+!**/src/test/**/target/
+
+### IntelliJ IDEA
+.idea/
+*.iws
+*.iml
+*.ipr
+
+### VS Code
+.vscode/
+
+### Env files - NEVER commit these
+.env
+.env.*
+!.env.example
+
+### Logs
+*.log
+logs/
+
+## Docs
+docs/
+
+### OS
+.DS_Store
+Thumbs.db
+
+### Docker
+docker/nginx/ssl/
+docker/backups/
+
+### Build outputs
+*.jar
+*.war

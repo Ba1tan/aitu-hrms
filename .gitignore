@@ -21,8 +21,6 @@ target/
 ### Logs
 *.log
 logs/
-
-## Docs
 docs/
 
 ### OS

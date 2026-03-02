@@ -6,7 +6,11 @@ spring:
 
 server:
   ssl:
-    enabled: false  # SSL terminated at Nginx level
+    enabled: false  # SSL terminated at NPM level
+  # Trust X-Forwarded-Proto / X-Forwarded-Host headers from Nginx Proxy Manager.
+  # Without this, Spring sees the internal http:// request and Swagger generates
+  # wrong URLs. "framework" means Spring MVC handles the header (not the container).
+  forward-headers-strategy: framework
 
 logging:
   level:
@@ -18,3 +22,10 @@ logging:
     rollingpolicy:
       max-file-size: 100MB
       max-history: 30
+
+springdoc:
+  swagger-ui:
+    server-url: https://hrms.nursnerv.uk/api
+  servers:
+    - url: https://hrms.nursnerv.uk/api
+      description: Production server

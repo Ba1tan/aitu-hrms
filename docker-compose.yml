@@ -58,6 +58,7 @@ services:
       JWT_SECRET: ${JWT_SECRET}
       CORS_ORIGINS: ${CORS_ORIGINS}
       SERVER_PORT: 8080
+      MANAGEMENT_HEALTH_MAIL_ENABLED: "false"
     networks:
       - hrms-internal
     depends_on:

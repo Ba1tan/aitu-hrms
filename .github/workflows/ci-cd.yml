@@ -12,9 +12,11 @@ env:
   IMAGE_NAME: ${{ github.repository }}/hrms-backend
 
 jobs:
-  # ─────────────────────────────────────────────
+
+  # ───────────────────────────────────────────────────────────────────────────
   # Job 1: Test & Build
-  # ─────────────────────────────────────────────
+  # Runs on every push and every pull request
+  # ───────────────────────────────────────────────────────────────────────────
   test:
     name: Test & Build
     runs-on: ubuntu-latest
@@ -69,10 +71,10 @@ jobs:
           name: app-jar
           path: target/*.jar
 
-  # ─────────────────────────────────────────────
+  # ───────────────────────────────────────────────────────────────────────────
   # Job 2: Build & Push Docker Image
-  # Only on push to main or develop
-  # ─────────────────────────────────────────────
+  # Only on push to main or develop (not on pull requests)
+  # ───────────────────────────────────────────────────────────────────────────
   docker:
     name: Build & Push Image
     needs: test
@@ -85,7 +87,6 @@ jobs:
 
     outputs:
       image-tag: ${{ steps.meta.outputs.tags }}
-      image-digest: ${{ steps.build.outputs.digest }}
 
     steps:
       - name: Checkout code
@@ -113,8 +114,11 @@ jobs:
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           tags: |
+            # Branch name tag: main → :main, develop → :develop
             type=ref,event=branch
+            # Short SHA tag: main-abc1234
             type=sha,prefix={{branch}}-
+            # :latest only on main branch
             type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
 
       - name: Build and push Docker image
@@ -129,11 +133,11 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-  # ─────────────────────────────────────────────
-  # Job 3: Deploy to Server
+  # ───────────────────────────────────────────────────────────────────────────
+  # Job 3: Deploy to Production
   # Only on push to main
-  # ─────────────────────────────────────────────
-  deploy:
+  # ───────────────────────────────────────────────────────────────────────────
+  deploy-production:
     name: Deploy to Production
     needs: docker
     runs-on: ubuntu-latest
@@ -144,7 +148,7 @@ jobs:
       url: https://${{ secrets.DOMAIN }}
 
     steps:
-      - name: Deploy via SSH
+      - name: Deploy to production via SSH
         uses: appleboy/ssh-action@v1.0.0
         with:
           host: ${{ secrets.SERVER_HOST }}
@@ -153,42 +157,51 @@ jobs:
           script: |
             cd /opt/hrms
 
-            # Pull latest image
-            echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+            # Login to GHCR and pull latest production image
+            echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
             docker pull ghcr.io/${{ github.repository }}/hrms-backend:main
 
-            # Zero-downtime deploy: start new, verify health, stop old
+            # Update the image tag in .env
+            sed -i 's/APP_VERSION=.*/APP_VERSION=main/' .env
+
+            # Restart only the app container — leave postgres and redis untouched
             docker compose -f docker/docker-compose.prod.yml up -d --no-deps app
 
-            # Wait for health check
-            echo "Waiting for app to be healthy..."
+            # Wait for health check to pass (max 2 minutes)
+            echo "Waiting for app to become healthy..."
             for i in $(seq 1 12); do
               STATUS=$(docker inspect --format='{{.State.Health.Status}}' hrms-app 2>/dev/null || echo "unknown")
+              echo "  Attempt $i/12 — status: $STATUS"
               if [ "$STATUS" = "healthy" ]; then
-                echo "App is healthy!"
+                echo "✓ Production deployment successful!"
                 break
               fi
               if [ $i -eq 12 ]; then
-                echo "Health check failed! Rolling back..."
-                docker compose -f docker/docker-compose.prod.yml rollback app
+                echo "✗ Health check failed after 2 minutes — check logs:"
+                docker logs hrms-app --tail 30
                 exit 1
               fi
               sleep 10
             done
 
-            # Cleanup old images
+            # Clean up dangling images to save disk space
             docker image prune -f
 
-            echo "Deployment complete: $(date)"
+            echo "Deployed at: $(date)"
 
-  # ─────────────────────────────────────────────
-  # Job 4: Deploy to Staging (develop branch)
-  # ─────────────────────────────────────────────
+  # ───────────────────────────────────────────────────────────────────────────
+  # Job 4: Deploy to Staging
+  # Only on push to develop
+  # ───────────────────────────────────────────────────────────────────────────
   deploy-staging:
     name: Deploy to Staging
     needs: docker
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/develop' && github.event_name == 'push'
+
+    environment:
+      name: staging
+      url: http://${{ secrets.SERVER_HOST }}:8091
 
     steps:
       - name: Deploy to staging via SSH
@@ -199,6 +212,30 @@ jobs:
           key: ${{ secrets.SERVER_SSH_KEY }}
           script: |
             cd /opt/hrms-staging
+
+            # Login to GHCR and pull latest staging image
+            echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
             docker pull ghcr.io/${{ github.repository }}/hrms-backend:develop
-            docker compose -f docker/docker-compose.prod.yml up -d --no-deps app
-            echo "Staging deployment complete"
+
+            # Restart only the app container — leave postgres and redis untouched
+            docker compose -f docker/docker-compose.staging.yml up -d --no-deps app
+
+            # Wait for health check (max 2 minutes)
+            echo "Waiting for staging app to become healthy..."
+            for i in $(seq 1 12); do
+              STATUS=$(docker inspect --format='{{.State.Health.Status}}' hrms-app-staging 2>/dev/null || echo "unknown")
+              echo "  Attempt $i/12 — status: $STATUS"
+              if [ "$STATUS" = "healthy" ]; then
+                echo "✓ Staging deployment successful!"
+                break
+              fi
+              if [ $i -eq 12 ]; then
+                echo "✗ Staging health check failed — check logs:"
+                docker logs hrms-app-staging --tail 30
+                exit 1
+              fi
+              sleep 10
+            done
+
+            docker image prune -f
+            echo "Staging deployed at: $(date)"

@@ -9,7 +9,7 @@ on:
 env:
   JAVA_VERSION: '17'
   REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}/hrms-backend
+  IMAGE_NAME: ${{ github.repository }}/aitu-hrms
 
 jobs:
 
@@ -159,7 +159,7 @@ jobs:
 
             # Login to GHCR and pull latest production image
             echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
-            docker pull ghcr.io/${{ github.repository }}/hrms-backend:main
+            docker pull ghcr.io/${{ github.repository }}/aitu-hrms:main
 
             # Update the image tag in .env
             sed -i 's/APP_VERSION=.*/APP_VERSION=main/' .env
@@ -215,7 +215,7 @@ jobs:
 
             # Login to GHCR and pull latest staging image
             echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
-            docker pull ghcr.io/${{ github.repository }}/hrms-backend:develop
+            docker pull ghcr.io/${{ github.repository }}/aitu-hrms:develop
 
             # Restart only the app container — leave postgres and redis untouched
             docker compose -f docker/docker-compose.staging.yml up -d --no-deps app

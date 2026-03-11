@@ -9,7 +9,7 @@ on:
 env:
   JAVA_VERSION: '17'
   REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}/aitu-hrms
+  IMAGE_NAME: ${{ github.repository }}
 
 jobs:
 
@@ -151,6 +151,7 @@ jobs:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
+          port: ${{ secrets.SERVER_SSH_PORT }}
           script: |
             cd ~/hrms
 
@@ -192,7 +193,7 @@ jobs:
 
     environment:
       name: staging
-      url: http://hrms.nursnerv.uk:8091
+      url: http://192.168.100.53:8091
 
     steps:
       - name: Deploy to staging via SSH
@@ -201,6 +202,7 @@ jobs:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
+          port: ${{ secrets.SERVER_SSH_PORT }}
           script: |
             cd ~/hrms-staging
 

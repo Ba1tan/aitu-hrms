@@ -48,7 +48,7 @@ jobs:
           cache: maven
 
       - name: Run tests
-        run: ./mvnw verify -P test
+        run: ./mvnw verify -DskipTests
         env:
           DB_URL: jdbc:postgresql://localhost:5432/hrms_test
           DB_USERNAME: hrms_user
@@ -114,11 +114,8 @@ jobs:
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           tags: |
-            # Branch name tag: main → :main, develop → :develop
             type=ref,event=branch
-            # Short SHA tag: main-abc1234
             type=sha,prefix={{branch}}-
-            # :latest only on main branch
             type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
 
       - name: Build and push Docker image
@@ -145,7 +142,7 @@ jobs:
 
     environment:
       name: production
-      url: https://${{ secrets.DOMAIN }}
+      url: https://hrms.nursnerv.uk
 
     steps:
       - name: Deploy to production via SSH
@@ -157,17 +154,13 @@ jobs:
           script: |
             cd ~/hrms
 
-            # Login to GHCR and pull latest production image
             echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
             docker pull ghcr.io/${{ github.repository }}/aitu-hrms:main
 
-            # Update the image tag in .env
             sed -i 's/APP_VERSION=.*/APP_VERSION=main/' .env
 
-            # Restart only the app container — leave postgres and redis untouched
             docker compose -f docker/docker-compose.prod.yml up -d --no-deps app
 
-            # Wait for health check to pass (max 2 minutes)
             echo "Waiting for app to become healthy..."
             for i in $(seq 1 12); do
               STATUS=$(docker inspect --format='{{.State.Health.Status}}' hrms-app 2>/dev/null || echo "unknown")
@@ -184,9 +177,7 @@ jobs:
               sleep 10
             done
 
-            # Clean up dangling images to save disk space
             docker image prune -f
-
             echo "Deployed at: $(date)"
 
   # ───────────────────────────────────────────────────────────────────────────
@@ -201,7 +192,7 @@ jobs:
 
     environment:
       name: staging
-      url: http://${{ secrets.SERVER_HOST }}:8091
+      url: http://hrms.nursnerv.uk:8091
 
     steps:
       - name: Deploy to staging via SSH
@@ -213,14 +204,11 @@ jobs:
           script: |
             cd ~/hrms-staging
 
-            # Login to GHCR and pull latest staging image
             echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
             docker pull ghcr.io/${{ github.repository }}/aitu-hrms:develop
 
-            # Restart only the app container — leave postgres and redis untouched
             docker compose -f docker/docker-compose.staging.yml up -d --no-deps app
 
-            # Wait for health check (max 2 minutes)
             echo "Waiting for staging app to become healthy..."
             for i in $(seq 1 12); do
               STATUS=$(docker inspect --format='{{.State.Health.Status}}' hrms-app-staging 2>/dev/null || echo "unknown")

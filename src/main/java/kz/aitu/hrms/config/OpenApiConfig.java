@@ -23,7 +23,7 @@ public class OpenApiConfig {
                         .version("1.0.0")
                         .contact(new Contact()
                                 .name("AITU HRMS Team")
-                                .email("admin@hrms.kz")))
+                                .email("231620@astanait.edu.kz")))
                 .addSecurityItem(new SecurityRequirement()
                         .addList(SECURITY_SCHEME_NAME))
                 .components(new Components()

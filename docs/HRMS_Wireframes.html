@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HRMS Wireframes — Nurbol Sembayev</title>
+<style>
+  :root {
+    --bg: #0F1923; --surface: #1A2634; --border: rgba(255,255,255,0.08);
+    --teal: #00C896; --blue: #3B82F6; --text: #F1F5F9; --muted: #94A3B8;
+    --red: #EF4444; --yellow: #F59E0B; --green: #10B981; --purple: #8B5CF6;
+    --font: 'Inter', system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #060E14; color: var(--text); font-family: var(--font); font-size: 13px; }
+
+  /* ── Layout chrome ── */
+  .page-title { padding: 20px 32px 12px; font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .1em; border-bottom: 1px solid var(--border); }
+  .screen-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(860px, 1fr)); gap: 32px; padding: 32px; }
+  .screen { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+  .screen-label { background: rgba(0,200,150,0.1); border-bottom: 1px solid var(--border); padding: 10px 16px; font-size: 11px; color: var(--teal); font-weight: 600; letter-spacing: .05em; text-transform: uppercase; display: flex; align-items: center; gap: 8px; }
+  .screen-label span { background: var(--teal); color: #000; border-radius: 4px; padding: 1px 7px; font-size: 10px; }
+  .screen-body { display: flex; min-height: 460px; }
+
+  /* ── Sidebar ── */
+  .sidebar { width: 200px; background: var(--bg); border-right: 1px solid var(--border); padding: 12px 0; flex-shrink: 0; }
+  .logo { padding: 8px 16px 16px; font-size: 18px; font-weight: 700; color: var(--teal); }
+  .nav-item { padding: 8px 16px; font-size: 12px; color: var(--muted); cursor: pointer; display: flex; align-items: center; gap: 8px; border-radius: 0; }
+  .nav-item.active { background: rgba(0,200,150,0.1); color: var(--teal); font-weight: 600; border-left: 3px solid var(--teal); }
+  .nav-item .icon { width: 16px; height: 16px; background: currentColor; border-radius: 2px; opacity: .6; flex-shrink: 0; }
+
+  /* ── Top bar ── */
+  .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+  .topbar { height: 48px; background: var(--surface); border-bottom: 1px solid var(--border); display: flex; align-items: center; padding: 0 20px; gap: 12px; }
+  .topbar-title { font-weight: 600; font-size: 14px; flex: 1; }
+  .btn { padding: 6px 14px; border-radius: 6px; font-size: 12px; font-weight: 500; display: inline-flex; align-items: center; gap: 6px; cursor: pointer; border: none; }
+  .btn-primary { background: var(--teal); color: #000; }
+  .btn-outline { background: transparent; color: var(--text); border: 1px solid var(--border); }
+  .btn-danger { background: transparent; color: var(--red); border: 1px solid var(--red); }
+  .avatar { width: 28px; height: 28px; border-radius: 50%; background: var(--teal); color: #000; font-size: 11px; font-weight: 700; display: flex; align-items: center; justify-content: center; }
+  .badge { background: var(--red); color: #fff; font-size: 9px; font-weight: 700; padding: 1px 5px; border-radius: 10px; }
+
+  /* ── Content ── */
+  .content { flex: 1; padding: 16px 20px; overflow: auto; }
+
+  /* ── Chips ── */
+  .chip { display: inline-flex; align-items: center; padding: 2px 10px; border-radius: 20px; font-size: 11px; font-weight: 500; }
+  .chip-green { background: rgba(16,185,129,.15); color: var(--green); }
+  .chip-red { background: rgba(239,68,68,.15); color: var(--red); }
+  .chip-yellow { background: rgba(245,158,11,.15); color: var(--yellow); }
+  .chip-blue { background: rgba(59,130,246,.15); color: var(--blue); }
+  .chip-gray { background: rgba(148,163,184,.15); color: var(--muted); }
+  .chip-purple { background: rgba(139,92,246,.15); color: var(--purple); }
+  .chip-teal { background: rgba(0,200,150,.15); color: var(--teal); }
+
+  /* ── Cards / Stat ── */
+  .stat-row { display: grid; grid-template-columns: repeat(4,1fr); gap: 12px; margin-bottom: 16px; }
+  .stat-card { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 14px 16px; }
+  .stat-label { font-size: 11px; color: var(--muted); margin-bottom: 6px; }
+  .stat-value { font-size: 22px; font-weight: 700; }
+  .stat-sub { font-size: 11px; color: var(--muted); margin-top: 3px; }
+
+  /* ── Table ── */
+  .table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  .table th { background: var(--bg); color: var(--muted); font-size: 10px; text-transform: uppercase; letter-spacing: .06em; padding: 8px 12px; text-align: left; border-bottom: 1px solid var(--border); font-weight: 600; }
+  .table td { padding: 10px 12px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+  .table tr:last-child td { border-bottom: none; }
+  .table tr:hover td { background: rgba(255,255,255,.02); }
+
+  /* ── Form ── */
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .form-grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
+  .field { display: flex; flex-direction: column; gap: 5px; }
+  .field label { font-size: 11px; color: var(--muted); font-weight: 500; }
+  .field-value { background: var(--bg); border: 1px solid var(--border); border-radius: 6px; padding: 8px 10px; font-size: 12px; color: var(--text); }
+  .field-value.required { border-color: rgba(0,200,150,.3); }
+  .field-value.focus { border-color: var(--teal); box-shadow: 0 0 0 2px rgba(0,200,150,.15); }
+  .field-value.error { border-color: var(--red); }
+  .field-hint { font-size: 10px; color: var(--muted); }
+  .field-error { font-size: 10px; color: var(--red); }
+  .section-title { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; margin: 16px 0 10px; font-weight: 600; }
+
+  /* ── Search bar ── */
+  .search-bar { display: flex; gap: 8px; margin-bottom: 14px; align-items: center; }
+  .search-input { flex: 1; max-width: 280px; background: var(--bg); border: 1px solid var(--border); border-radius: 6px; padding: 7px 12px; font-size: 12px; color: var(--text); }
+  .filter-select { background: var(--bg); border: 1px solid var(--border); border-radius: 6px; padding: 7px 12px; font-size: 12px; color: var(--muted); }
+
+  /* ── Annotation ── */
+  .annotation { background: rgba(0,200,150,.06); border-left: 3px solid var(--teal); padding: 8px 12px; margin: 12px 0; border-radius: 0 6px 6px 0; font-size: 11px; color: var(--muted); }
+  .annotation strong { color: var(--teal); }
+
+  /* ── Misc ── */
+  .divider { height: 1px; background: var(--border); margin: 12px 0; }
+  .row { display: flex; align-items: center; gap: 8px; }
+  .col { display: flex; flex-direction: column; gap: 4px; }
+  .emp-name { font-weight: 600; font-size: 13px; }
+  .emp-sub { font-size: 11px; color: var(--muted); }
+  .emp-num { font-size: 11px; color: var(--teal); font-family: monospace; }
+  .kzt { font-family: monospace; font-weight: 600; }
+  .action-link { color: var(--blue); font-size: 11px; cursor: pointer; }
+
+  /* ── Alert banner ── */
+  .alert { padding: 10px 14px; border-radius: 6px; font-size: 12px; margin-bottom: 14px; }
+  .alert-success { background: rgba(16,185,129,.1); border: 1px solid rgba(16,185,129,.3); color: var(--green); }
+  .alert-warning { background: rgba(245,158,11,.1); border: 1px solid rgba(245,158,11,.3); color: var(--yellow); }
+
+  /* ── Payslip tax table ── */
+  .tax-row { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid var(--border); font-size: 12px; }
+  .tax-row.total { font-weight: 700; font-size: 14px; border-top: 2px solid var(--teal); border-bottom: none; padding-top: 10px; margin-top: 4px; }
+
+  /* progress bar */
+  .progress-wrap { background: var(--border); border-radius: 4px; height: 6px; }
+  .progress-bar { height: 6px; border-radius: 4px; background: var(--teal); }
+
+  /* notification dot */
+  .notif-dot { width: 8px; height: 8px; background: var(--teal); border-radius: 50%; flex-shrink: 0; }
+  .notif-dot.unread { background: var(--blue); }
+</style>
+</head>
+<body>
+
+<div class="page-title">HRMS Wireframes · For: Nurbol Sembayev · Stack: React 18 + MUI v5 + React Query + Zustand</div>
+
+<div class="screen-grid">
+
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<!-- 1. LOGIN -->
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<div class="screen" style="max-width:400px;">
+  <div class="screen-label">1 · Login Page <span>Public</span></div>
+  <div style="background:var(--bg);padding:40px;display:flex;flex-direction:column;align-items:center;min-height:440px;justify-content:center;">
+    <div style="width:100%;max-width:340px;">
+      <div style="font-size:28px;font-weight:700;color:var(--teal);margin-bottom:4px;">HRMS</div>
+      <div style="font-size:13px;color:var(--muted);margin-bottom:28px;">Система управления персоналом</div>
+      <div class="field" style="margin-bottom:14px;">
+        <label>Email</label>
+        <div class="field-value focus">admin@hrms.kz</div>
+      </div>
+      <div class="field" style="margin-bottom:20px;">
+        <label>Пароль</label>
+        <div class="field-value">••••••••••</div>
+      </div>
+      <div class="btn btn-primary" style="width:100%;justify-content:center;padding:10px;">Войти</div>
+      <div class="annotation" style="margin-top:16px;">Поле <strong>email</strong> — используется для входа (не username). При 401 показать Alert: «Неверный email или пароль».</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<!-- 2. DASHBOARD -->
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<div class="screen">
+  <div class="screen-label">2 · Dashboard <span>All roles — content adapts by role</span></div>
+  <div class="screen-body">
+    <div class="sidebar">
+      <div class="logo">HRMS</div>
+      <div class="nav-item active"><div class="icon"></div>Дашборд</div>
+      <div class="nav-item"><div class="icon"></div>Сотрудники</div>
+      <div class="nav-item"><div class="icon"></div>Зарплата</div>
+      <div class="nav-item"><div class="icon"></div>Отпуска</div>
+      <div class="nav-item"><div class="icon"></div>Посещаемость</div>
+      <div class="nav-item"><div class="icon"></div>Отчёты</div>
+    </div>
+    <div class="main">
+      <div class="topbar">
+        <div class="topbar-title">Дашборд</div>
+        <span>🔔</span><span class="badge">3</span>
+        <div class="avatar">НТ</div>
+      </div>
+      <div class="content">
+        <div class="stat-row">
+          <div class="stat-card"><div class="stat-label">Сотрудников</div><div class="stat-value">87</div><div class="stat-sub">+3 за месяц</div></div>
+          <div class="stat-card"><div class="stat-label">ФОТ (Март 2024)</div><div class="stat-value kzt">27 840 000 ₸</div><div class="stat-sub chip chip-green">PAID</div></div>
+          <div class="stat-card"><div class="stat-label">Ожид. отпуск</div><div class="stat-value">5</div><div class="stat-sub">на рассмотрении</div></div>
+          <div class="stat-card"><div class="stat-label">Сегодня на работе</div><div class="stat-value">72 <span style="font-size:14px;color:var(--muted)">/87</span></div><div class="stat-sub">82.7%</div></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+          <div style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:14px;">
+            <div class="section-title">Последние запросы отпуска</div>
+            <div class="row" style="margin-bottom:8px;">
+              <div class="col" style="flex:1"><div class="emp-name">Асель Нурова</div><div class="emp-sub">Annual Leave · 10–15 апр (4 дн)</div></div>
+              <div class="chip chip-yellow">PENDING</div>
+            </div>
+            <div class="row" style="margin-bottom:8px;">
+              <div class="col" style="flex:1"><div class="emp-name">Болат Сейткали</div><div class="emp-sub">Sick Leave · 8–9 апр (2 дн)</div></div>
+              <div class="chip chip-green">APPROVED</div>
+            </div>
+          </div>
+          <div style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:14px;">
+            <div class="section-title">Расчётные периоды</div>
+            <div class="row" style="margin-bottom:8px;">
+              <div class="col" style="flex:1"><div class="emp-name">Март 2024</div><div class="emp-sub">87 расчётных листов</div></div>
+              <div class="chip chip-teal">PAID</div>
+            </div>
+            <div class="row">
+              <div class="col" style="flex:1"><div class="emp-name">Апрель 2024</div><div class="emp-sub">0 расчётных листов</div></div>
+              <div class="chip chip-gray">DRAFT</div>
+            </div>
+          </div>
+        </div>
+        <div class="annotation">Показывать карточки ФОТ и «Расчётные периоды» только для <strong>HR_MANAGER, ACCOUNTANT</strong>. Для <strong>EMPLOYEE</strong> — только «Мой следующий расчётный лист» и кнопка «Чек-ин».</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<!-- 3. EMPLOYEE LIST -->
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<div class="screen">
+  <div class="screen-label">3 · Employee List <span>HR_MANAGER, ACCOUNTANT, MANAGER</span></div>
+  <div class="screen-body">
+    <div class="sidebar">
+      <div class="logo">HRMS</div>
+      <div class="nav-item"><div class="icon"></div>Дашборд</div>
+      <div class="nav-item active"><div class="icon"></div>Сотрудники</div>
+      <div class="nav-item"><div class="icon"></div>Зарплата</div>
+      <div class="nav-item"><div class="icon"></div>Отпуска</div>
+      <div class="nav-item"><div class="icon"></div>Посещаемость</div>
+      <div class="nav-item"><div class="icon"></div>Отчёты</div>
+    </div>
+    <div class="main">
+      <div class="topbar">
+        <div class="topbar-title">Сотрудники</div>
+        <div class="btn btn-primary">+ Добавить сотрудника</div>
+      </div>
+      <div class="content">
+        <div class="search-bar">
+          <input class="search-input" placeholder="🔍  Поиск по имени, email, EMP-номеру...">
+          <select class="filter-select"><option>Все отделы</option><option>Разработка</option><option>HR</option></select>
+          <select class="filter-select"><option>Все статусы</option><option>ACTIVE</option><option>ON_LEAVE</option><option>TERMINATED</option></select>
+        </div>
+        <table class="table">
+          <thead><tr>
+            <th>Сотрудник</th><th>Отдел / Должность</th><th>Оклад</th><th>Статус</th><th>Дата найма</th><th></th>
+          </tr></thead>
+          <tbody>
+            <tr>
+              <td><div class="row"><div class="avatar" style="background:#3B82F6;color:#fff;width:32px;height:32px;font-size:12px;">АН</div><div class="col"><div class="emp-name">Нурова Асель</div><div class="emp-num">EMP-0042</div></div></div></td>
+              <td><div class="emp-name">Разработка</div><div class="emp-sub">Backend Developer</div></td>
+              <td class="kzt">320 000 ₸</td>
+              <td><div class="chip chip-green">ACTIVE</div></td>
+              <td>01.03.2023</td>
+              <td><span class="action-link">Открыть →</span></td>
+            </tr>
+            <tr>
+              <td><div class="row"><div class="avatar" style="background:#8B5CF6;color:#fff;width:32px;height:32px;font-size:12px;">БС</div><div class="col"><div class="emp-name">Сейткали Болат</div><div class="emp-num">EMP-0031</div></div></div></td>
+              <td><div class="emp-name">HR</div><div class="emp-sub">HR Specialist</div></td>
+              <td class="kzt">280 000 ₸</td>
+              <td><div class="chip chip-yellow">ON_LEAVE</div></td>
+              <td>15.06.2022</td>
+              <td><span class="action-link">Открыть →</span></td>
+            </tr>
+            <tr>
+              <td><div class="row"><div class="avatar" style="background:var(--muted);color:#000;width:32px;height:32px;font-size:12px;">ДА</div><div class="col"><div class="emp-name">Ахметов Даурен</div><div class="emp-num">EMP-0018</div></div></div></td>
+              <td><div class="emp-name">Финансы</div><div class="emp-sub">Accountant</div></td>
+              <td class="kzt">350 000 ₸</td>
+              <td><div class="chip chip-red">TERMINATED</div></td>
+              <td>01.01.2021</td>
+              <td><span class="action-link">Открыть →</span></td>
+            </tr>
+          </tbody>
+        </table>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:12px;font-size:11px;color:var(--muted);">
+          <span>Показано 3 из 87 сотрудников</span>
+          <div style="display:flex;gap:6px;"><div class="btn btn-outline" style="padding:4px 10px;">← Назад</div><div class="btn btn-primary" style="padding:4px 10px;">Вперёд →</div></div>
+        </div>
+        <div class="annotation">Клик по строке → открыть <strong>Drawer</strong> (не новую страницу) с полной карточкой сотрудника. Кнопка «Добавить» — только для <strong>HR_MANAGER</strong>.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<!-- 4. CREATE EMPLOYEE FORM -->
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<div class="screen">
+  <div class="screen-label">4 · Create Employee (Dialog/Drawer) <span>HR_MANAGER</span></div>
+  <div class="screen-body" style="padding:0;">
+    <div class="main">
+      <div class="topbar">
+        <div class="topbar-title">Новый сотрудник</div>
+        <div class="btn btn-outline">Отмена</div>
+        <div class="btn btn-primary">Сохранить</div>
+      </div>
+      <div class="content">
+        <div class="section-title">Личные данные</div>
+        <div class="form-grid-3">
+          <div class="field"><label>Фамилия *</label><div class="field-value required">Нурова</div></div>
+          <div class="field"><label>Имя *</label><div class="field-value required">Асель</div></div>
+          <div class="field"><label>Отчество</label><div class="field-value">Бекова</div></div>
+          <div class="field"><label>Email *</label><div class="field-value focus">asel.nurova@company.kz</div></div>
+          <div class="field"><label>ИИН (12 цифр)</label><div class="field-value">950312300145</div></div>
+          <div class="field"><label>Телефон</label><div class="field-value">+7 701 234 5678</div></div>
+        </div>
+        <div class="section-title">Трудовые данные</div>
+        <div class="form-grid">
+          <div class="field"><label>Дата найма *</label><div class="field-value">01.02.2024</div></div>
+          <div class="field"><label>Тип занятости *</label><div class="field-value">FULL_TIME</div></div>
+          <div class="field"><label>Оклад (₸) *</label><div class="field-value required">320 000</div><div class="field-hint">Decimal string → "320000.00" в API</div></div>
+          <div class="field"><label>Отдел</label><div class="field-value">Разработка</div></div>
+          <div class="field"><label>Должность</label><div class="field-value">Backend Developer</div></div>
+          <div class="field"><label>Руководитель</label><div class="field-value">Нурсултан Тореханов</div></div>
+        </div>
+        <div class="section-title">Банковские реквизиты</div>
+        <div class="form-grid">
+          <div class="field"><label>Счёт (IBAN)</label><div class="field-value">KZ91722C000001234567</div></div>
+          <div class="field"><label>Банк</label><div class="field-value">Халык Банк</div></div>
+        </div>
+        <div class="section-title">Налоговые признаки</div>
+        <div class="row" style="gap:24px;">
+          <label style="font-size:12px;display:flex;align-items:center;gap:6px;"><input type="checkbox" checked> Резидент РК</label>
+          <label style="font-size:12px;display:flex;align-items:center;gap:6px;"><input type="checkbox"> Инвалид</label>
+          <label style="font-size:12px;display:flex;align-items:center;gap:6px;"><input type="checkbox"> Пенсионер (ОПВ=0)</label>
+        </div>
+        <div class="annotation" style="margin-top:14px;">Поля с <strong>*</strong> обязательны. <strong>baseSalary</strong> передаётся как string "320000.00", не число. <strong>employmentType</strong>: FULL_TIME | PART_TIME | CONTRACT | INTERN. <strong>POST /v1/employees</strong></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<!-- 5. PAYROLL PERIODS -->
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<div class="screen">
+  <div class="screen-label">5 · Payroll Periods <span>HR_MANAGER, ACCOUNTANT</span></div>
+  <div class="screen-body">
+    <div class="sidebar">
+      <div class="logo">HRMS</div>
+      <div class="nav-item"><div class="icon"></div>Дашборд</div>
+      <div class="nav-item"><div class="icon"></div>Сотрудники</div>
+      <div class="nav-item active"><div class="icon"></div>Зарплата</div>
+      <div class="nav-item"><div class="icon"></div>Отпуска</div>
+      <div class="nav-item"><div class="icon"></div>Посещаемость</div>
+      <div class="nav-item"><div class="icon"></div>Отчёты</div>
+    </div>
+    <div class="main">
+      <div class="topbar">
+        <div class="topbar-title">Расчётные периоды</div>
+        <div class="btn btn-primary">+ Новый период</div>
+      </div>
+      <div class="content">
+        <table class="table">
+          <thead><tr><th>Период</th><th>Рабочие дни</th><th>Сотрудников</th><th>Итого (брутто)</th><th>Итого (нетто)</th><th>Статус</th><th>Действие</th></tr></thead>
+          <tbody>
+            <tr>
+              <td><div class="emp-name">Март 2024</div><div class="emp-sub">01.03–31.03.2024</div></td>
+              <td>20</td><td>87</td>
+              <td class="kzt">27 840 000 ₸</td>
+              <td class="kzt">22 514 280 ₸</td>
+              <td><div class="chip chip-teal">PAID</div></td>
+              <td><span class="action-link">Расч. листы →</span></td>
+            </tr>
+            <tr>
+              <td><div class="emp-name">Февраль 2024</div><div class="emp-sub">01.02–29.02.2024</div></td>
+              <td>21</td><td>85</td>
+              <td class="kzt">26 950 000 ₸</td>
+              <td class="kzt">21 800 000 ₸</td>
+              <td><div class="chip chip-purple">LOCKED</div></td>
+              <td><span class="action-link">Расч. листы →</span></td>
+            </tr>
+            <tr>
+              <td><div class="emp-name">Апрель 2024</div><div class="emp-sub">01.04–30.04.2024</div></td>
+              <td>22</td><td>—</td><td>—</td><td>—</td>
+              <td><div class="chip chip-gray">DRAFT</div></td>
+              <td><div class="btn btn-primary" style="padding:4px 10px;font-size:11px;">▶ Сформировать</div></td>
+            </tr>
+          </tbody>
+        </table>
+        <div class="annotation"><strong>Workflow кнопок:</strong> DRAFT → «Сформировать» (POST /generate) → PROCESSING → «Утвердить» (HR_MANAGER) → APPROVED → «Выплачено» (ACCOUNTANT) → PAID → «Заблокировать» (SUPER_ADMIN) → LOCKED.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<!-- 6. PAYSLIP DETAIL -->
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<div class="screen" style="max-width:500px;">
+  <div class="screen-label">6 · Payslip Detail (Drawer) <span>HR_MANAGER · EMPLOYEE self-service</span></div>
+  <div style="padding:20px;">
+    <div class="row" style="margin-bottom:16px;">
+      <div class="col" style="flex:1">
+        <div style="font-size:16px;font-weight:700;">Нурова Асель</div>
+        <div class="emp-sub">EMP-0042 · Разработка · Backend Developer</div>
+      </div>
+      <div class="chip chip-green">APPROVED</div>
+    </div>
+    <div class="row" style="margin-bottom:16px;gap:20px;">
+      <div><div class="stat-label">Период</div><div style="font-weight:600;">Март 2024</div></div>
+      <div><div class="stat-label">Рабочих дней</div><div style="font-weight:600;">20 / 20</div></div>
+      <div><div class="stat-label">МРП (2024)</div><div style="font-weight:600;">3 692 ₸</div></div>
+    </div>
+    <div class="divider"></div>
+    <div class="tax-row"><span>Оклад (брутто)</span><span class="kzt">320 000.00 ₸</span></div>
+    <div class="tax-row"><span>Начисленная ЗП (проратирована)</span><span class="kzt">320 000.00 ₸</span></div>
+    <div class="tax-row"><span>Надбавки / премии</span><span class="kzt" style="color:var(--green)">+ 0.00 ₸</span></div>
+    <div class="divider"></div>
+    <div style="font-size:11px;color:var(--muted);text-transform:uppercase;margin:8px 0 6px;">Вычеты (удержания из зарплаты)</div>
+    <div class="tax-row"><span>ОПВ (10%)</span><span class="kzt" style="color:var(--red)">− 32 000.00 ₸</span></div>
+    <div class="tax-row"><span>Налогооблагаемый доход</span><span class="kzt">284 308.00 ₸</span></div>
+    <div class="tax-row"><span>ИПН (10%)</span><span class="kzt" style="color:var(--red)">− 28 430.80 ₸</span></div>
+    <div class="tax-row"><span>Прочие вычеты</span><span class="kzt" style="color:var(--red)">− 0.00 ₸</span></div>
+    <div class="divider"></div>
+    <div style="font-size:11px;color:var(--muted);text-transform:uppercase;margin:8px 0 6px;">Обязательства работодателя (не вычитаются)</div>
+    <div class="tax-row"><span style="color:var(--muted)">СО (3.5%)</span><span class="kzt" style="color:var(--muted)">10 080.00 ₸</span></div>
+    <div class="tax-row"><span style="color:var(--muted)">СН (9.5% − СО)</span><span class="kzt" style="color:var(--muted)">20 369.96 ₸</span></div>
+    <div class="tax-row total"><span>К ВЫПЛАТЕ (нетто)</span><span class="kzt" style="color:var(--teal)">259 569.20 ₸</span></div>
+    <div class="annotation" style="margin-top:14px;"><strong>СО и СН</strong> — показывать в отдельной секции, серым. Они не вычитаются из зарплаты сотрудника, это обязательства работодателя.</div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<!-- 7. LEAVE REQUESTS -->
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<div class="screen">
+  <div class="screen-label">7 · Leave Requests <span>EMPLOYEE: my requests · MANAGER: pending approval</span></div>
+  <div class="screen-body">
+    <div class="sidebar">
+      <div class="logo">HRMS</div>
+      <div class="nav-item"><div class="icon"></div>Дашборд</div>
+      <div class="nav-item"><div class="icon"></div>Сотрудники</div>
+      <div class="nav-item"><div class="icon"></div>Зарплата</div>
+      <div class="nav-item active"><div class="icon"></div>Отпуска</div>
+      <div class="nav-item"><div class="icon"></div>Посещаемость</div>
+      <div class="nav-item"><div class="icon"></div>Отчёты</div>
+    </div>
+    <div class="main">
+      <div class="topbar">
+        <div class="topbar-title">Отпуска</div>
+        <div class="btn btn-primary">+ Подать заявку</div>
+      </div>
+      <div class="content">
+        <!-- Balance bar -->
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px;">
+          <div style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:12px;">
+            <div class="stat-label">Annual Leave</div>
+            <div class="row" style="gap:8px;margin:4px 0;">
+              <div class="progress-wrap" style="flex:1"><div class="progress-bar" style="width:33%"></div></div>
+              <span style="font-size:12px;font-weight:600;">8 / 24 дн</span>
+            </div>
+            <div class="emp-sub">Осталось: 16 дней</div>
+          </div>
+          <div style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:12px;">
+            <div class="stat-label">Sick Leave</div>
+            <div class="row" style="gap:8px;margin:4px 0;">
+              <div class="progress-wrap" style="flex:1"><div class="progress-bar" style="width:10%"></div></div>
+              <span style="font-size:12px;font-weight:600;">3 / 30 дн</span>
+            </div>
+            <div class="emp-sub">Осталось: 27 дней</div>
+          </div>
+          <div style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:12px;">
+            <div class="stat-label">Study Leave</div>
+            <div class="row" style="gap:8px;margin:4px 0;">
+              <div class="progress-wrap" style="flex:1"><div class="progress-bar" style="width:0%"></div></div>
+              <span style="font-size:12px;font-weight:600;">0 / 10 дн</span>
+            </div>
+            <div class="emp-sub">Осталось: 10 дней</div>
+          </div>
+        </div>
+        <table class="table">
+          <thead><tr><th>Сотрудник</th><th>Тип</th><th>Период</th><th>Дней</th><th>Статус</th><th>Действие</th></tr></thead>
+          <tbody>
+            <tr>
+              <td><div class="emp-name">Нурова Асель</div><div class="emp-num">EMP-0042</div></td>
+              <td>Annual Leave</td>
+              <td>10.04 – 15.04.2024</td>
+              <td>4</td>
+              <td><div class="chip chip-yellow">PENDING</div></td>
+              <td><div class="row" style="gap:6px;"><div class="btn btn-primary" style="padding:3px 10px;font-size:11px;">✓ Одобрить</div><div class="btn btn-danger" style="padding:3px 10px;font-size:11px;">✗ Отклонить</div></div></td>
+            </tr>
+            <tr>
+              <td><div class="emp-name">Нурова Асель</div><div class="emp-num">EMP-0042</div></td>
+              <td>Sick Leave</td>
+              <td>01.03 – 03.03.2024</td>
+              <td>3</td>
+              <td><div class="chip chip-green">APPROVED</div></td>
+              <td><span class="emp-sub">Одобрено 04.03</span></td>
+            </tr>
+          </tbody>
+        </table>
+        <div class="annotation"><strong>Балансы</strong> — GET /v1/leave/balances/my. <strong>Заявки</strong> — GET /v1/leave/requests/my (EMPLOYEE) или /pending (MANAGER). <strong>daysRequested</strong> вычислять на фронте (пн–пт).</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<!-- 8. SUBMIT LEAVE REQUEST FORM -->
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<div class="screen" style="max-width:480px;">
+  <div class="screen-label">8 · Submit Leave Request (Dialog) <span>EMPLOYEE</span></div>
+  <div style="padding:20px;">
+    <div style="font-size:15px;font-weight:700;margin-bottom:16px;">Подать заявку на отпуск</div>
+    <div class="field" style="margin-bottom:14px;">
+      <label>Тип отпуска *</label>
+      <div class="field-value focus">Annual Leave (осталось 16 дней)</div>
+    </div>
+    <div class="form-grid" style="margin-bottom:14px;">
+      <div class="field"><label>Дата начала *</label><div class="field-value">10.04.2024</div></div>
+      <div class="field"><label>Дата окончания *</label><div class="field-value">15.04.2024</div></div>
+    </div>
+    <div style="background:rgba(0,200,150,.08);border:1px solid rgba(0,200,150,.2);border-radius:6px;padding:10px;margin-bottom:14px;font-size:12px;">
+      <div style="color:var(--teal);font-weight:600;margin-bottom:4px;">Рабочих дней: 4</div>
+      <div style="color:var(--muted);">Выходные (13–14 апр) не учитываются. После одобрения остаток: 12 дней.</div>
+    </div>
+    <div class="field" style="margin-bottom:16px;">
+      <label>Причина (необязательно)</label>
+      <div class="field-value" style="min-height:60px;align-items:flex-start;">Семейный отпуск</div>
+    </div>
+    <div class="row" style="justify-content:flex-end;gap:8px;">
+      <div class="btn btn-outline">Отмена</div>
+      <div class="btn btn-primary">Отправить заявку</div>
+    </div>
+    <div class="annotation" style="margin-top:14px;"><strong>daysRequested</strong> считается на фронте: countWorkingDays(startDate, endDate) — только пн–пт. Передавать в body как число. POST /v1/leave/requests</div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<!-- 9. ATTENDANCE -->
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<div class="screen">
+  <div class="screen-label">9 · Attendance <span>EMPLOYEE: self-service · HR_MANAGER: team view</span></div>
+  <div class="screen-body">
+    <div class="sidebar">
+      <div class="logo">HRMS</div>
+      <div class="nav-item"><div class="icon"></div>Дашборд</div>
+      <div class="nav-item"><div class="icon"></div>Сотрудники</div>
+      <div class="nav-item"><div class="icon"></div>Зарплата</div>
+      <div class="nav-item"><div class="icon"></div>Отпуска</div>
+      <div class="nav-item active"><div class="icon"></div>Посещаемость</div>
+      <div class="nav-item"><div class="icon"></div>Отчёты</div>
+    </div>
+    <div class="main">
+      <div class="topbar">
+        <div class="topbar-title">Посещаемость</div>
+      </div>
+      <div class="content">
+        <!-- Employee self-service section -->
+        <div style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:16px;margin-bottom:16px;">
+          <div class="section-title">Сегодня — 15 апреля 2024</div>
+          <div class="row" style="gap:20px;margin-bottom:14px;">
+            <div><div class="stat-label">Вход</div><div style="font-size:20px;font-weight:700;color:var(--teal);">09:07</div></div>
+            <div><div class="stat-label">Выход</div><div style="font-size:20px;font-weight:700;color:var(--muted);">—</div></div>
+            <div><div class="stat-label">Статус</div><div class="chip chip-yellow" style="font-size:13px;padding:4px 12px;">LATE</div></div>
+            <div style="flex:1"></div>
+            <div class="btn btn-primary" style="padding:10px 24px;font-size:13px;">⬛ Отметить выход</div>
+          </div>
+          <div class="annotation" style="margin-top:0;">Если check_in == null → показать кнопку <strong>«Отметить вход»</strong> (POST /check-in). Если check_out == null → <strong>«Отметить выход»</strong> (POST /check-out). LATE если вход позже 09:10.</div>
+        </div>
+        <!-- Monthly mini-calendar -->
+        <div class="section-title">Апрель 2024</div>
+        <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;max-width:360px;">
+          <div style="font-size:10px;color:var(--muted);text-align:center;padding:4px;">Пн</div>
+          <div style="font-size:10px;color:var(--muted);text-align:center;padding:4px;">Вт</div>
+          <div style="font-size:10px;color:var(--muted);text-align:center;padding:4px;">Ср</div>
+          <div style="font-size:10px;color:var(--muted);text-align:center;padding:4px;">Чт</div>
+          <div style="font-size:10px;color:var(--muted);text-align:center;padding:4px;">Пт</div>
+          <div style="font-size:10px;color:var(--muted);text-align:center;padding:4px;">Сб</div>
+          <div style="font-size:10px;color:var(--muted);text-align:center;padding:4px;">Вс</div>
+          <div style="text-align:center;padding:5px;background:rgba(16,185,129,.15);border-radius:4px;font-size:12px;">1</div>
+          <div style="text-align:center;padding:5px;background:rgba(16,185,129,.15);border-radius:4px;font-size:12px;">2</div>
+          <div style="text-align:center;padding:5px;background:rgba(16,185,129,.15);border-radius:4px;font-size:12px;">3</div>
+          <div style="text-align:center;padding:5px;background:rgba(16,185,129,.15);border-radius:4px;font-size:12px;">4</div>
+          <div style="text-align:center;padding:5px;background:rgba(245,158,11,.15);border-radius:4px;font-size:12px;color:var(--yellow);">5</div>
+          <div style="text-align:center;padding:5px;background:rgba(148,163,184,.1);border-radius:4px;font-size:12px;color:var(--muted);">6</div>
+          <div style="text-align:center;padding:5px;background:rgba(148,163,184,.1);border-radius:4px;font-size:12px;color:var(--muted);">7</div>
+          <div style="text-align:center;padding:5px;background:rgba(16,185,129,.15);border-radius:4px;font-size:12px;">8</div>
+          <div style="text-align:center;padding:5px;background:rgba(239,68,68,.15);border-radius:4px;font-size:12px;color:var(--red);">9</div>
+          <div style="text-align:center;padding:5px;background:rgba(16,185,129,.15);border-radius:4px;font-size:12px;">10</div>
+          <div style="text-align:center;padding:5px;background:rgba(16,185,129,.15);border-radius:4px;font-size:12px;">11</div>
+          <div style="text-align:center;padding:5px;background:rgba(16,185,129,.15);border-radius:4px;font-size:12px;">12</div>
+        </div>
+        <div class="row" style="gap:12px;margin-top:10px;flex-wrap:wrap;">
+          <div class="row" style="gap:5px;"><div style="width:10px;height:10px;border-radius:2px;background:rgba(16,185,129,.3)"></div><span style="font-size:11px;color:var(--muted);">PRESENT</span></div>
+          <div class="row" style="gap:5px;"><div style="width:10px;height:10px;border-radius:2px;background:rgba(245,158,11,.3)"></div><span style="font-size:11px;color:var(--muted);">LATE</span></div>
+          <div class="row" style="gap:5px;"><div style="width:10px;height:10px;border-radius:2px;background:rgba(239,68,68,.3)"></div><span style="font-size:11px;color:var(--muted);">ABSENT</span></div>
+          <div class="row" style="gap:5px;"><div style="width:10px;height:10px;border-radius:2px;background:rgba(148,163,184,.2)"></div><span style="font-size:11px;color:var(--muted);">WEEKEND</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<!-- 10. REPORTS -->
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<div class="screen" style="max-width:560px;">
+  <div class="screen-label">10 · Reports (Downloads only) <span>HR_MANAGER, ACCOUNTANT</span></div>
+  <div style="padding:20px;">
+    <div style="font-size:15px;font-weight:700;margin-bottom:16px;">Отчёты и выгрузки</div>
+    <div style="display:grid;gap:10px;">
+      <div style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:14px;display:flex;align-items:center;gap:12px;">
+        <div style="font-size:24px;">📊</div>
+        <div style="flex:1">
+          <div style="font-weight:600;">Сводная ведомость (XLSX)</div>
+          <div class="emp-sub">Все сотрудники: оклад, ОПВ, ИПН, нетто за период</div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:6px;">
+          <select class="filter-select" style="font-size:11px;">
+            <option>Март 2024</option><option>Февраль 2024</option>
+          </select>
+          <div class="btn btn-primary" style="justify-content:center;font-size:11px;">⬇ Скачать</div>
+        </div>
+      </div>
+      <div style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:14px;display:flex;align-items:center;gap:12px;">
+        <div style="font-size:24px;">🏦</div>
+        <div style="flex:1">
+          <div style="font-weight:600;">Форма 200.00 (XLSX)</div>
+          <div class="emp-sub">Квартальная декларация по ИПН / ОПВ / СО</div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:6px;">
+          <select class="filter-select" style="font-size:11px;"><option>Q1 2024</option><option>Q4 2023</option></select>
+          <div class="btn btn-primary" style="justify-content:center;font-size:11px;">⬇ Скачать</div>
+        </div>
+      </div>
+      <div style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:14px;display:flex;align-items:center;gap:12px;">
+        <div style="font-size:24px;">🗓️</div>
+        <div style="flex:1">
+          <div style="font-weight:600;">Посещаемость (XLSX)</div>
+          <div class="emp-sub">Присутствие / опоздания / сверхурочные за период</div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:6px;">
+          <input type="text" class="filter-select" value="01.04 – 30.04.2024" style="font-size:11px;">
+          <div class="btn btn-primary" style="justify-content:center;font-size:11px;">⬇ Скачать</div>
+        </div>
+      </div>
+      <div style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:14px;display:flex;align-items:center;gap:12px;">
+        <div style="font-size:24px;">🌴</div>
+        <div style="flex:1">
+          <div style="font-weight:600;">Остатки отпусков (XLSX)</div>
+          <div class="emp-sub">Все виды отпусков: начислено / использовано / остаток</div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:6px;">
+          <select class="filter-select" style="font-size:11px;"><option>2024</option><option>2023</option></select>
+          <div class="btn btn-primary" style="justify-content:center;font-size:11px;">⬇ Скачать</div>
+        </div>
+      </div>
+    </div>
+    <div class="annotation" style="margin-top:14px;">Все кнопки «Скачать» → axios с <strong>responseType: 'blob'</strong> → URL.createObjectURL(). Файлы возвращаются как бинарный поток, не JSON.</div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<!-- 11. NOTIFICATIONS PANEL -->
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<div class="screen" style="max-width:400px;">
+  <div class="screen-label">11 · Notifications (Dropdown/Panel) <span>All roles</span></div>
+  <div style="padding:16px;">
+    <div class="row" style="justify-content:space-between;margin-bottom:12px;">
+      <div style="font-weight:700;">Уведомления</div>
+      <span class="action-link">Прочитать все</span>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:2px;">
+      <div style="background:rgba(59,130,246,.08);border-left:3px solid var(--blue);padding:10px 12px;border-radius:0 6px 6px 0;">
+        <div class="row" style="gap:8px;margin-bottom:4px;"><div class="notif-dot unread"></div><div style="font-weight:600;font-size:12px;">Отпуск одобрен</div><span class="emp-sub" style="margin-left:auto;">2ч назад</span></div>
+        <div class="emp-sub">Ваш запрос на 10–15 апр одобрен руководителем</div>
+      </div>
+      <div style="padding:10px 12px;border-radius:6px;">
+        <div class="row" style="gap:8px;margin-bottom:4px;"><div class="notif-dot" style="background:var(--muted);"></div><div style="font-size:12px;">Расчётный лист готов</div><span class="emp-sub" style="margin-left:auto;">вчера</span></div>
+        <div class="emp-sub">Расчётный лист за Март 2024 доступен</div>
+      </div>
+      <div style="padding:10px 12px;border-radius:6px;">
+        <div class="row" style="gap:8px;margin-bottom:4px;"><div class="notif-dot" style="background:var(--muted);"></div><div style="font-size:12px;">Новый запрос отпуска</div><span class="emp-sub" style="margin-left:auto;">2 дня</span></div>
+        <div class="emp-sub">Асель Нурова запросила 4 дня (10–15 апр)</div>
+      </div>
+    </div>
+    <div class="annotation" style="margin-top:12px;"><strong>Бейдж</strong>: GET /v1/notifications/unread-count каждые 30с. <strong>Тип</strong> LEAVE_APPROVED → синий, PAYSLIP_READY → зелёный, LEAVE_REQUEST → жёлтый (для менеджера).</div>
+  </div>
+</div>
+
+</div><!-- end grid -->
+</body>
+</html>

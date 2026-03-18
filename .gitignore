@@ -21,7 +21,6 @@ target/
 ### Logs
 *.log
 logs/
-docs/
 
 ### OS
 .DS_Store
@@ -34,3 +33,6 @@ docker/backups/
 ### Build outputs
 *.jar
 *.war
+
+.claude/
+CLAUDE.md

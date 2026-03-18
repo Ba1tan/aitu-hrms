@@ -1,0 +1,11 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  - job_name: 'hrms-backend'
+    metrics_path: '/api/actuator/prometheus'
+    static_configs:
+      - targets: ['host.docker.internal:8080']
+    # Note: use host.docker.internal to reach Spring Boot running on host machine
+    # If running app in Docker too, replace with container name: hrms-app:8080

@@ -85,7 +85,7 @@ public class Employee extends BaseEntity {
     private boolean hasDisability = false;
 
     @Column(name = "is_pensioner")
-    private boolean isPensioner = false;
+    private boolean pensioner = false;
 
     public String getFullName() {
         if (middleName != null && !middleName.isBlank()) {

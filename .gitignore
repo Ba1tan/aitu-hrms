@@ -35,3 +35,4 @@ docker/backups/
 *.war
 
 .claude/
+CLAUDE.md

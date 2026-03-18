@@ -9,7 +9,7 @@ CREATE TABLE users (
     last_name       VARCHAR(100)    NOT NULL,
     email           VARCHAR(255)    NOT NULL UNIQUE,
     password        VARCHAR(255)    NOT NULL,
-    role            VARCHAR(20)     NOT NULL CHECK (role IN ('SUPER_ADMIN','HR_MANAGER','ACCOUNTANT','EMPLOYEE')),
+    role            VARCHAR(20)     NOT NULL CHECK (role IN ('SUPER_ADMIN','HR_MANAGER','ACCOUNTANT','MANAGER','EMPLOYEE')),
     enabled         BOOLEAN         NOT NULL DEFAULT TRUE,
     account_non_locked BOOLEAN      NOT NULL DEFAULT TRUE,
     employee_id     UUID,

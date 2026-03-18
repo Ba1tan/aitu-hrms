@@ -34,4 +34,4 @@ docker/backups/
 *.jar
 *.war
 
-.claude
+.claude/

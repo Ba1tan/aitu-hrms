@@ -106,6 +106,8 @@ public class PayrollDtos {
         // Employee deductions
         private BigDecimal opvAmount;
         private BigDecimal oopvAmount;
+        private BigDecimal vosmsAmount;
+        private BigDecimal opvrAmount;
         private BigDecimal taxableIncome;
         private BigDecimal ipnAmount;
         private BigDecimal otherDeductions;

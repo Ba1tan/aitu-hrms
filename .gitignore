@@ -33,6 +33,6 @@ docker/backups/
 ### Build outputs
 *.jar
 *.war
-
+docs/dev-phases/
 .claude/
 CLAUDE.md

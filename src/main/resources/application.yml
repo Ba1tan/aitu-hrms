@@ -69,14 +69,18 @@ app:
     allowed-origins: ${CORS_ORIGINS:http://localhost:3000,http://localhost:5173}
 
   payroll:
-    # Kazakhstan tax rates 2024
-    ipn-rate: 0.10          # ИПН - Individual Income Tax 10%
-    opv-rate: 0.10          # ОПВ - Pension contribution 10%
-    so-rate: 0.035          # СО - Social contribution 3.5%
-    sn-rate: 0.095          # СН - Social tax 9.5%
-    oopv-rate: 0.015        # ООПВ - OOPV 1.5%
-    mrp: 3692               # МРП 2024 (tenge)
-    min-wage: 85000         # Minimum wage 2024 (tenge)
+    # Kazakhstan Tax Code 2026 (Закон РК № 214-VIII от 18.07.2025, вступил в силу 01.01.2026)
+    ipn-rate: 0.10          # ИПН 10% (до 8 500 МРП/год), 15% сверх порога — пока не реализовано
+    opv-rate: 0.10          # ОПВ — пенсионные взносы работника 10%
+    vosms-rate: 0.02        # ВОСМС — взносы работника на медстрахование 2% (НОВОЕ)
+    so-rate: 0.05           # СО — социальные отчисления работодателя 5% (было 3.5%)
+    sn-rate: 0.06           # СН — социальный налог работодателя фиксированные 6% (было 9.5%-СО)
+    opvr-rate: 0.035        # ОПВР — пенсионные взносы работодателя 3.5% (было 2.5%) (НОВОЕ)
+    oopv-rate: 0.00         # ООПВ — для большинства сотрудников 0
+    mrp: 4325               # МРП 2026 (было 3692)
+    min-wage: 85000         # МЗП 2026 — без изменений
+    standard-deduction-mrp: 30   # Базовый вычет 30 МРП (было 1 МРП) (НОВОЕ)
+    opv-cap-mzp: 50         # ОПВ не более 50 МЗП
 
 springdoc:
   api-docs:

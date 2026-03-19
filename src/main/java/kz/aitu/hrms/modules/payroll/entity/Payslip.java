@@ -52,6 +52,14 @@ public class Payslip extends BaseEntity {
     @Builder.Default
     private BigDecimal oopvAmount = BigDecimal.ZERO;  // ООПВ 1.5% (if applicable)
 
+    @Column(name = "vosms_amount", nullable = false, precision = 15, scale = 2)
+    @Builder.Default
+    private BigDecimal vosmsAmount = BigDecimal.ZERO;   // ВОСМС employee medical 2%
+
+    @Column(name = "opvr_amount", nullable = false, precision = 15, scale = 2)
+    @Builder.Default
+    private BigDecimal opvrAmount = BigDecimal.ZERO;    // ОПВР employer pension 3.5%
+
     @Column(name = "taxable_income", nullable = false, precision = 15, scale = 2)
     private BigDecimal taxableIncome;
 

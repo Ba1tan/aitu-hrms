@@ -1,0 +1,121 @@
+# docker-compose.yml — LOCAL DEVELOPMENT ONLY
+# Starts infrastructure services. Run the Spring Boot app separately via IntelliJ or:
+#   mvn spring-boot:run -Dspring-boot.run.profiles=dev
+#
+# Usage:
+#   docker compose up -d              # start all infra
+#   docker compose up -d postgres redis  # start only DB + cache
+#   docker compose down               # stop and remove containers
+#   docker compose logs -f postgres   # tail logs
+
+services:
+
+  # ────────── PostgreSQL 16 ──────────
+  postgres:
+    image: postgres:16-alpine
+    container_name: hrms-postgres-dev
+    environment:
+      POSTGRES_DB: hrms
+      POSTGRES_USER: hrms_user
+      POSTGRES_PASSWORD: hrms_pass
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_dev_data:/var/lib/postgresql/data
+      - ./scripts/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql:ro
+    networks:
+      - hrms-dev
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U hrms_user -d hrms"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # ────────── Redis 7 ──────────
+  redis:
+    image: redis:7-alpine
+    container_name: hrms-redis-dev
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_dev_data:/data
+    networks:
+      - hrms-dev
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # ────────── RabbitMQ 3 (Phase 2 — comment out if not needed yet) ──────────
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    container_name: hrms-rabbitmq-dev
+    environment:
+      RABBITMQ_DEFAULT_USER: hrms
+      RABBITMQ_DEFAULT_PASS: hrms_pass
+    ports:
+      - "5672:5672"    # AMQP
+      - "15672:15672"  # Management UI → http://localhost:15672
+    volumes:
+      - rabbitmq_dev_data:/var/lib/rabbitmq
+    networks:
+      - hrms-dev
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    restart: unless-stopped
+
+  # ────────── Prometheus (optional monitoring) ──────────
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: hrms-prometheus-dev
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./infrastructure/monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_dev_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.enable-lifecycle'
+    networks:
+      - hrms-dev
+    restart: unless-stopped
+    profiles:
+      - monitoring  # Only start with: docker compose --profile monitoring up -d
+
+  # ────────── Grafana (optional monitoring) ──────────
+  grafana:
+    image: grafana/grafana:latest
+    container_name: hrms-grafana-dev
+    ports:
+      - "3001:3000"  # http://localhost:3001 (admin/admin)
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_USERS_ALLOW_SIGN_UP: "false"
+    volumes:
+      - grafana_dev_data:/var/lib/grafana
+    networks:
+      - hrms-dev
+    depends_on:
+      - prometheus
+    restart: unless-stopped
+    profiles:
+      - monitoring  # Only start with: docker compose --profile monitoring up -d
+
+volumes:
+  postgres_dev_data:
+  redis_dev_data:
+  rabbitmq_dev_data:
+  prometheus_dev_data:
+  grafana_dev_data:
+
+networks:
+  hrms-dev:
+    driver: bridge

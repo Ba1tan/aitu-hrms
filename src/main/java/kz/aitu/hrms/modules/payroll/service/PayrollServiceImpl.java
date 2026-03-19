@@ -83,9 +83,9 @@ public class PayrollServiceImpl implements PayrollService {
         return toPeriodResponse(findPeriodOrThrow(periodId));
     }
 
-    // =========================================================================
+
     // PAYSLIP GENERATION
-    // =========================================================================
+
 
     @Override
     @Transactional
@@ -146,6 +146,8 @@ public class PayrollServiceImpl implements PayrollService {
                         .allowances(result.getAllowances())
                         .opvAmount(result.getOpvAmount())
                         .oopvAmount(result.getOopvAmount())
+                        .vosmsAmount(result.getVosmsAmount())
+                        .opvrAmount(result.getOpvrAmount())
                         .taxableIncome(result.getTaxableIncome())
                         .ipnAmount(result.getIpnAmount())
                         .otherDeductions(result.getDeductions())
@@ -194,9 +196,9 @@ public class PayrollServiceImpl implements PayrollService {
         return resp;
     }
 
-    // =========================================================================
+
     // PAYSLIP MANAGEMENT
-    // =========================================================================
+
 
     @Override
     @Transactional(readOnly = true)
@@ -255,9 +257,9 @@ public class PayrollServiceImpl implements PayrollService {
         return toPayslipResponse(payslipRepository.save(payslip));
     }
 
-    // =========================================================================
+
     // STATUS TRANSITIONS
-    // =========================================================================
+
 
     @Override
     @Transactional
@@ -319,9 +321,9 @@ public class PayrollServiceImpl implements PayrollService {
         return toPeriodResponse(periodRepository.save(period));
     }
 
-    // =========================================================================
+
     // EMPLOYEE SELF-SERVICE
-    // =========================================================================
+
 
     @Override
     @Transactional(readOnly = true)
@@ -340,9 +342,9 @@ public class PayrollServiceImpl implements PayrollService {
                                 "Payslip not found for this employee and period")));
     }
 
-    // =========================================================================
+
     // HELPERS
-    // =========================================================================
+
 
     private PayrollPeriod findPeriodOrThrow(UUID id) {
         return periodRepository.findByIdAndDeletedFalse(id)
@@ -412,6 +414,8 @@ public class PayrollServiceImpl implements PayrollService {
         r.setAllowances(s.getAllowances());
         r.setOpvAmount(s.getOpvAmount());
         r.setOopvAmount(s.getOopvAmount());
+        r.setVosmsAmount(s.getVosmsAmount());
+        r.setOpvrAmount(s.getOpvrAmount());
         r.setTaxableIncome(s.getTaxableIncome());
         r.setIpnAmount(s.getIpnAmount());
         r.setOtherDeductions(s.getOtherDeductions());

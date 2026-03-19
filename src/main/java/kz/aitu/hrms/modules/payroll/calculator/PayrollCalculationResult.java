@@ -25,13 +25,15 @@ public class PayrollCalculationResult {
 
     // ---- Kazakhstan Deductions (in order of calculation per Tax Code) ----
     private BigDecimal opvAmount;           // ОПВ = earnedSalary * 10%
-    private BigDecimal oopvAmount;          // ООПВ = earnedSalary * 1.5% (if applicable)
-    private BigDecimal taxableIncome;       // earnedSalary - OPV - MRP deduction
+    private BigDecimal vosmsAmount;         // ВОСМС = earnedSalary * 2% (employee medical) — NEW 2026
+    private BigDecimal oopvAmount;          // ООПВ = 0 for most employees
+    private BigDecimal taxableIncome;       // earnedSalary - OPV - VOSMS - 30×MRP
     private BigDecimal ipnAmount;           // ИПН = taxableIncome * 10%
 
     // ---- Employer Obligations (not deducted from employee) ----
-    private BigDecimal soAmount;            // СО = (earnedSalary - OPV) * 3.5%
-    private BigDecimal snAmount;            // СН = earnedSalary * 9.5% - SO
+    private BigDecimal soAmount;            // СО = (earnedSalary - OPV) * 5%
+    private BigDecimal snAmount;            // СН = earnedSalary * 6% (fixed, no longer -SO)
+    private BigDecimal opvrAmount;          // ОПВР = earnedSalary * 3.5% — NEW 2026
 
     // ---- Final ----
     private BigDecimal totalDeductions;

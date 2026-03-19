@@ -199,6 +199,8 @@ CREATE TABLE payslips (
     other_deductions    NUMERIC(15,2)   NOT NULL DEFAULT 0,
     opv_amount          NUMERIC(15,2)   NOT NULL,
     oopv_amount         NUMERIC(15,2)   NOT NULL DEFAULT 0,
+    vosms_amount        NUMERIC(15,2)   NOT NULL DEFAULT 0,
+    opvr_amount         NUMERIC(15,2)   NOT NULL DEFAULT 0,
     taxable_income      NUMERIC(15,2)   NOT NULL,
     ipn_amount          NUMERIC(15,2)   NOT NULL,
     total_deductions    NUMERIC(15,2)   NOT NULL,

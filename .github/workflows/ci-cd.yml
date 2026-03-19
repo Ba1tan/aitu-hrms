@@ -47,8 +47,8 @@ jobs:
           distribution: 'temurin'
           cache: maven
 
-      - name: Run tests
-        run: ./mvnw verify -DskipTests
+      - name: Build & test
+        run: mvn verify
         env:
           DB_URL: jdbc:postgresql://localhost:5432/hrms_test
           DB_USERNAME: hrms_user
@@ -61,9 +61,6 @@ jobs:
         with:
           name: test-results
           path: target/surefire-reports/
-
-      - name: Build JAR
-        run: ./mvnw package -DskipTests
 
       - name: Upload JAR artifact
         uses: actions/upload-artifact@v4

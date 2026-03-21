@@ -53,9 +53,8 @@ public class PayrollPeriod extends BaseEntity {
     @Column(name = "approved_at")
     private LocalDateTime approvedAt;
 
-    /**
-     * readable period name, "Март 2024"
-     */
+
+     // readable period name, "Март 2024"
     public String getName() {
         String[] monthsRu = {
             "", "Январь", "Февраль", "Март", "Апрель", "Май", "Июнь",

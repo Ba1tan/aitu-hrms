@@ -36,9 +36,7 @@ public class AuthService {
     private final UserDetailsService userDetailsService;
     private final StringRedisTemplate redisTemplate;
 
-    /**
-     * Authenticate user with email and password, return JWT tokens.
-     */
+
     public AuthDtos.AuthResponse login(AuthDtos.LoginRequest request) {
         try {
             authenticationManager.authenticate(
@@ -62,9 +60,6 @@ public class AuthService {
         return buildAuthResponse(user);
     }
 
-    /**
-     * Register a new user (only SUPER_ADMIN can call this via controller security).
-     */
     @Transactional
     public AuthDtos.AuthResponse register(AuthDtos.RegisterRequest request) {
         if (userRepository.existsByEmail(request.getEmail())) {
@@ -94,9 +89,6 @@ public class AuthService {
         return buildAuthResponse(user);
     }
 
-    /**
-     * Issue new access token from a valid refresh token.
-     */
     public AuthDtos.AuthResponse refreshToken(AuthDtos.RefreshTokenRequest request) {
         String refreshToken = request.getRefreshToken();
 
@@ -120,15 +112,11 @@ public class AuthService {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new ResourceNotFoundException("User", "email", email));
 
-        // Blacklist old refresh token, issue new pair
         blacklistToken(refreshToken);
         log.debug("Token refreshed for user: {}", email);
         return buildAuthResponse(user);
     }
 
-    /**
-     * Change the currently authenticated user's password.
-     */
     @Transactional
     public void changePassword(AuthDtos.ChangePasswordRequest request) {
         // Get currently authenticated user from security context
@@ -146,9 +134,6 @@ public class AuthService {
         log.info("Password changed for user: {}", email);
     }
 
-    /**
-     * Logout by blacklisting the provided JWT token in Redis.
-     */
     public void logout(String authHeader) {
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             throw new BusinessException("Invalid authorization header.");
@@ -158,9 +143,7 @@ public class AuthService {
         log.info("Token blacklisted on logout");
     }
 
-    // -------------------------------------------------------------------------
     // Private helpers
-    // -------------------------------------------------------------------------
 
     private AuthDtos.AuthResponse buildAuthResponse(User user) {
         String accessToken = jwtService.generateAccessToken(user);

@@ -60,10 +60,10 @@ public class KazakhstanPayrollCalculator {
     private int minWage;
 
     @Value("${app.payroll.standard-deduction-mrp}")
-    private int standardDeductionMrp;   // 30 in 2026
+    private int standardDeductionMrp;
 
     @Value("${app.payroll.opv-cap-mzp}")
-    private int opvCapMzp;              // 50 × МЗП
+    private int opvCapMzp;
 
     private static final int SCALE = 2;
     private static final RoundingMode ROUNDING = RoundingMode.HALF_UP;

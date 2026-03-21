@@ -1,4 +1,3 @@
--- Default super admin (password: password)
 INSERT INTO users (id, first_name, last_name, email, password, role, enabled, account_non_locked)
 VALUES (
     gen_random_uuid(),

@@ -6,10 +6,7 @@ spring:
 
 server:
   ssl:
-    enabled: false  # SSL terminated at NPM level
-  # Trust X-Forwarded-Proto / X-Forwarded-Host headers from Nginx Proxy Manager.
-  # Without this, Spring sees the internal http:// request and Swagger generates
-  # wrong URLs. "framework" means Spring MVC handles the header (not the container).
+    enabled: false
   forward-headers-strategy: framework
 
 logging:

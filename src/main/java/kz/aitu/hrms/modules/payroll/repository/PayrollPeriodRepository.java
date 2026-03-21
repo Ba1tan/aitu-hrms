@@ -21,7 +21,6 @@ public interface PayrollPeriodRepository extends JpaRepository<PayrollPeriod, UU
 
     Optional<PayrollPeriod> findByYearAndMonthAndDeletedFalse(int year, int month);
 
-    // Latest non-locked period for quick access
     Optional<PayrollPeriod> findTopByStatusNotAndDeletedFalseOrderByYearDescMonthDesc(
             PayrollPeriodStatus status);
 }

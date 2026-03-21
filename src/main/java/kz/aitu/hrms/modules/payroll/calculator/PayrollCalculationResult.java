@@ -5,10 +5,6 @@ import lombok.Data;
 
 import java.math.BigDecimal;
 
-/**
- * Immutable result of a single payroll calculation.
- * Holds every intermediate value for full transparency in payslips.
- */
 @Data
 @Builder
 public class PayrollCalculationResult {

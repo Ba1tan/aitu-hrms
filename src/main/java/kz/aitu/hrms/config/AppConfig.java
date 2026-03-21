@@ -20,18 +20,12 @@ public class AppConfig {
 
     private final UserRepository userRepository;
 
-    /**
-     * Spring Security uses this to load users during JWT filter authentication.
-     */
     @Bean
     public UserDetailsService userDetailsService() {
         return email -> userRepository.findByEmail(email)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found: " + email));
     }
 
-    /**
-     * JPA auditing — populates createdBy / updatedBy fields automatically.
-     */
     @Bean
     public AuditorAware<String> auditorProvider() {
         return () -> {

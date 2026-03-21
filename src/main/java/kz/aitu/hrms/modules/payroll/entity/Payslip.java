@@ -26,14 +26,12 @@ public class Payslip extends BaseEntity {
     @JoinColumn(name = "employee_id", nullable = false)
     private Employee employee;
 
-    // ---- Days ----
     @Column(name = "worked_days", nullable = false)
     private Integer workedDays;
 
     @Column(name = "total_working_days", nullable = false)
     private Integer totalWorkingDays;
 
-    // ---- Earnings ----
     @Column(name = "gross_salary", nullable = false, precision = 15, scale = 2)
     private BigDecimal grossSalary;
 
@@ -44,7 +42,6 @@ public class Payslip extends BaseEntity {
     @Builder.Default
     private BigDecimal allowances = BigDecimal.ZERO;
 
-    // ---- Employee deductions ----
     @Column(name = "opv_amount", nullable = false, precision = 15, scale = 2)
     private BigDecimal opvAmount;           // ОПВ pension 10%
 
@@ -76,14 +73,12 @@ public class Payslip extends BaseEntity {
     @Column(name = "net_salary", nullable = false, precision = 15, scale = 2)
     private BigDecimal netSalary;
 
-    // ---- Employer obligations (not deducted from employee) ----
     @Column(name = "so_amount", nullable = false, precision = 15, scale = 2)
-    private BigDecimal soAmount;            // СО 3.5%
+    private BigDecimal soAmount;
 
     @Column(name = "sn_amount", nullable = false, precision = 15, scale = 2)
-    private BigDecimal snAmount;            // СН 9.5% - SO
+    private BigDecimal snAmount;
 
-    // ---- Metadata ----
     @Column(name = "mrp_used", nullable = false)
     private Integer mrpUsed;
 

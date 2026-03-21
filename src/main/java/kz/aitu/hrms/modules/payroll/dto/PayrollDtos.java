@@ -16,7 +16,6 @@ import java.util.UUID;
 
 public class PayrollDtos {
 
-    // ===================== PERIOD REQUESTS =====================
 
     @Data
     public static class CreatePeriodRequest {
@@ -35,37 +34,31 @@ public class PayrollDtos {
         private Integer workingDays;
     }
 
-    // ===================== GENERATE PAYSLIPS REQUEST =====================
 
     @Data
     public static class GeneratePayslipsRequest {
-        // If provided, only generate for these specific employee IDs.
-        // If empty/null → generate for ALL active employees.
         private List<UUID> employeeIds;
     }
-
-    // ===================== PAYSLIP ADJUSTMENT =====================
 
     @Data
     public static class AdjustPayslipRequest {
         @DecimalMin(value = "0.00")
-        private BigDecimal allowances;       // Extra bonuses/allowances
+        private BigDecimal allowances;
 
         @DecimalMin(value = "0.00")
-        private BigDecimal otherDeductions;  // Manual deductions
+        private BigDecimal otherDeductions;
 
         @Min(value = 0) @Max(value = 31)
-        private Integer workedDays;          // Override prorated days
+        private Integer workedDays;
     }
 
-    // ===================== PERIOD RESPONSES =====================
 
     @Data
     public static class PeriodResponse {
         private UUID id;
         private Integer year;
         private Integer month;
-        private String name;           // e.g. "Март 2024"
+        private String name;
         private LocalDate startDate;
         private LocalDate endDate;
         private Integer workingDays;
@@ -86,7 +79,6 @@ public class PayrollDtos {
         private BigDecimal totalSo;
     }
 
-    // ===================== PAYSLIP RESPONSES =====================
 
     @Data
     public static class PayslipResponse {
@@ -94,16 +86,13 @@ public class PayrollDtos {
         private PeriodInfo period;
         private EmployeeInfo employee;
 
-        // Days
         private Integer workedDays;
         private Integer totalWorkingDays;
 
-        // Earnings
         private BigDecimal grossSalary;
         private BigDecimal earnedSalary;
         private BigDecimal allowances;
 
-        // Employee deductions
         private BigDecimal opvAmount;
         private BigDecimal oopvAmount;
         private BigDecimal vosmsAmount;
@@ -113,14 +102,11 @@ public class PayrollDtos {
         private BigDecimal otherDeductions;
         private BigDecimal totalDeductions;
 
-        // Take-home
         private BigDecimal netSalary;
 
-        // Employer contributions (informational)
         private BigDecimal soAmount;
         private BigDecimal snAmount;
 
-        // Metadata
         private Integer mrpUsed;
         private boolean resident;
         private PayslipStatus status;

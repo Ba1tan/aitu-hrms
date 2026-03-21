@@ -8,30 +8,25 @@ import java.util.UUID;
 
 public interface PayrollService {
 
-    //Periods
     PayrollDtos.PeriodResponse createPeriod(PayrollDtos.CreatePeriodRequest request);
 
     Page<PayrollDtos.PeriodResponse> getPeriods(Pageable pageable);
 
     PayrollDtos.PeriodResponse getPeriod(UUID periodId);
 
-    //Payslip generation
     PayrollDtos.GeneratePayslipsResponse generatePayslips(
             UUID periodId, PayrollDtos.GeneratePayslipsRequest request);
 
-    //Payslip management
     Page<PayrollDtos.PayslipResponse> getPayslipsByPeriod(UUID periodId, Pageable pageable);
 
     PayrollDtos.PayslipResponse getPayslip(UUID payslipId);
 
     PayrollDtos.PayslipResponse adjustPayslip(UUID payslipId, PayrollDtos.AdjustPayslipRequest request);
 
-    //Status transitions
     PayrollDtos.PeriodResponse approvePeriod(UUID periodId);   // APPROVED → PAID is next step
     PayrollDtos.PeriodResponse markPeriodPaid(UUID periodId);
     PayrollDtos.PeriodResponse lockPeriod(UUID periodId);
 
-    //Employee self-service
     Page<PayrollDtos.PayslipResponse> getMyPayslips(UUID employeeId, Pageable pageable);
 
     PayrollDtos.PayslipResponse getMyPayslipForPeriod(UUID employeeId, UUID periodId);

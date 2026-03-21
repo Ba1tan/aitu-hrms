@@ -43,7 +43,6 @@ public class User extends BaseEntity implements UserDetails {
     @Column(nullable = false)
     private boolean accountNonLocked = true;
 
-    // Link to employee record (nullable for admin users without employee profile)
     @Column(name = "employee_id")
     private java.util.UUID employeeId;
 

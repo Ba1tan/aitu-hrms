@@ -352,7 +352,7 @@ INSERT INTO users (id, email, password, first_name, last_name, role, employee_id
 VALUES
     ('f2000000-0000-0000-0000-000000000001',
      'a.zhaksylykova@hrms-demo.kz',
-     '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2uheWG/igi.',
+     '$2a$12$xZktUBw.ab92RvUBeoUVgeocdbMbJQJvCnVkgsKiy18vyUoeDsYmW',
      'Ainur', 'Zhaksylykova', 'HR_MANAGER',
      'e1000000-0000-0000-0000-000000000011',
      true, false, NOW(), NOW(), 'system'),
@@ -360,7 +360,7 @@ VALUES
 -- ACCOUNTANT — Zulfiya Yessenova (E16)
     ('f2000000-0000-0000-0000-000000000002',
      'z.yessenova@hrms-demo.kz',
-     '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2uheWG/igi.',
+     '$2a$12$xZktUBw.ab92RvUBeoUVgeocdbMbJQJvCnVkgsKiy18vyUoeDsYmW',
      'Zulfiya', 'Yessenova', 'ACCOUNTANT',
      'e1000000-0000-0000-0000-000000000016',
      true, false, NOW(), NOW(), 'system'),
@@ -368,15 +368,15 @@ VALUES
 -- MANAGER — Nursultan Torekhanov (E01, Tech Lead)
     ('f2000000-0000-0000-0000-000000000003',
      'n.torekhanov@hrms-demo.kz',
-     '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2uheWG/igi.',
-     'Nursultan', 'Torekhanov', 'MANAGER',
+     '$2a$12$xZktUBw.ab92RvUBeoUVgeocdbMbJQJvCnVkgsKiy18vyUoeDsYmW',
+     'Nursultan', 'Bukenbayev', 'MANAGER',
      'e1000000-0000-0000-0000-000000000001',
      true, false, NOW(), NOW(), 'system'),
 
 -- MANAGER — Berik Seilov (E21, Sales Manager)
     ('f2000000-0000-0000-0000-000000000004',
      'b.seilov@hrms-demo.kz',
-     '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2uheWG/igi.',
+     '$2a$12$xZktUBw.ab92RvUBeoUVgeocdbMbJQJvCnVkgsKiy18vyUoeDsYmW',
      'Berik', 'Seilov', 'MANAGER',
      'e1000000-0000-0000-0000-000000000021',
      true, false, NOW(), NOW(), 'system'),
@@ -384,7 +384,7 @@ VALUES
 -- MANAGER — Serik Bekmuratov (E28, Operations Manager)
     ('f2000000-0000-0000-0000-000000000005',
      's.bekmuratov@hrms-demo.kz',
-     '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2uheWG/igi.',
+     '$2a$12$xZktUBw.ab92RvUBeoUVgeocdbMbJQJvCnVkgsKiy18vyUoeDsYmW',
      'Serik', 'Bekmuratov', 'MANAGER',
      'e1000000-0000-0000-0000-000000000028',
      true, false, NOW(), NOW(), 'system'),
@@ -393,7 +393,7 @@ VALUES
 -- Askar Seralinov — dev team
     ('f2000000-0000-0000-0000-000000000006',
      'a.seralinov@hrms-demo.kz',
-     '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2uheWG/igi.',
+     '$2a$12$xZktUBw.ab92RvUBeoUVgeocdbMbJQJvCnVkgsKiy18vyUoeDsYmW',
      'Askar', 'Seralinov', 'EMPLOYEE',
      'e1000000-0000-0000-0000-000000000002',
      true, false, NOW(), NOW(), 'system'),
@@ -401,7 +401,7 @@ VALUES
 -- Nurbol Sembayev — frontend
     ('f2000000-0000-0000-0000-000000000007',
      'n.sembayev@hrms-demo.kz',
-     '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2uheWG/igi.',
+     '$2a$12$xZktUBw.ab92RvUBeoUVgeocdbMbJQJvCnVkgsKiy18vyUoeDsYmW',
      'Nurbol', 'Sembayev', 'EMPLOYEE',
      'e1000000-0000-0000-0000-000000000003',
      true, false, NOW(), NOW(), 'system'),
@@ -409,7 +409,7 @@ VALUES
 -- Asel Nurova — sales
     ('f2000000-0000-0000-0000-000000000008',
      'asel.nurova@hrms-demo.kz',
-     '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2uheWG/igi.',
+     '$2a$12$xZktUBw.ab92RvUBeoUVgeocdbMbJQJvCnVkgsKiy18vyUoeDsYmW',
      'Asel', 'Nurova', 'EMPLOYEE',
      'e1000000-0000-0000-0000-000000000022',
      true, false, NOW(), NOW(), 'system'),
@@ -417,7 +417,7 @@ VALUES
 -- Maral Duysenova — finance
     ('f2000000-0000-0000-0000-000000000009',
      'm.duysenova@hrms-demo.kz',
-     '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2uheWG/igi.',
+     '$2a$12$xZktUBw.ab92RvUBeoUVgeocdbMbJQJvCnVkgsKiy18vyUoeDsYmW',
      'Maral', 'Duysenova', 'EMPLOYEE',
      'e1000000-0000-0000-0000-000000000017',
      true, false, NOW(), NOW(), 'system'),
@@ -425,7 +425,7 @@ VALUES
 -- Kamilla Bekova — marketing
     ('f2000000-0000-0000-0000-000000000010',
      'k.bekova@hrms-demo.kz',
-     '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2uheWG/igi.',
+     '$2a$12$xZktUBw.ab92RvUBeoUVgeocdbMbJQJvCnVkgsKiy18vyUoeDsYmW',
      'Kamilla', 'Bekova', 'EMPLOYEE',
      'e1000000-0000-0000-0000-000000000032',
      true, false, NOW(), NOW(), 'system');

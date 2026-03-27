@@ -101,7 +101,7 @@ public class PayrollServiceImpl implements PayrollService {
             throw new BusinessException("Cannot modify a paid period");
         }
 
-        // Determine target employees
+
         List<Employee> employees = employeeService.findActiveEmployees();
         if (req != null && req.getEmployeeIds() != null && !req.getEmployeeIds().isEmpty()) {
             Set<UUID> filter = Set.copyOf(req.getEmployeeIds());
@@ -128,7 +128,7 @@ public class PayrollServiceImpl implements PayrollService {
 
                 PayrollCalculationResult result = calculator.calculate(
                         emp,
-                        period.getWorkingDays(),   // assume full month for MVP
+                        period.getWorkingDays(),
                         period.getWorkingDays(),
                         BigDecimal.ZERO,
                         BigDecimal.ZERO,
@@ -174,7 +174,7 @@ public class PayrollServiceImpl implements PayrollService {
             }
         }
 
-        // Transition period to PROCESSING if it was DRAFT
+
         if (period.getStatus() == PayrollPeriodStatus.DRAFT && generated > 0) {
             period.setStatus(PayrollPeriodStatus.PROCESSING);
             UUID currentUserId = getCurrentUserId();
@@ -275,7 +275,7 @@ public class PayrollServiceImpl implements PayrollService {
             throw new BusinessException("No payslips found for this period. Generate payslips first.");
         }
 
-        // Approve all DRAFT payslips in this period
+
         List<Payslip> drafts = payslipRepository.findByPeriodIdAndDeletedFalse(periodId).stream()
                 .filter(p -> p.getStatus() == PayslipStatus.DRAFT)
                 .collect(Collectors.toList());
@@ -297,7 +297,7 @@ public class PayrollServiceImpl implements PayrollService {
             throw new BusinessException("Only APPROVED periods can be marked as paid. Current: " + period.getStatus());
         }
 
-        // Mark all approved payslips as paid
+
         List<Payslip> approved = payslipRepository.findByPeriodIdAndDeletedFalse(periodId).stream()
                 .filter(p -> p.getStatus() == PayslipStatus.APPROVED)
                 .collect(Collectors.toList());
@@ -357,7 +357,6 @@ public class PayrollServiceImpl implements PayrollService {
     }
 
     private UUID getCurrentUserId() {
-        // Returns null gracefully if no authenticated user (shouldn't happen in practice)
         try {
             Authentication auth = SecurityContextHolder.getContext().getAuthentication();
             if (auth != null && auth.getPrincipal() instanceof kz.aitu.hrms.modules.auth.entity.User user) {
@@ -382,7 +381,6 @@ public class PayrollServiceImpl implements PayrollService {
         r.setCreatedAt(p.getCreatedAt());
         r.setUpdatedAt(p.getUpdatedAt());
 
-        // Attach summary if payslips have been generated
         try {
             List<Object[]> totalsList = payslipRepository.getPeriodTotals(p.getId());
             if (totalsList != null && !totalsList.isEmpty()) {

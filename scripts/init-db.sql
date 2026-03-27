@@ -6,9 +6,6 @@
 -- Enable UUID generation (required for gen_random_uuid())
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
--- Current monolith uses the 'public' schema (default).
--- These schemas are placeholders for Phase 2 microservice extraction.
--- They won't break anything — they just exist for future use.
 CREATE SCHEMA IF NOT EXISTS hrms_user;
 CREATE SCHEMA IF NOT EXISTS hrms_employee;
 CREATE SCHEMA IF NOT EXISTS hrms_attendance;
@@ -18,7 +15,6 @@ CREATE SCHEMA IF NOT EXISTS hrms_notification;
 CREATE SCHEMA IF NOT EXISTS hrms_reporting;
 CREATE SCHEMA IF NOT EXISTS hrms_integration;
 
--- Grant the app user access to all schemas
 GRANT ALL PRIVILEGES ON SCHEMA public TO hrms_user;
 GRANT ALL PRIVILEGES ON SCHEMA hrms_user TO hrms_user;
 GRANT ALL PRIVILEGES ON SCHEMA hrms_employee TO hrms_user;

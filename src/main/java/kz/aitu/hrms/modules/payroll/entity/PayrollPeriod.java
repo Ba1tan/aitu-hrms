@@ -39,14 +39,14 @@ public class PayrollPeriod extends BaseEntity {
     @Builder.Default
     private PayrollPeriodStatus status = PayrollPeriodStatus.DRAFT;
 
-    // Who triggered payroll processing
+
     @Column(name = "processed_by")
     private UUID processedBy;
 
     @Column(name = "processed_at")
     private LocalDateTime processedAt;
 
-    // Who approved payout
+
     @Column(name = "approved_by")
     private UUID approvedBy;
 

@@ -1,7 +1,7 @@
 # HRMS Backend — Technical Documentation
 
 **Project:** Human Resource Management System with Automated Payroll  
-**Team:** Nursultan Bukenbayev · Askar Seralinov · Nurbol Sembayev    
+**Team:** Nursultan Bukenbayev · Askar Seralinov · Nurbol Sembayev   
 **University:** Astana IT University  
 **Stack:** Java 17 · Spring Boot 3.2 · PostgreSQL 16 · Redis 7
 

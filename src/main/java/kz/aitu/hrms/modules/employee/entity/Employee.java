@@ -17,7 +17,7 @@ import java.time.LocalDate;
 public class Employee extends BaseEntity {
 
     @Column(name = "employee_number", nullable = false, unique = true)
-    private String employeeNumber;   // e.g. EMP-0001
+    private String employeeNumber;
 
     @Column(name = "first_name", nullable = false)
     private String firstName;

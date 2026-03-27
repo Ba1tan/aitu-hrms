@@ -157,7 +157,7 @@ public class EmployeeServiceImpl implements EmployeeService {
         return employeeRepository.findByStatusAndDeletedFalse(EmploymentStatus.ACTIVE);
     }
 
-    // ---- helpers ----
+    // helpers
 
     private Employee findEmployeeOrThrow(UUID id) {
         return employeeRepository.findByIdAndDeletedFalse(id)

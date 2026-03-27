@@ -3,6 +3,11 @@ spring:
     show-sql: true
   flyway:
     clean-on-validation-error: false
+  datasource:
+    url: jdbc:postgresql://localhost:5432/hrms
+    username: hrms_user
+    password: hrms_pass
+
 
 logging:
   level:
@@ -12,4 +17,4 @@ logging:
 
 app:
   cors:
-    allowed-origins: http://localhost:3000,http://localhost:5173,http://localhost:4173
+    allowed-origins: http://localhost:3000,http://localhost:5173,http://localhost:4173,http://localhost:8081,http://127.0.0.1:8081

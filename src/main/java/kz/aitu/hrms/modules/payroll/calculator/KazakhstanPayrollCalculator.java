@@ -10,7 +10,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 
 /**
- * Kazakhstan payroll calculator — 2026 Tax Code (Закон РК № 214-VIII от 18.07.2025).
+ * Kazakhstan payroll calculator Tax Code (Закон РК № 214-VIII от 18.07.2025).
  *
  * Calculation order:
  * Step 1: Earned salary (prorate if partial month)
@@ -69,7 +69,7 @@ public class KazakhstanPayrollCalculator {
     private static final RoundingMode ROUNDING = RoundingMode.HALF_UP;
 
     // Disability deductions per 2026 Tax Code Art. 404
-    private static final int DISABILITY_DEDUCTION_MRP = 882;   // group 3 / general
+    private static final int DISABILITY_DEDUCTION_MRP = 882;
 
     public PayrollCalculationResult calculate(
             Employee employee,
@@ -88,13 +88,13 @@ public class KazakhstanPayrollCalculator {
         // Step 1: Prorate salary
         BigDecimal earnedSalary = calculateEarnedSalary(grossSalary, workedDays, totalDays);
 
-        // Step 2: OPV — employee pension 10%, capped at 50×МЗП
+        // Step 2: OPV employee pension 10%, capped at 50×МЗП
         BigDecimal opvAmount = BigDecimal.ZERO;
         if (!isPensioner) {
             opvAmount = calculateOpv(earnedSalary);
         }
 
-        // Step 3: ВОСМС — employee medical insurance 2%, capped at 20×МЗП
+        // Step 3: ВОСМС employee medical insurance 2%, capped at 20×МЗП
         BigDecimal vosmsAmount = calculateVosms(earnedSalary);
 
         // Step 4: Standard deduction (residents only)
@@ -137,15 +137,15 @@ public class KazakhstanPayrollCalculator {
             netSalary = BigDecimal.ZERO;
         }
 
-        // Step 8: SO — employer social contribution 5% (2026: rate increased from 3.5%)
+        // Step 8: SO employer social contribution 5%
         BigDecimal soBase = earnedSalary.subtract(opvAmount);
         if (soBase.compareTo(BigDecimal.ZERO) < 0) soBase = BigDecimal.ZERO;
         BigDecimal soAmount = soBase.multiply(soRate).setScale(SCALE, ROUNDING);
 
-        // Step 9: SN — fixed 6% (2026: no longer earned×9.5%-SO)
+        // Step 9: SN fixed 6%
         BigDecimal snAmount = earnedSalary.multiply(snRate).setScale(SCALE, ROUNDING);
 
-        // Step 10: OPVR — employer pension 3.5% (2026: increased from 2.5%)
+        // Step 10: OPVR — employer pension 3.5%
         BigDecimal opvrAmount = earnedSalary.multiply(opvrRate).setScale(SCALE, ROUNDING);
 
         log.debug("Payroll 2026 for {} {}: gross={}, earned={}, opv={}, vosms={}, " +

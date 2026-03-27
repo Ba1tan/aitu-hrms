@@ -65,7 +65,7 @@ public class DepartmentController {
         return ResponseEntity.ok(ApiResponse.noContent("Department deleted"));
     }
 
-    // =================== POSITIONS ===================
+    //POSITIONS
 
     @Operation(summary = "Create position")
     @PostMapping("/positions")

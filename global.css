@@ -1,0 +1,272 @@
+/** @import must precede all other statements */
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap");
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --bg: #f5edf4;
+    --text: #161616;
+    --muted: #5f6472;
+    --line: rgba(255,255,255,.35);
+    --surface: rgba(255,255,255,.34);
+    --surface-strong: rgba(255,255,255,.6);
+    --shadow: 0 24px 60px rgba(115, 100, 171, 0.16);
+    --blue: #2263e6;
+    --indigo: #7b8ef8;
+    --sky: #6dcdf7;
+    --pink: #d88ce8;
+    --mint: #67dccf;
+  }
+}
+
+@layer base {
+  /**
+   * HRMS Professional Theme with Glassmorphism
+   * Modern, trustworthy color palette for enterprise HR platform
+   */
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 213 25% 15%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 213 25% 15%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 213 25% 15%;
+
+    /* Primary: Modern Blue - professional & trustworthy */
+    --primary: 217 91% 47%;
+    --primary-foreground: 210 40% 98%;
+
+    /* Secondary: Slate - clean & modern */
+    --secondary: 215 13% 34%;
+    --secondary-foreground: 0 0% 100%;
+
+    /* Muted: Light gray */
+    --muted: 214 32% 91%;
+    --muted-foreground: 213 16% 43%;
+
+    /* Accent: Teal - growth & success */
+    --accent: 174 71% 45%;
+    --accent-foreground: 0 0% 100%;
+
+    /* Destructive: Red - alerts */
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 214 32% 91%;
+    --input: 214 32% 91%;
+    --ring: 217 91% 47%;
+
+    --radius: 0.75rem;
+
+    --sidebar-background: 213 25% 9%;
+    --sidebar-foreground: 210 11% 96%;
+    --sidebar-primary: 217 91% 47%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 174 71% 45%;
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 213 25% 15%;
+    --sidebar-ring: 217 91% 47%;
+  }
+
+  .dark {
+    --background: 213 25% 9%;
+    --foreground: 210 11% 96%;
+
+    --card: 213 25% 13%;
+    --card-foreground: 210 11% 96%;
+
+    --popover: 213 25% 13%;
+    --popover-foreground: 210 11% 96%;
+
+    --primary: 217 91% 57%;
+    --primary-foreground: 213 25% 9%;
+
+    --secondary: 215 25% 70%;
+    --secondary-foreground: 213 25% 9%;
+
+    --muted: 213 16% 32%;
+    --muted-foreground: 213 13% 65%;
+
+    --accent: 174 71% 50%;
+    --accent-foreground: 213 25% 9%;
+
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 213 16% 32%;
+    --input: 213 16% 32%;
+    --ring: 217 91% 57%;
+
+    --sidebar-background: 213 25% 8%;
+    --sidebar-foreground: 210 11% 96%;
+    --sidebar-primary: 217 91% 57%;
+    --sidebar-primary-foreground: 213 25% 9%;
+    --sidebar-accent: 174 71% 50%;
+    --sidebar-accent-foreground: 213 25% 9%;
+    --sidebar-border: 213 25% 18%;
+    --sidebar-ring: 217 91% 57%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-family: "Inter", sans-serif;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: "Plus Jakarta Sans", sans-serif;
+    font-weight: 700;
+  }
+
+  :where(p, span, li, a, button, label, td, th) {
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
+
+  pre,
+  code {
+    overflow-x: auto;
+    white-space: pre;
+  }
+}
+
+@layer components {
+  /* Glassmorphism Base Classes */
+  .glass {
+    @apply bg-white/10 dark:bg-black/20 backdrop-blur-md backdrop-saturate-150 border border-white/20 dark:border-white/10;
+  }
+
+  .glass-light {
+    @apply bg-white/20 dark:bg-black/30 backdrop-blur-lg backdrop-saturate-200 border border-white/30 dark:border-white/20;
+  }
+
+  .glass-strong {
+    @apply bg-white/30 dark:bg-black/40 backdrop-blur-2xl backdrop-saturate-200 border border-white/40 dark:border-white/30;
+  }
+
+  .glass-secondary {
+    @apply bg-primary/10 dark:bg-primary/20 backdrop-blur-md border border-primary/20 dark:border-primary/30;
+  }
+
+  .glass-accent {
+    @apply bg-accent/10 dark:bg-accent/20 backdrop-blur-md border border-accent/20 dark:border-accent/30;
+  }
+
+  /* Liquid glass effect - animated */
+  .liquid-glass {
+    @apply glass relative overflow-hidden;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
+  }
+
+  .liquid-glass::before {
+    content: "";
+    @apply absolute inset-0 opacity-0 animate-pulse;
+    background: linear-gradient(45deg, transparent 30%, rgba(255, 255, 255, 0.1) 50%, transparent 70%);
+  }
+
+  /* Glassmorphic card */
+  .glass-card {
+    @apply glass rounded-2xl p-6 hover:shadow-lg hover:bg-white/15 dark:hover:bg-black/30 transition-all duration-300;
+  }
+
+  .glass-card-lg {
+    @apply glass rounded-2xl p-8 hover:shadow-xl transition-all duration-300;
+  }
+
+  /* Glassmorphic buttons */
+  .glass-btn {
+    @apply glass rounded-lg px-6 py-2 font-semibold transition-all duration-300 hover:bg-white/20 dark:hover:bg-black/40 hover:shadow-lg active:scale-95;
+  }
+
+  .glass-btn-primary {
+    @apply bg-primary/80 hover:bg-primary/90 dark:bg-primary/70 dark:hover:bg-primary/80 text-primary-foreground backdrop-blur-md border border-primary/30 rounded-lg px-6 py-2 font-semibold transition-all duration-300 hover:shadow-lg active:scale-95;
+  }
+
+  .glass-btn-accent {
+    @apply bg-accent/80 hover:bg-accent/90 dark:bg-accent/70 dark:hover:bg-accent/80 text-accent-foreground backdrop-blur-md border border-accent/30 rounded-lg px-6 py-2 font-semibold transition-all duration-300 hover:shadow-lg active:scale-95;
+  }
+
+  /* Glassmorphic input */
+  .glass-input {
+    @apply glass rounded-lg px-4 py-3 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 focus:bg-white/25 dark:focus:bg-black/40 transition-all;
+  }
+
+  /* Glassmorphic background gradient overlay */
+  .glass-gradient {
+    @apply relative overflow-hidden;
+    background: linear-gradient(135deg, rgba(59, 91, 219, 0.1) 0%, rgba(76, 175, 80, 0.1) 100%);
+  }
+
+  .glass-gradient::after {
+    content: "";
+    @apply absolute inset-0 bg-gradient-to-br from-white/10 via-transparent to-white/5 dark:from-white/5 dark:via-transparent dark:to-black/10 pointer-events-none;
+  }
+
+  /* Frosted overlay effect */
+  .frosted {
+    @apply backdrop-blur-xl backdrop-saturate-180;
+  }
+
+  /* Liquid shimmer effect */
+  .liquid-shimmer {
+    @apply relative overflow-hidden;
+    background: linear-gradient(90deg, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.2) 50%, rgba(255, 255, 255, 0) 100%);
+    background-size: 200% 100%;
+    animation: shimmer 3s infinite;
+  }
+
+  @keyframes shimmer {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+  }
+
+  /* Button and component styles */
+  .btn-primary {
+    @apply bg-primary text-primary-foreground hover:bg-primary/90 rounded-lg font-semibold transition-colors;
+  }
+
+  .btn-secondary {
+    @apply bg-secondary text-secondary-foreground hover:bg-secondary/90 rounded-lg font-semibold transition-colors;
+  }
+
+  .section-container {
+    @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+  }
+
+  /* Glow effects for glass elements */
+  .glass-glow {
+    @apply glass shadow-[0_8px_32px_rgba(59,91,219,0.1)] dark:shadow-[0_8px_32px_rgba(59,91,219,0.2)];
+  }
+
+  .glass-glow-accent {
+    @apply glass shadow-[0_8px_32px_rgba(76,175,80,0.1)] dark:shadow-[0_8px_32px_rgba(76,175,80,0.2)];
+  }
+}
+
+/* Glassmorphic scrollbar */
+::-webkit-scrollbar {
+  width: 0px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(59, 91, 219, 0.3);
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(59, 91, 219, 0.5);
+}

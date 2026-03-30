@@ -20,6 +20,9 @@ public class AppConfig {
 
     private final UserRepository userRepository;
 
+    /**
+     * Spring Security uses this to load users during JWT filter authentication.
+     */
     @Bean
     public UserDetailsService userDetailsService() {
         return email -> userRepository.findByEmail(email)

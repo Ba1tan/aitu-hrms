@@ -32,7 +32,7 @@ public class Employee extends BaseEntity {
     private LocalDate dateOfBirth;
 
     @Column(name = "iin", unique = true)
-    private String iin;              // ИИН (Individual Identification Number)
+    private String iin;              // ИИН
 
     @Column(nullable = false, unique = true)
     private String email;
@@ -77,7 +77,6 @@ public class Employee extends BaseEntity {
     @Column(name = "profile_photo_url")
     private String profilePhotoUrl;
 
-    // Kazakhstan-specific
     @Column(name = "is_resident", nullable = false)
     private boolean resident = true;
 

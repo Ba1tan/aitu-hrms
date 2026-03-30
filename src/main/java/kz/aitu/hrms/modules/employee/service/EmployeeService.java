@@ -24,6 +24,5 @@ public interface EmployeeService {
 
     void delete(UUID id);
 
-    // Used by payroll service — returns raw entities for calculation
     List<Employee> findActiveEmployees();
 }

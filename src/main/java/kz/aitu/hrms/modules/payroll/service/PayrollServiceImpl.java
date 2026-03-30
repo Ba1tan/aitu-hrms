@@ -41,9 +41,9 @@ public class PayrollServiceImpl implements PayrollService {
     private final EmployeeService employeeService;
     private final KazakhstanPayrollCalculator calculator;
 
-
+    // =========================================================================
     // PERIOD MANAGEMENT
-
+    // =========================================================================
 
     @Override
     @Transactional
@@ -83,9 +83,9 @@ public class PayrollServiceImpl implements PayrollService {
         return toPeriodResponse(findPeriodOrThrow(periodId));
     }
 
-
+    // =========================================================================
     // PAYSLIP GENERATION
-
+    // =========================================================================
 
     @Override
     @Transactional
@@ -101,7 +101,7 @@ public class PayrollServiceImpl implements PayrollService {
             throw new BusinessException("Cannot modify a paid period");
         }
 
-
+        // Determine target employees
         List<Employee> employees = employeeService.findActiveEmployees();
         if (req != null && req.getEmployeeIds() != null && !req.getEmployeeIds().isEmpty()) {
             Set<UUID> filter = Set.copyOf(req.getEmployeeIds());
@@ -128,7 +128,7 @@ public class PayrollServiceImpl implements PayrollService {
 
                 PayrollCalculationResult result = calculator.calculate(
                         emp,
-                        period.getWorkingDays(),
+                        period.getWorkingDays(),   // assume full month for MVP
                         period.getWorkingDays(),
                         BigDecimal.ZERO,
                         BigDecimal.ZERO,
@@ -146,8 +146,6 @@ public class PayrollServiceImpl implements PayrollService {
                         .allowances(result.getAllowances())
                         .opvAmount(result.getOpvAmount())
                         .oopvAmount(result.getOopvAmount())
-                        .vosmsAmount(result.getVosmsAmount())
-                        .opvrAmount(result.getOpvrAmount())
                         .taxableIncome(result.getTaxableIncome())
                         .ipnAmount(result.getIpnAmount())
                         .otherDeductions(result.getDeductions())
@@ -174,7 +172,7 @@ public class PayrollServiceImpl implements PayrollService {
             }
         }
 
-
+        // Transition period to PROCESSING if it was DRAFT
         if (period.getStatus() == PayrollPeriodStatus.DRAFT && generated > 0) {
             period.setStatus(PayrollPeriodStatus.PROCESSING);
             UUID currentUserId = getCurrentUserId();
@@ -196,9 +194,9 @@ public class PayrollServiceImpl implements PayrollService {
         return resp;
     }
 
-
+    // =========================================================================
     // PAYSLIP MANAGEMENT
-
+    // =========================================================================
 
     @Override
     @Transactional(readOnly = true)
@@ -257,9 +255,9 @@ public class PayrollServiceImpl implements PayrollService {
         return toPayslipResponse(payslipRepository.save(payslip));
     }
 
-
+    // =========================================================================
     // STATUS TRANSITIONS
-
+    // =========================================================================
 
     @Override
     @Transactional
@@ -275,7 +273,7 @@ public class PayrollServiceImpl implements PayrollService {
             throw new BusinessException("No payslips found for this period. Generate payslips first.");
         }
 
-
+        // Approve all DRAFT payslips in this period
         List<Payslip> drafts = payslipRepository.findByPeriodIdAndDeletedFalse(periodId).stream()
                 .filter(p -> p.getStatus() == PayslipStatus.DRAFT)
                 .collect(Collectors.toList());
@@ -297,7 +295,7 @@ public class PayrollServiceImpl implements PayrollService {
             throw new BusinessException("Only APPROVED periods can be marked as paid. Current: " + period.getStatus());
         }
 
-
+        // Mark all approved payslips as paid
         List<Payslip> approved = payslipRepository.findByPeriodIdAndDeletedFalse(periodId).stream()
                 .filter(p -> p.getStatus() == PayslipStatus.APPROVED)
                 .collect(Collectors.toList());
@@ -321,15 +319,14 @@ public class PayrollServiceImpl implements PayrollService {
         return toPeriodResponse(periodRepository.save(period));
     }
 
-
+    // =========================================================================
     // EMPLOYEE SELF-SERVICE
-
+    // =========================================================================
 
     @Override
     @Transactional(readOnly = true)
     public Page<PayrollDtos.PayslipResponse> getMyPayslips(UUID employeeId, Pageable pageable) {
-        return payslipRepository
-                .findByEmployeeIdAndDeletedFalseOrderByPeriodYearDescPeriodMonthDesc(employeeId, pageable)
+        return payslipRepository.findMyPayslips(employeeId, pageable)
                 .map(this::toPayslipResponse);
     }
 
@@ -342,9 +339,9 @@ public class PayrollServiceImpl implements PayrollService {
                                 "Payslip not found for this employee and period")));
     }
 
-
+    // =========================================================================
     // HELPERS
-
+    // =========================================================================
 
     private PayrollPeriod findPeriodOrThrow(UUID id) {
         return periodRepository.findByIdAndDeletedFalse(id)
@@ -357,6 +354,7 @@ public class PayrollServiceImpl implements PayrollService {
     }
 
     private UUID getCurrentUserId() {
+        // Returns null gracefully if no authenticated user (shouldn't happen in practice)
         try {
             Authentication auth = SecurityContextHolder.getContext().getAuthentication();
             if (auth != null && auth.getPrincipal() instanceof kz.aitu.hrms.modules.auth.entity.User user) {
@@ -381,6 +379,7 @@ public class PayrollServiceImpl implements PayrollService {
         r.setCreatedAt(p.getCreatedAt());
         r.setUpdatedAt(p.getUpdatedAt());
 
+        // Attach summary if payslips have been generated
         try {
             List<Object[]> totalsList = payslipRepository.getPeriodTotals(p.getId());
             if (totalsList != null && !totalsList.isEmpty()) {
@@ -412,8 +411,6 @@ public class PayrollServiceImpl implements PayrollService {
         r.setAllowances(s.getAllowances());
         r.setOpvAmount(s.getOpvAmount());
         r.setOopvAmount(s.getOopvAmount());
-        r.setVosmsAmount(s.getVosmsAmount());
-        r.setOpvrAmount(s.getOpvrAmount());
         r.setTaxableIncome(s.getTaxableIncome());
         r.setIpnAmount(s.getIpnAmount());
         r.setOtherDeductions(s.getOtherDeductions());

@@ -36,7 +36,9 @@ public class AuthService {
     private final UserDetailsService userDetailsService;
     private final StringRedisTemplate redisTemplate;
 
-
+    /**
+     * Authenticate user with email and password, return JWT tokens.
+     */
     public AuthDtos.AuthResponse login(AuthDtos.LoginRequest request) {
         try {
             authenticationManager.authenticate(
@@ -71,7 +73,7 @@ public class AuthService {
             role = Role.valueOf(request.getRole().toUpperCase());
         } catch (IllegalArgumentException ex) {
             throw new BusinessException("Invalid role: " + request.getRole()
-                    + ". Valid roles: SUPER_ADMIN, HR_MANAGER, ACCOUNTANT, EMPLOYEE");
+                    + ". Valid roles: SUPER_ADMIN, HR_MANAGER, ACCOUNTANT, MANAGER, EMPLOYEE");
         }
 
         User user = User.builder()
@@ -112,10 +114,12 @@ public class AuthService {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new ResourceNotFoundException("User", "email", email));
 
+
         blacklistToken(refreshToken);
         log.debug("Token refreshed for user: {}", email);
         return buildAuthResponse(user);
     }
+
 
     @Transactional
     public void changePassword(AuthDtos.ChangePasswordRequest request) {
@@ -134,6 +138,7 @@ public class AuthService {
         log.info("Password changed for user: {}", email);
     }
 
+
     public void logout(String authHeader) {
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             throw new BusinessException("Invalid authorization header.");
@@ -143,7 +148,9 @@ public class AuthService {
         log.info("Token blacklisted on logout");
     }
 
-    // Private helpers
+
+    // private helpers
+
 
     private AuthDtos.AuthResponse buildAuthResponse(User user) {
         String accessToken = jwtService.generateAccessToken(user);

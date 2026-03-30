@@ -46,6 +46,12 @@ public interface EmployeeRepository extends JpaRepository<Employee, UUID> {
 
     Optional<Employee> findByEmailAndDeletedFalse(String email);
 
+    long countByDeletedFalse();
+
+    long countByStatusAndDeletedFalse(EmploymentStatus status);
+
+    long countByHireDateGreaterThanEqualAndDeletedFalse(java.time.LocalDate hireDate);
+
     @Query("SELECT MAX(e.employeeNumber) FROM Employee e")
     Optional<String> findMaxEmployeeNumber();
 }

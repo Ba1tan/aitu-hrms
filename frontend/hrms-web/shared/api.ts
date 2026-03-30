@@ -14,8 +14,20 @@ apiClient.interceptors.request.use((config) => {
   return config;
 });
 
+// Unwraps ApiResponse<T> { success, message, data, timestamp } → data
+// So all pages access res.data directly without double unwrap
 apiClient.interceptors.response.use(
-    (response) => response,
+    (response) => {
+      if (
+          response.data &&
+          typeof response.data === 'object' &&
+          'success' in response.data &&
+          'data' in response.data
+      ) {
+        response.data = response.data.data;
+      }
+      return response;
+    },
     (error) => {
       if (error.response?.status === 401) {
         TokenService.clearTokens();
@@ -110,7 +122,6 @@ export interface CreateEmployeeRequest {
   status: string;
 }
 
-// Field names match what Dashboard.tsx, Payroll.tsx etc. actually use
 export interface DashboardStats {
   employees: number;
   payrollGross: string;
@@ -169,49 +180,55 @@ export interface RegisterRequest {
 
 // --- API METHODS ---
 
-export const loginApi  = (data: any) => apiClient.post('/auth/login', data);
+export const loginApi  = (data: any) => apiClient.post<AuthResponse>('/auth/login', data);
 export const logoutApi = ()           => apiClient.post('/auth/logout');
-export const getMeApi  = ()           => apiClient.get('/auth/me');
+export const getMeApi  = ()           => apiClient.get<AuthUser>('/auth/me');
 
 export const departmentsApi = {
-  list: () => apiClient.get<{ data: Department[] }>('/v1/departments'),
+  list: () => apiClient.get<Department[]>('/v1/departments'),
 };
+
 export const positionsApi = {
   list: (departmentId?: string) =>
-      apiClient.get<{ data: Position[] }>('/v1/positions', { params: { departmentId } }),
+      apiClient.get<Position[]>('/v1/positions', { params: { departmentId } }),
 };
+
 export const employeesApi = {
   list:   (filters: any = {}) =>
-      apiClient.get<{ data: PageResponse<EmployeeListItem> }>('/v1/employees', { params: filters }),
+      apiClient.get<PageResponse<EmployeeListItem>>('/v1/employees', { params: filters }),
   get:    (id: string) =>
-      apiClient.get<{ data: EmployeeListItem }>(`/v1/employees/${id}`),
+      apiClient.get<EmployeeListItem>(`/v1/employees/${id}`),
   create: (data: CreateEmployeeRequest) =>
-      apiClient.post<{ data: EmployeeListItem }>('/v1/employees', data),
+      apiClient.post<EmployeeListItem>('/v1/employees', data),
   update: (id: string, data: Partial<CreateEmployeeRequest>) =>
-      apiClient.put<{ data: EmployeeListItem }>(`/v1/employees/${id}`, data),
+      apiClient.put<EmployeeListItem>(`/v1/employees/${id}`, data),
 };
+
 export const dashboardApi = {
-  stats:          () => apiClient.get<{ data: DashboardStats }>('/v1/dashboard/stats'),
-  recentLeaves:   () => apiClient.get<{ data: RecentLeave[] }>('/v1/dashboard/recent-leaves'),
-  recentPayrolls: () => apiClient.get<{ data: RecentPayroll[] }>('/v1/dashboard/recent-payrolls'),
+  stats:          () => apiClient.get<DashboardStats>('/v1/dashboard/stats'),
+  recentLeaves:   () => apiClient.get<RecentLeave[]>('/v1/dashboard/recent-leaves'),
+  recentPayrolls: () => apiClient.get<RecentPayroll[]>('/v1/dashboard/recent-payrolls'),
 };
+
 export const leaveApi = {
-  list: () => apiClient.get<{ data: LeaveItem[] }>('/v1/leave/requests/my'),
+  list: () => apiClient.get<LeaveItem[]>('/v1/leave/requests/my'),
 };
+
 export const attendanceApi = {
-  today:      () => apiClient.get<{ data: AttendanceItem }>('/v1/attendance/today'),
-  checkIn:    () => apiClient.post<{ data: AttendanceItem }>('/v1/attendance/check-in'),
-  checkOut:   () => apiClient.post<{ data: AttendanceItem }>('/v1/attendance/check-out'),
+  today:      () => apiClient.get<AttendanceItem>('/v1/attendance/today'),
+  checkIn:    () => apiClient.post<AttendanceItem>('/v1/attendance/check-in'),
+  checkOut:   () => apiClient.post<AttendanceItem>('/v1/attendance/check-out'),
   getHistory: (year: number, month: number) =>
-      apiClient.get<{ data: AttendanceItem[] }>('/v1/attendance/my', { params: { year, month } }),
+      apiClient.get<AttendanceItem[]>('/v1/attendance/my', { params: { year, month } }),
 };
+
 export const payrollApi = {
   periods:    (page = 0) => apiClient.get('/v1/payroll/periods', { params: { page } }),
   myPayslips: (page = 0) => apiClient.get('/v1/payroll/my-payslips', { params: { page } }),
 };
+
 export const reportsApi = {
-  list: (): Promise<{ data: { data: ReportItem[] } }> =>
-      Promise.resolve({ data: { data: [] } }),
+  list: (): Promise<{ data: ReportItem[] }> => Promise.resolve({ data: [] }),
   downloadPayrollSummary: (periodId: string) =>
       apiClient.get('/v1/reports/payroll-summary', { params: { periodId }, responseType: 'blob' }),
 };

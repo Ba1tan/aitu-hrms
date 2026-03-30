@@ -3,14 +3,18 @@ name: HRMS CI/CD Pipeline
 on:
   push:
     branches: [ main, develop ]
+    paths:
+      - 'src/**'
+      - 'pom.xml'
+      - 'docker/**'
+      - '.github/workflows/ci-cd.yml'
   pull_request:
     branches: [ main, develop ]
-
-env:
-  JAVA_VERSION: '17'
-  REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}
-
+    paths:
+      - 'src/**'
+      - 'pom.xml'
+      - 'docker/**'
+      - '.github/workflows/ci-cd.yml'
 jobs:
 
   # ───────────────────────────────────────────────────────────────────────────

@@ -1,4 +1,3 @@
-import { User } from './api';
 
 // Token keys
 export const TOKEN_KEYS = {

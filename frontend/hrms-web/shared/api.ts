@@ -3,9 +3,7 @@ import { TokenService } from "./auth";
 
 const apiClient = axios.create({
   baseURL: import.meta.env.VITE_API_URL || 'http://localhost:8080/api',
-  headers: {
-    'Content-Type': 'application/json',
-  },
+  headers: { 'Content-Type': 'application/json' },
 });
 
 apiClient.interceptors.request.use((config) => {
@@ -17,17 +15,7 @@ apiClient.interceptors.request.use((config) => {
 });
 
 apiClient.interceptors.response.use(
-    (response) => {
-      if (
-          response.data &&
-          typeof response.data === 'object' &&
-          'success' in response.data &&
-          'data' in response.data
-      ) {
-        response.data = response.data.data;
-      }
-      return response;
-    },
+    (response) => response,
     (error) => {
       if (error.response?.status === 401) {
         TokenService.clearTokens();
@@ -53,15 +41,8 @@ export interface AuthResponse {
   user: AuthUser;
 }
 
-export interface Department {
-  id: string;
-  name: string;
-}
-
-export interface Position {
-  id: string;
-  title: string;
-}
+export interface Department { id: string; name: string; }
+export interface Position   { id: string; title: string; }
 
 export interface Employee {
   id: string;
@@ -129,26 +110,12 @@ export interface CreateEmployeeRequest {
   status: string;
 }
 
+// Field names match what Dashboard.tsx, Payroll.tsx etc. actually use
 export interface DashboardStats {
-  totalEmployees: number;
-  activeEmployees: number;
-  onLeaveEmployees: number;
-  newHiresThisMonth: number;
-  lastPayrollPeriodName: string;
-  lastPayrollStatus: string;
-  lastPayrollGross: string;
-  lastPayrollNet: string;
-  lastPayrollEmployeeCount: number;
-  pendingLeaveRequests: number;
-  todayPresent: number;
-  todayAbsent: number;
-  todayLate: number;
-  todayTotal: number;
-  attendanceRate: number;
-  myLastNetSalary: string;
-  myLastPayrollPeriod: string;
-  myLeaveBalance: number;
-  myAttendanceTodayStatus: string | null;
+  employees: number;
+  payrollGross: string;
+  pendingLeaves: number;
+  todayAttendance: number;
 }
 
 export interface RecentLeave {
@@ -207,50 +174,44 @@ export const logoutApi = ()           => apiClient.post('/auth/logout');
 export const getMeApi  = ()           => apiClient.get('/auth/me');
 
 export const departmentsApi = {
-  list: () => apiClient.get<Department[]>('/v1/departments'),
+  list: () => apiClient.get<{ data: Department[] }>('/v1/departments'),
 };
-
 export const positionsApi = {
   list: (departmentId?: string) =>
-      apiClient.get<Position[]>('/v1/positions', { params: { departmentId } }),
+      apiClient.get<{ data: Position[] }>('/v1/positions', { params: { departmentId } }),
 };
-
 export const employeesApi = {
   list:   (filters: any = {}) =>
-      apiClient.get<PageResponse<EmployeeListItem>>('/v1/employees', { params: filters }),
+      apiClient.get<{ data: PageResponse<EmployeeListItem> }>('/v1/employees', { params: filters }),
   get:    (id: string) =>
-      apiClient.get<EmployeeListItem>(`/v1/employees/${id}`),
+      apiClient.get<{ data: EmployeeListItem }>(`/v1/employees/${id}`),
   create: (data: CreateEmployeeRequest) =>
-      apiClient.post<EmployeeListItem>('/v1/employees', data),
+      apiClient.post<{ data: EmployeeListItem }>('/v1/employees', data),
   update: (id: string, data: Partial<CreateEmployeeRequest>) =>
-      apiClient.put<EmployeeListItem>(`/v1/employees/${id}`, data),
+      apiClient.put<{ data: EmployeeListItem }>(`/v1/employees/${id}`, data),
 };
-
 export const dashboardApi = {
-  stats:          () => apiClient.get<DashboardStats>('/v1/dashboard/stats'),
-  recentLeaves:   () => apiClient.get<DashboardStats>('/v1/dashboard/stats'),
-  recentPayrolls: () => apiClient.get<DashboardStats>('/v1/dashboard/stats'),
+  stats:          () => apiClient.get<{ data: DashboardStats }>('/v1/dashboard/stats'),
+  recentLeaves:   () => apiClient.get<{ data: RecentLeave[] }>('/v1/dashboard/recent-leaves'),
+  recentPayrolls: () => apiClient.get<{ data: RecentPayroll[] }>('/v1/dashboard/recent-payrolls'),
 };
-
 export const leaveApi = {
-  list: () => apiClient.get<LeaveItem[]>('/v1/leave/requests/my'),
+  list: () => apiClient.get<{ data: LeaveItem[] }>('/v1/leave/requests/my'),
 };
-
 export const attendanceApi = {
-  today:      () => apiClient.get<AttendanceItem>('/v1/attendance/today'),
-  checkIn:    () => apiClient.post<AttendanceItem>('/v1/attendance/check-in'),
-  checkOut:   () => apiClient.post<AttendanceItem>('/v1/attendance/check-out'),
+  today:      () => apiClient.get<{ data: AttendanceItem }>('/v1/attendance/today'),
+  checkIn:    () => apiClient.post<{ data: AttendanceItem }>('/v1/attendance/check-in'),
+  checkOut:   () => apiClient.post<{ data: AttendanceItem }>('/v1/attendance/check-out'),
   getHistory: (year: number, month: number) =>
-      apiClient.get<AttendanceItem[]>('/v1/attendance/my', { params: { year, month } }),
+      apiClient.get<{ data: AttendanceItem[] }>('/v1/attendance/my', { params: { year, month } }),
 };
-
 export const payrollApi = {
   periods:    (page = 0) => apiClient.get('/v1/payroll/periods', { params: { page } }),
   myPayslips: (page = 0) => apiClient.get('/v1/payroll/my-payslips', { params: { page } }),
 };
-
 export const reportsApi = {
-  list: (): Promise<{ data: ReportItem[] }> => Promise.resolve({ data: [] }),
+  list: (): Promise<{ data: { data: ReportItem[] } }> =>
+      Promise.resolve({ data: { data: [] } }),
   downloadPayrollSummary: (periodId: string) =>
       apiClient.get('/v1/reports/payroll-summary', { params: { periodId }, responseType: 'blob' }),
 };

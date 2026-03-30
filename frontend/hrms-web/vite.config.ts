@@ -12,10 +12,6 @@ export default defineConfig(({ mode }) => ({
         changeOrigin: true,
       }
     },
-    fs: {
-      allow: ["./client", "./shared"],
-      deny: [".env", ".env.*", "*.{crt,pem}", "**/.git/**", "server/**"],
-    },
   },
   build: {
     outDir: "dist/spa",

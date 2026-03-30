@@ -194,6 +194,7 @@ export interface ReportItem {
 
 export const loginApi  = (data: any) => apiClient.post('/auth/login', data);
 export const logoutApi = ()           => apiClient.post('/auth/logout');
+export const getMeApi = () => apiClient.get('/auth/me');
 
 export const departmentsApi = {
   list: () => apiClient.get('/v1/departments'),
@@ -208,7 +209,9 @@ export const employeesApi = {
   update: (id: string, data: any) => apiClient.put(`/v1/employees/${id}`, data),
 };
 export const dashboardApi = {
-  stats: () => apiClient.get('/v1/dashboard/stats'),
+  stats:          () => apiClient.get('/v1/dashboard/stats'),
+  recentLeaves:   () => apiClient.get('/v1/dashboard/stats'),
+  recentPayrolls: () => apiClient.get('/v1/dashboard/stats'),
 };
 export const leaveApi = {
   list: () => apiClient.get('/v1/leave/requests/my'),
@@ -225,6 +228,7 @@ export const payrollApi = {
   myPayslips: (page = 0) => apiClient.get('/v1/payroll/my-payslips', { params: { page } }),
 };
 export const reportsApi = {
+  list: () => Promise.resolve({ data: [] }),   // placeholder — reports page not fully implemented yet
   downloadPayrollSummary: (periodId: string) =>
       apiClient.get('/v1/reports/payroll-summary', { params: { periodId }, responseType: 'blob' }),
 };

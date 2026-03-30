@@ -15,6 +15,12 @@ on:
       - 'pom.xml'
       - 'docker/**'
       - '.github/workflows/ci-cd.yml'
+
+env:
+  JAVA_VERSION: '17'
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
 jobs:
 
   # ───────────────────────────────────────────────────────────────────────────

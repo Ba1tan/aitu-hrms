@@ -1,15 +1,15 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { AuthResponse, AuthUser, LoginRequest, RegisterRequest, TokenService } from '../../shared/auth';
-import { loginApi, logoutApi, getMeApi } from '../../shared/api';
-import registerApi from '../../shared/api';
+import { AuthResponse, LoginRequest, RegisterRequest, TokenService } from '../../shared/auth';
+import { loginApi, logoutApi } from '../../shared/api';
+import apiClient from '../../shared/api';
 
 export const useAuth = () => {
   const queryClient = useQueryClient();
 
-  // Login mutation
   const loginMutation = useMutation({
-    mutationFn: (credentials: LoginRequest) => loginApi(credentials).then(res => res.data),
+    mutationFn: (credentials: LoginRequest) =>
+        loginApi(credentials).then(res => res.data),
     onSuccess: (data: AuthResponse) => {
       TokenService.saveTokens(data.accessToken, data.refreshToken, data.user);
       toast.success('Login successful!');
@@ -20,9 +20,9 @@ export const useAuth = () => {
     },
   });
 
-  // Register mutation
   const registerMutation = useMutation({
-    mutationFn: (data: RegisterRequest) => registerApi(data).then(res => res.data),
+    mutationFn: (data: RegisterRequest) =>
+        apiClient.post<AuthResponse>('/auth/register', data).then(res => res.data),
     onSuccess: (data: AuthResponse) => {
       TokenService.saveTokens(data.accessToken, data.refreshToken, data.user);
       toast.success('Account created!');
@@ -33,7 +33,6 @@ export const useAuth = () => {
     },
   });
 
-  // Logout mutation
   const logoutMutation = useMutation({
     mutationFn: () => logoutApi(),
     onSuccess: () => {
@@ -42,7 +41,7 @@ export const useAuth = () => {
       queryClient.clear();
     },
     onError: () => {
-      TokenService.clearTokens(); // Clear anyway
+      TokenService.clearTokens();
       toast.error('Logout error, tokens cleared');
     },
   });

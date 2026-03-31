@@ -4,7 +4,7 @@ VALUES (
     'Nursultan',
     'Admin',
     'admin@hrms.kz',
-    '$2a$12$RkFhlu3/G2YHuMYZbtUxlOJ.yU4I5vJAaD1vT5zxBqbf7Yskc4ha2',
+    '$2a$12$xZktUBw.ab92RvUBeoUVgeocdbMbJQJvCnVkgsKiy18vyUoeDsYmW',
     'SUPER_ADMIN',
     true,
     true

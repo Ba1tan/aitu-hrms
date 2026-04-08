@@ -83,8 +83,17 @@ public class Employee extends BaseEntity {
     @Column(name = "has_disability")
     private boolean hasDisability = false;
 
+    @Column(name = "disability_group")
+    private Integer disabilityGroup;     // 1, 2, or 3
+
     @Column(name = "is_pensioner")
     private boolean pensioner = false;
+
+    @Column(name = "termination_reason")
+    private String terminationReason;
+
+    @Column(name = "address")
+    private String address;
 
     public String getFullName() {
         if (middleName != null && !middleName.isBlank()) {

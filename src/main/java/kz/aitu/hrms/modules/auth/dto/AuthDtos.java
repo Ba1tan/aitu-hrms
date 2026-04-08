@@ -5,6 +5,11 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
 
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.util.List;
+import java.util.UUID;
+
 public class AuthDtos {
 
     @Data
@@ -68,5 +73,37 @@ public class AuthDtos {
             private String lastName;
             private String role;
         }
+    }
+    @Data
+    public static class UserProfileResponse {
+        private UUID id;
+        private String email;
+        private String firstName;
+        private String lastName;
+        private String role;
+        private List<String> permissions;
+        private EmployeeProfileResponse employee; // null if no linked employee
+    }
+
+    @Data
+    public static class EmployeeProfileResponse {
+        private UUID id;
+        private String employeeNumber;
+        private String fullName;
+        private String departmentName;
+        private String positionTitle;
+        private BigDecimal baseSalary;
+        private LocalDate hireDate;
+        private String status;
+    }
+
+    @Data
+    public static class UpdateProfileRequest {
+        @Size(max = 100)
+        private String firstName;
+        @Size(max = 100)
+        private String lastName;
+        @Size(max = 20)
+        private String phone;
     }
 }

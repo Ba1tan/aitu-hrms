@@ -39,7 +39,10 @@ public class SecurityConfig {
     private String[] allowedOrigins;
 
     private static final String[] PUBLIC_ENDPOINTS = {
-            "/auth/**",
+            "/auth/login",
+            "/auth/refresh",
+            "/auth/forgot-password",
+            "/auth/reset-password",
             "/v3/api-docs/**",
             "/swagger-ui/**",
             "/swagger-ui.html",

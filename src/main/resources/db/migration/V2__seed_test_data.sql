@@ -1,19 +1,29 @@
--- V4__seed_comprehensive_test_data.sql
--- Replaces V3 minimal seed with a full realistic company structure.
--- 6 departments, 12 positions, 35 employees, user accounts for all.
--- All passwords are BCrypt hash of "password123"
+-- V2__seed_test_data.sql
+-- Admin account + 6 departments + 12 positions + 35 employees + 10 user accounts
+-- All passwords: BCrypt of "password123"
+-- New schema columns (require_password_change, failed_login_count, etc.) use defaults
+
+-- ADMIN ACCOUNT
+INSERT INTO users (id, first_name, last_name, email, password, role, enabled, account_non_locked)
+VALUES (
+           gen_random_uuid(),
+           'Nursultan', 'Admin', 'admin@hrms.kz',
+           '$2a$12$xZktUBw.ab92RvUBeoUVgeocdbMbJQJvCnVkgsKiy18vyUoeDsYmW',
+           'SUPER_ADMIN', true, true
+       );
+
 -- Admin account from V2 remains: admin@hrms.kz / password
 
 
 -- DEPARTMENTS (6)
 
 INSERT INTO departments (id, name, description, cost_center, is_deleted, created_at, updated_at, created_by) VALUES
- ('d1000000-0000-0000-0000-000000000001', 'Разработка',        'Backend, frontend, DevOps',            'CC-001', false, NOW(), NOW(), 'system'),
- ('d1000000-0000-0000-0000-000000000002', 'HR и кадры',        'Управление персоналом и рекрутинг',    'CC-002', false, NOW(), NOW(), 'system'),
- ('d1000000-0000-0000-0000-000000000003', 'Финансы',           'Бухгалтерия, расчёт зарплаты',         'CC-003', false, NOW(), NOW(), 'system'),
- ('d1000000-0000-0000-0000-000000000004', 'Продажи',           'B2B и B2C продажи',                    'CC-004', false, NOW(), NOW(), 'system'),
- ('d1000000-0000-0000-0000-000000000005', 'Операции',          'Административные и операционные задачи','CC-005', false, NOW(), NOW(), 'system'),
- ('d1000000-0000-0000-0000-000000000006', 'Маркетинг',         'Диджитал и бренд маркетинг',           'CC-006', false, NOW(), NOW(), 'system');
+         ('d1000000-0000-0000-0000-000000000001', 'Разработка',        'Backend, frontend, DevOps',            'CC-001', false, NOW(), NOW(), 'system'),
+         ('d1000000-0000-0000-0000-000000000002', 'HR и кадры',        'Управление персоналом и рекрутинг',    'CC-002', false, NOW(), NOW(), 'system'),
+         ('d1000000-0000-0000-0000-000000000003', 'Финансы',           'Бухгалтерия, расчёт зарплаты',         'CC-003', false, NOW(), NOW(), 'system'),
+         ('d1000000-0000-0000-0000-000000000004', 'Продажи',           'B2B и B2C продажи',                    'CC-004', false, NOW(), NOW(), 'system'),
+         ('d1000000-0000-0000-0000-000000000005', 'Операции',          'Административные и операционные задачи','CC-005', false, NOW(), NOW(), 'system'),
+         ('d1000000-0000-0000-0000-000000000006', 'Маркетинг',         'Диджитал и бренд маркетинг',           'CC-006', false, NOW(), NOW(), 'system');
 
 
 -- POSITIONS (12)
@@ -40,11 +50,7 @@ INSERT INTO positions (id, title, description, min_salary, max_salary, departmen
 
 
 -- EMPLOYEES (35)
--- Coverage: all departments, all statuses, various salary levels,
---           residents/non-resident, pensioner, disability, partial months
-
-
--- ── РАЗРАБОТКА (10 employees)
+-- РАЗРАБОТКА (10 employees)
 
 INSERT INTO employees (id, employee_number, first_name, last_name, middle_name,
                        email, iin, phone, hire_date, status, employment_type, base_salary,
@@ -130,7 +136,7 @@ VALUES
  'e1000000-0000-0000-0000-000000000001',
  true, false, false, false, NOW(), NOW(), 'system'),
 
--- ── HR И КАДРЫ (5 employees)
+-- HR И КАДРЫ (5 employees)
 
 -- E11: HR Manager — has HR_MANAGER user role
 ('e1000000-0000-0000-0000-000000000011', 'EMP-0011', 'Ainur',      'Zhaksylykova','Bekova',
@@ -171,7 +177,7 @@ VALUES
  'e1000000-0000-0000-0000-000000000011',
  true, false, true, false, NOW(), NOW(), 'system'),
 
--- ── ФИНАНСЫ (5 employees)
+--ФИНАНСЫ (5 employees)
 
 -- E16: Chief Accountant — has ACCOUNTANT user role
 ('e1000000-0000-0000-0000-000000000016', 'EMP-0016', 'Zulfiya',    'Yessenova',  'Аскаровна',
@@ -212,7 +218,7 @@ VALUES
  'e1000000-0000-0000-0000-000000000016',
  true, false, false, false, NOW(), NOW(), 'system'),
 
--- ── ПРОДАЖИ (7 employees)
+-- ПРОДАЖИ (7 employees)
 
 -- E21: Sales Manager — has MANAGER user role
 ('e1000000-0000-0000-0000-000000000021', 'EMP-0021', 'Berik',      'Seilov',     'Маратович',
@@ -264,7 +270,7 @@ VALUES
  'e1000000-0000-0000-0000-000000000021',
  true, false, false, false, NOW(), NOW(), 'system'),
 
--- ── ОПЕРАЦИИ (4 employees)
+--ОПЕРАЦИИ (4 employees)
 
 -- E28: Operations Manager — has MANAGER user role
 ('e1000000-0000-0000-0000-000000000028', 'EMP-0028', 'Serik',      'Bekmuratov', 'Жандосович',
@@ -294,7 +300,7 @@ VALUES
  'e1000000-0000-0000-0000-000000000028',
  true, false, false, false, NOW(), NOW(), 'system'),
 
--- ── МАРКЕТИНГ (4 employees)
+--МАРКЕТИНГ (4 employees)
 
 ('e1000000-0000-0000-0000-000000000032', 'EMP-0032', 'Kamilla',    'Bekova',     'Нурлановна',
  'k.bekova@hrms-demo.kz',         '940210500132', '+7 701 001 0032',
@@ -340,8 +346,6 @@ WHERE id = 'd1000000-0000-0000-0000-000000000006';
 
 
 -- USER ACCOUNTS
--- All passwords = BCrypt of "password123"
--- Roles assigned to cover all RBAC scenarios
 
 
 -- SUPER_ADMIN (update admin to link to no specific employee)

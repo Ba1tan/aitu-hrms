@@ -6,9 +6,11 @@ import jakarta.validation.Valid;
 import kz.aitu.hrms.common.response.ApiResponse;
 import kz.aitu.hrms.modules.auth.dto.AuthDtos;
 import kz.aitu.hrms.modules.auth.service.AuthService;
+import kz.aitu.hrms.modules.auth.entity.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 @Tag(name = "Authentication", description = "Login, register, token management")
@@ -55,5 +57,22 @@ public class AuthController {
             @RequestHeader("Authorization") String authHeader) {
         authService.logout(authHeader);
         return ResponseEntity.ok(ApiResponse.noContent("Logged out successfully"));
+    }
+
+    @Operation(summary = "Get current user profile with employee data")
+    @GetMapping("/me")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<ApiResponse<AuthDtos.UserProfileResponse>> me(
+            @AuthenticationPrincipal User currentUser) {
+        return ResponseEntity.ok(ApiResponse.ok(authService.getProfile(currentUser)));
+    }
+
+    @Operation(summary = "Update own profile")
+    @PutMapping("/me")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<ApiResponse<AuthDtos.UserProfileResponse>> updateProfile(
+            @AuthenticationPrincipal User currentUser,
+            @Valid @RequestBody AuthDtos.UpdateProfileRequest request) {
+        return ResponseEntity.ok(ApiResponse.ok(authService.updateProfile(currentUser, request)));
     }
 }

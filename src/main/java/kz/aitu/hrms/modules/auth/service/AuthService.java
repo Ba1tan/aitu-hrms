@@ -7,6 +7,7 @@ import kz.aitu.hrms.modules.auth.dto.AuthDtos;
 import kz.aitu.hrms.modules.auth.entity.Role;
 import kz.aitu.hrms.modules.auth.entity.User;
 import kz.aitu.hrms.modules.auth.repository.UserRepository;
+import kz.aitu.hrms.modules.employee.entity.Employee;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -20,6 +21,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Duration;
+import java.util.List;
 
 @Slf4j
 @Service
@@ -146,6 +148,44 @@ public class AuthService {
         String token = authHeader.substring(7);
         blacklistToken(token);
         log.info("Token blacklisted on logout");
+    }
+
+    public AuthDtos.UserProfileResponse getProfile(User user) {
+        AuthDtos.UserProfileResponse profile = new AuthDtos.UserProfileResponse();
+        profile.setId(user.getId());
+        profile.setEmail(user.getEmail());
+        profile.setFirstName(user.getFirstName());
+        profile.setLastName(user.getLastName());
+        profile.setRole(user.getRole().name());
+        profile.setPermissions(List.of()); // TODO: load from role_permissions table
+
+        if (user.getEmployee() != null) {
+            AuthDtos.EmployeeProfileResponse empProfile = getEmployeeProfileResponse(user);
+            profile.setEmployee(empProfile);
+        }
+        return profile;
+    }
+
+    private static AuthDtos.EmployeeProfileResponse getEmployeeProfileResponse(User user) {
+        Employee emp = user.getEmployee();
+        AuthDtos.EmployeeProfileResponse empProfile = new AuthDtos.EmployeeProfileResponse();
+        empProfile.setId(emp.getId());
+        empProfile.setEmployeeNumber(emp.getEmployeeNumber());
+        empProfile.setFullName(emp.getFullName());
+        empProfile.setDepartmentName(emp.getDepartment() != null ? emp.getDepartment().getName() : null);
+        empProfile.setPositionTitle(emp.getPosition() != null ? emp.getPosition().getTitle() : null);
+        empProfile.setBaseSalary(emp.getBaseSalary());
+        empProfile.setHireDate(emp.getHireDate());
+        empProfile.setStatus(emp.getStatus().name());
+        return empProfile;
+    }
+
+    @Transactional
+    public AuthDtos.UserProfileResponse updateProfile(User user, AuthDtos.UpdateProfileRequest request) {
+        if (request.getFirstName() != null) user.setFirstName(request.getFirstName());
+        if (request.getLastName() != null) user.setLastName(request.getLastName());
+        userRepository.save(user);
+        return getProfile(user);
     }
 
 

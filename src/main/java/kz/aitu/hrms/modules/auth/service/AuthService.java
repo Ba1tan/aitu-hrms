@@ -7,6 +7,7 @@ import kz.aitu.hrms.modules.auth.dto.AuthDtos;
 import kz.aitu.hrms.modules.auth.entity.Role;
 import kz.aitu.hrms.modules.auth.entity.User;
 import kz.aitu.hrms.modules.auth.repository.UserRepository;
+import kz.aitu.hrms.modules.employee.entity.Employee;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -20,6 +21,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Duration;
+import java.util.List;
 
 @Slf4j
 @Service
@@ -36,7 +38,9 @@ public class AuthService {
     private final UserDetailsService userDetailsService;
     private final StringRedisTemplate redisTemplate;
 
-
+    /**
+     * Authenticate user with email and password, return JWT tokens.
+     */
     public AuthDtos.AuthResponse login(AuthDtos.LoginRequest request) {
         try {
             authenticationManager.authenticate(
@@ -71,7 +75,7 @@ public class AuthService {
             role = Role.valueOf(request.getRole().toUpperCase());
         } catch (IllegalArgumentException ex) {
             throw new BusinessException("Invalid role: " + request.getRole()
-                    + ". Valid roles: SUPER_ADMIN, HR_MANAGER, ACCOUNTANT, EMPLOYEE");
+                    + ". Valid roles: SUPER_ADMIN, HR_MANAGER, ACCOUNTANT, MANAGER, EMPLOYEE");
         }
 
         User user = User.builder()
@@ -112,10 +116,12 @@ public class AuthService {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new ResourceNotFoundException("User", "email", email));
 
+
         blacklistToken(refreshToken);
         log.debug("Token refreshed for user: {}", email);
         return buildAuthResponse(user);
     }
+
 
     @Transactional
     public void changePassword(AuthDtos.ChangePasswordRequest request) {
@@ -134,6 +140,7 @@ public class AuthService {
         log.info("Password changed for user: {}", email);
     }
 
+
     public void logout(String authHeader) {
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             throw new BusinessException("Invalid authorization header.");
@@ -143,7 +150,47 @@ public class AuthService {
         log.info("Token blacklisted on logout");
     }
 
-    // Private helpers
+    public AuthDtos.UserProfileResponse getProfile(User user) {
+        AuthDtos.UserProfileResponse profile = new AuthDtos.UserProfileResponse();
+        profile.setId(user.getId());
+        profile.setEmail(user.getEmail());
+        profile.setFirstName(user.getFirstName());
+        profile.setLastName(user.getLastName());
+        profile.setRole(user.getRole().name());
+        profile.setPermissions(List.of()); // TODO: load from role_permissions table
+
+        if (user.getEmployee() != null) {
+            AuthDtos.EmployeeProfileResponse empProfile = getEmployeeProfileResponse(user);
+            profile.setEmployee(empProfile);
+        }
+        return profile;
+    }
+
+    private static AuthDtos.EmployeeProfileResponse getEmployeeProfileResponse(User user) {
+        Employee emp = user.getEmployee();
+        AuthDtos.EmployeeProfileResponse empProfile = new AuthDtos.EmployeeProfileResponse();
+        empProfile.setId(emp.getId());
+        empProfile.setEmployeeNumber(emp.getEmployeeNumber());
+        empProfile.setFullName(emp.getFullName());
+        empProfile.setDepartmentName(emp.getDepartment() != null ? emp.getDepartment().getName() : null);
+        empProfile.setPositionTitle(emp.getPosition() != null ? emp.getPosition().getTitle() : null);
+        empProfile.setBaseSalary(emp.getBaseSalary());
+        empProfile.setHireDate(emp.getHireDate());
+        empProfile.setStatus(emp.getStatus().name());
+        return empProfile;
+    }
+
+    @Transactional
+    public AuthDtos.UserProfileResponse updateProfile(User user, AuthDtos.UpdateProfileRequest request) {
+        if (request.getFirstName() != null) user.setFirstName(request.getFirstName());
+        if (request.getLastName() != null) user.setLastName(request.getLastName());
+        userRepository.save(user);
+        return getProfile(user);
+    }
+
+
+    // private helpers
+
 
     private AuthDtos.AuthResponse buildAuthResponse(User user) {
         String accessToken = jwtService.generateAccessToken(user);

@@ -25,7 +25,6 @@ public class DepartmentController {
     private final DepartmentService departmentService;
     private final PositionService positionService;
 
-
     @Operation(summary = "Create department")
     @PostMapping("/departments")
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'HR_MANAGER')")
@@ -64,8 +63,6 @@ public class DepartmentController {
         departmentService.delete(id);
         return ResponseEntity.ok(ApiResponse.noContent("Department deleted"));
     }
-
-    //POSITIONS
 
     @Operation(summary = "Create position")
     @PostMapping("/positions")

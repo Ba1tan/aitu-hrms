@@ -3,8 +3,18 @@ name: HRMS CI/CD Pipeline
 on:
   push:
     branches: [ main, develop ]
+    paths:
+      - 'src/**'
+      - 'pom.xml'
+      - 'docker/**'
+      - '.github/workflows/ci-cd.yml'
   pull_request:
     branches: [ main, develop ]
+    paths:
+      - 'src/**'
+      - 'pom.xml'
+      - 'docker/**'
+      - '.github/workflows/ci-cd.yml'
 
 env:
   JAVA_VERSION: '17'

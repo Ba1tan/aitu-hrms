@@ -26,12 +26,14 @@ public class Payslip extends BaseEntity {
     @JoinColumn(name = "employee_id", nullable = false)
     private Employee employee;
 
+    // ---- Days ----
     @Column(name = "worked_days", nullable = false)
     private Integer workedDays;
 
     @Column(name = "total_working_days", nullable = false)
     private Integer totalWorkingDays;
 
+    // ---- Earnings ----
     @Column(name = "gross_salary", nullable = false, precision = 15, scale = 2)
     private BigDecimal grossSalary;
 
@@ -42,20 +44,13 @@ public class Payslip extends BaseEntity {
     @Builder.Default
     private BigDecimal allowances = BigDecimal.ZERO;
 
+    // ---- Employee deductions ----
     @Column(name = "opv_amount", nullable = false, precision = 15, scale = 2)
     private BigDecimal opvAmount;           // ОПВ pension 10%
 
     @Column(name = "oopv_amount", nullable = false, precision = 15, scale = 2)
     @Builder.Default
     private BigDecimal oopvAmount = BigDecimal.ZERO;  // ООПВ 1.5% (if applicable)
-
-    @Column(name = "vosms_amount", nullable = false, precision = 15, scale = 2)
-    @Builder.Default
-    private BigDecimal vosmsAmount = BigDecimal.ZERO;   // ВОСМС employee medical 2%
-
-    @Column(name = "opvr_amount", nullable = false, precision = 15, scale = 2)
-    @Builder.Default
-    private BigDecimal opvrAmount = BigDecimal.ZERO;    // ОПВР employer pension 3.5%
 
     @Column(name = "taxable_income", nullable = false, precision = 15, scale = 2)
     private BigDecimal taxableIncome;
@@ -73,12 +68,14 @@ public class Payslip extends BaseEntity {
     @Column(name = "net_salary", nullable = false, precision = 15, scale = 2)
     private BigDecimal netSalary;
 
+    // ---- Employer obligations (not deducted from employee) ----
     @Column(name = "so_amount", nullable = false, precision = 15, scale = 2)
-    private BigDecimal soAmount;
+    private BigDecimal soAmount;            // СО 3.5%
 
     @Column(name = "sn_amount", nullable = false, precision = 15, scale = 2)
-    private BigDecimal snAmount;
+    private BigDecimal snAmount;            // СН 9.5% - SO
 
+    // ---- Metadata ----
     @Column(name = "mrp_used", nullable = false)
     private Integer mrpUsed;
 

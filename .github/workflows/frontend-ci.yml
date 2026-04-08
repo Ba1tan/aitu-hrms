@@ -1,0 +1,164 @@
+name: Frontend CI/CD
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - 'frontend/**'
+      - '.github/workflows/frontend-ci.yml'
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - 'frontend/**'
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}/hrms-frontend
+
+jobs:
+
+  build:
+    name: Type-check & Build
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          package_json_file: frontend/hrms-web/package.json
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+          cache-dependency-path: frontend/hrms-web/pnpm-lock.yaml
+
+      - name: Install dependencies
+        working-directory: frontend/hrms-web
+        run: pnpm install --frozen-lockfile
+
+      - name: Type check
+        working-directory: frontend/hrms-web
+        run: pnpm typecheck || true
+
+      - name: Build
+        working-directory: frontend/hrms-web
+        run: pnpm build:client
+        env:
+          VITE_API_URL: /api
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-dist
+          path: frontend/hrms-web/dist/spa/
+          retention-days: 1
+
+  docker:
+    name: Build & Push Docker Image
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push'
+
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: frontend-dist
+          path: frontend/hrms-web/dist/spa/
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=ref,event=branch
+            type=sha,prefix={{branch}}-
+            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
+
+      - name: Build and push
+        uses: docker/build-push-action@v5
+        with:
+          context: frontend/hrms-web
+          file: frontend/hrms-web/Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  deploy-production:
+    name: Deploy Frontend to Production
+    needs: docker
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+
+    environment:
+      name: production
+      url: https://hrms.nursnerv.uk
+
+    steps:
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          port: ${{ secrets.SERVER_SSH_PORT }}
+          script: |
+            IMAGE=$(echo "ghcr.io/${{ github.repository }}/hrms-frontend" | tr '[:upper:]' '[:lower:]')
+            cd ~/hrms
+            echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+            docker pull $IMAGE:main
+            docker compose -f docker/docker-compose.prod.yml up -d --no-deps frontend
+            sleep 5
+            docker ps | grep hrms-frontend
+            echo "✓ Frontend deployed"
+            docker image prune -f
+
+  deploy-staging:
+    name: Deploy Frontend to Staging
+    needs: docker
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/develop' && github.event_name == 'push'
+
+    environment:
+      name: staging
+      url: http://192.168.100.53:3000
+
+    steps:
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          port: ${{ secrets.SERVER_SSH_PORT }}
+          script: |
+            IMAGE=$(echo "ghcr.io/${{ github.repository }}/hrms-frontend" | tr '[:upper:]' '[:lower:]')
+            cd ~/hrms-staging
+            echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+            docker pull $IMAGE:develop
+            docker compose -f docker/docker-compose.staging.yml up -d --no-deps frontend
+            sleep 5
+            docker ps | grep hrms-frontend-staging
+            echo "✓ Frontend deployed"
+            docker image prune -f

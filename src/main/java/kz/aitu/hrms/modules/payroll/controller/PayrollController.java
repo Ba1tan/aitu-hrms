@@ -26,8 +26,9 @@ public class PayrollController {
 
     private final PayrollService payrollService;
 
-
+    // =========================================================================
     // PERIODS
+    // =========================================================================
 
     @Operation(summary = "Create a new payroll period")
     @PostMapping("/periods")
@@ -54,9 +55,9 @@ public class PayrollController {
         return ResponseEntity.ok(ApiResponse.ok(payrollService.getPeriod(periodId)));
     }
 
-
+    // =========================================================================
     // PAYSLIP GENERATION
-
+    // =========================================================================
 
     @Operation(summary = "Generate payslips for all (or selected) active employees in a period")
     @PostMapping("/periods/{periodId}/generate")
@@ -69,8 +70,9 @@ public class PayrollController {
                 payrollService.generatePayslips(periodId, request)));
     }
 
-
+    // =========================================================================
     // PAYSLIP MANAGEMENT
+    // =========================================================================
 
     @Operation(summary = "Get all payslips for a period")
     @GetMapping("/periods/{periodId}/payslips")
@@ -99,8 +101,9 @@ public class PayrollController {
         return ResponseEntity.ok(ApiResponse.ok(payrollService.adjustPayslip(payslipId, request)));
     }
 
-
+    // =========================================================================
     // STATUS TRANSITIONS
+    // =========================================================================
 
     @Operation(summary = "Approve a period — moves PROCESSING → APPROVED, approves all DRAFT payslips")
     @PostMapping("/periods/{periodId}/approve")
@@ -132,8 +135,9 @@ public class PayrollController {
                 payrollService.lockPeriod(periodId)));
     }
 
-
+    // =========================================================================
     // EMPLOYEE SELF-SERVICE
+    // =========================================================================
 
     @Operation(summary = "Get my payslips (authenticated employee)")
     @GetMapping("/my-payslips")
@@ -158,7 +162,9 @@ public class PayrollController {
                 payrollService.getMyPayslipForPeriod(employeeId, periodId)));
     }
 
+    // =========================================================================
     // HELPERS
+    // =========================================================================
 
     private UUID resolveEmployeeId(User user) {
         if (user.getEmployeeId() == null) {

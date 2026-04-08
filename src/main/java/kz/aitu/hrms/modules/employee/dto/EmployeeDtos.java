@@ -12,7 +12,6 @@ import java.util.UUID;
 
 public class EmployeeDtos {
 
-
     @Data
     public static class CreateEmployeeRequest {
 

@@ -19,15 +19,25 @@ public interface PayslipRepository extends JpaRepository<Payslip, UUID> {
 
     Optional<Payslip> findByIdAndDeletedFalse(UUID id);
 
+    // All payslips for a period (paginated) — HR view
     Page<Payslip> findByPeriodIdAndDeletedFalse(UUID periodId, Pageable pageable);
 
+    // All payslips for a period (list) — used by payroll processing and reports
     List<Payslip> findByPeriodIdAndDeletedFalse(UUID periodId);
 
-    Page<Payslip> findByEmployeeIdAndDeletedFalseOrderByPeriodYearDescPeriodMonthDesc(
-            UUID employeeId, Pageable pageable);
+    // Employee self-service: their own payslips, always newest period first.
+    // Explicit @Query so bad Pageable sort values (e.g. from Swagger) don't crash.
+    @Query("""
+        SELECT p FROM Payslip p
+        WHERE p.employee.id = :employeeId AND p.deleted = false
+        ORDER BY p.period.year DESC, p.period.month DESC
+        """)
+    Page<Payslip> findMyPayslips(@Param("employeeId") UUID employeeId, Pageable pageable);
 
+    // Check if payslip already exists for this employee+period (prevent duplicates)
     boolean existsByPeriodIdAndEmployeeIdAndDeletedFalse(UUID periodId, UUID employeeId);
 
+    // Totals for a period — used in period summary response
     @Query("""
         SELECT COALESCE(SUM(p.grossSalary), 0)  AS totalGross,
                COALESCE(SUM(p.netSalary), 0)    AS totalNet,
@@ -40,10 +50,13 @@ public interface PayslipRepository extends JpaRepository<Payslip, UUID> {
         """)
     List<Object[]> getPeriodTotals(@Param("periodId") UUID periodId);
 
+    // Employee's single payslip for a specific period
     Optional<Payslip> findByPeriodIdAndEmployeeIdAndDeletedFalse(UUID periodId, UUID employeeId);
 
+    // Count payslips by status for a period
     long countByPeriodIdAndStatusAndDeletedFalse(UUID periodId, PayslipStatus status);
 
+    // Sum net salary for period — for bank transfer file
     @Query("SELECT COALESCE(SUM(p.netSalary), 0) FROM Payslip p WHERE p.period.id = :periodId AND p.deleted = false")
     BigDecimal sumNetSalaryByPeriod(@Param("periodId") UUID periodId);
 }

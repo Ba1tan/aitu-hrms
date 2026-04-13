@@ -9,7 +9,7 @@ export default function ReportsPage() {
 
   useEffect(() => {
     reportsApi.list().then(res => {
-      setReports(res.data.data);
+      setReports(res.data);
       setLoading(false);
     });
   }, []);

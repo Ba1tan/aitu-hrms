@@ -47,7 +47,7 @@ jobs:
         env:
           # Minimal config so context loads without a real Redis
           SPRING_DATA_REDIS_HOST: localhost
-          APP_JWT_SECRET: test-secret-key-min-32-characters-long!
+          APP_JWT_SECRET: dGVzdC1zZWNyZXQta2V5LWZvci1jaS1taW4tMzItY2hhcnMhIQ==
 
       - name: Upload test results
         if: always()

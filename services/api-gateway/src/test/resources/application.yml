@@ -9,4 +9,6 @@ spring:
 
 app:
   jwt:
-    secret: test-secret-key-min-32-characters-long!
+    # Base64-encoded test secret (required by JwtTokenValidator constructor)
+    # Plain text: test-secret-key-for-ci-min-32-chars!!
+    secret: dGVzdC1zZWNyZXQta2V5LWZvci1jaS1taW4tMzItY2hhcnMhIQ==

@@ -105,8 +105,8 @@ services:
   gateway:
     image: ${GATEWAY_IMAGE:-hrms-gateway:local}
     build:
-      context: ./services/api-gateway
-      dockerfile: Dockerfile
+      context: ./services
+      dockerfile: api-gateway/Dockerfile
     restart: unless-stopped
     ports:
       - "${GATEWAY_PORT:-8090}:8080"

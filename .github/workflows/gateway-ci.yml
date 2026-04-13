@@ -101,7 +101,7 @@ jobs:
       - name: Build and push
         uses: docker/build-push-action@v5
         with:
-          context: services/api-gateway
+          context: services
           file: services/api-gateway/Dockerfile
           push: true
           tags: ${{ steps.meta.outputs.tags }}

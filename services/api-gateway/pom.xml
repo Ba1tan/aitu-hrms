@@ -40,7 +40,7 @@
         <dependency>
             <groupId>kz.aitu</groupId>
             <artifactId>hrms-common</artifactId>
-            <version>1.0.0</version>
+            <version>1.0.0-SNAPSHOT</version>
         </dependency>
 
         <!-- Actuator -->

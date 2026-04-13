@@ -89,7 +89,7 @@
         <repository>
             <id>github</id>
             <name>GitHub Packages</name>
-            <url>https://maven.pkg.github.com/ba1tan/hrms-backend</url>
+            <url>https://maven.pkg.github.com/ba1tan/aitu-hrms</url>
         </repository>
     </distributionManagement>
 </project>

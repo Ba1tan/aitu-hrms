@@ -31,8 +31,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # setup-java creates a Maven settings.xml that authenticates
-      # to GitHub Packages using GITHUB_TOKEN automatically.
       - uses: actions/setup-java@v4
         with:
           java-version: ${{ env.JAVA_VERSION }}

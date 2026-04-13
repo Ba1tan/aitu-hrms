@@ -6,7 +6,7 @@ export default function LeavePage() {
   const [leaves, setLeaves] = useState<LeaveItem[]>([]);
 
   useEffect(() => {
-    leaveApi.list().then(res => setLeaves(res.data.data));
+    leaveApi.list().then(res => setLeaves(res.data));
   }, []);
 
   return (

@@ -15,8 +15,8 @@ export default function Dashboard() {
           dashboardApi.stats(),
           dashboardApi.recentLeaves()
         ]);
-        setStats(statsRes.data.data);
-        setRecentLeaves(leavesRes.data.data);
+        setStats(statsRes.data);
+        setRecentLeaves(leavesRes.data);
       } catch (error) {
         console.error("Ошибка API:", error);
       } finally {

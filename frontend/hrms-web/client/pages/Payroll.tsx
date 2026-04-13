@@ -11,7 +11,7 @@ export default function PayrollPage() {
     const fetchPayroll = async () => {
       try {
         const res = await dashboardApi.recentPayrolls();
-        setPeriods(res.data.data);
+        setPeriods(res.data);
       } catch (e) {
         console.error("Payroll API Error:", e);
       } finally {

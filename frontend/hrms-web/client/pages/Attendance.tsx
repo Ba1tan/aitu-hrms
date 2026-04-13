@@ -23,10 +23,10 @@ export default function AttendancePage() {
         attendanceApi.getHistory(now.getFullYear(), now.getMonth() + 1)
       ]);
 
-      setTodayRecord(todayRes.data.data);
-      
+      setTodayRecord(todayRes.data);
+
       // Превращаем массив истории в объект { "2024-04-15": record } для быстрого поиска
-      const historyMap = historyRes.data.data.reduce((acc, curr) => {
+      const historyMap = historyRes.data.reduce((acc, curr) => {
         acc[curr.date] = curr;
         return acc;
       }, {} as Record<string, AttendanceItem>);

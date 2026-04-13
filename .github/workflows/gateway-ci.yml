@@ -39,7 +39,7 @@ jobs:
 
       - name: Install hrms-common
         working-directory: services/hrms-common
-        run: mvn install -DskipTests -q
+        run: mvn install -DskipTests --no-transfer-progress
 
       - name: Build & test
         working-directory: services/api-gateway

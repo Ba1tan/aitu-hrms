@@ -6,7 +6,7 @@
 
     <groupId>kz.aitu</groupId>
     <artifactId>hrms-common</artifactId>
-    <version>1.0.0</version>
+    <version>1.0.0-SNAPSHOT</version>
     <packaging>jar</packaging>
     <name>HRMS Common Library</name>
 
@@ -91,5 +91,10 @@
             <name>GitHub Packages</name>
             <url>https://maven.pkg.github.com/ba1tan/aitu-hrms</url>
         </repository>
+        <snapshotRepository>
+            <id>github</id>
+            <name>GitHub Packages</name>
+            <url>https://maven.pkg.github.com/ba1tan/aitu-hrms</url>
+        </snapshotRepository>
     </distributionManagement>
 </project>

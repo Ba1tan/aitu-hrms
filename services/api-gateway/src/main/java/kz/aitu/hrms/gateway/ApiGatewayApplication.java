@@ -5,7 +5,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication(scanBasePackages = {
         "kz.aitu.hrms.gateway",
-        "kz.aitu.hrms.common.security"
+        "kz.aitu.hrms.common.jwt"
 })
 public class ApiGatewayApplication {
     public static void main(String[] args) {

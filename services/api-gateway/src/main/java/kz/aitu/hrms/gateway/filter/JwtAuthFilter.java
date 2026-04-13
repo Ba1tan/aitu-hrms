@@ -1,6 +1,6 @@
 package kz.aitu.hrms.gateway.filter;
 
-import kz.aitu.hrms.common.security.JwtService;
+import kz.aitu.hrms.common.jwt.JwtTokenValidator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
@@ -27,10 +27,10 @@ public final class JwtAuthFilter implements GlobalFilter, Ordered {
             "/actuator/health"
     );
 
-    private final JwtService jwtService;
+    private final JwtTokenValidator jwtTokenValidator;
 
-    public JwtAuthFilter(JwtService jwtService) {
-        this.jwtService = jwtService;
+    public JwtAuthFilter(JwtTokenValidator jwtTokenValidator) {
+        this.jwtTokenValidator = jwtTokenValidator;
     }
 
     @Override
@@ -42,16 +42,16 @@ public final class JwtAuthFilter implements GlobalFilter, Ordered {
         }
 
         String token = extractToken(exchange.getRequest());
-        if (token == null || !jwtService.isValid(token)) {
+        if (token == null || !jwtTokenValidator.isValid(token)) {
             logger.warn("Rejected request to {} — missing or invalid JWT", path);
             exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
             return exchange.getResponse().setComplete();
         }
 
         ServerHttpRequest mutated = exchange.getRequest().mutate()
-                .header("X-User-Id", jwtService.extractUserId(token))
-                .header("X-User-Email", jwtService.extractEmail(token))
-                .header("X-User-Role", jwtService.extractRole(token))
+                .header("X-User-Id", jwtTokenValidator.extractUserId(token))
+                .header("X-User-Email", jwtTokenValidator.extractEmail(token))
+                .header("X-User-Role", jwtTokenValidator.extractRole(token))
                 .build();
 
         return chain.filter(exchange.mutate().request(mutated).build());

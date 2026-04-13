@@ -1,0 +1,12 @@
+spring:
+  data:
+    redis:
+      host: localhost
+      port: 6379
+  cloud:
+    gateway:
+      routes: []
+
+app:
+  jwt:
+    secret: test-secret-key-min-32-characters-long!

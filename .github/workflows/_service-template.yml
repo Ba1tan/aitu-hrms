@@ -1,32 +1,39 @@
-name: Monolith CI/CD
+# ─────────────────────────────────────────────────────────────────────────────
+# TEMPLATE — copy this file and replace every TODO marker.
+#
+# Steps:
+#   1. cp _service-template.yml {service-name}-ci.yml
+#   2. Replace all TODO values below
+#   3. Add service to docker-compose.microservices.yml with image: ${SERVICE_IMAGE:-...}
+# ─────────────────────────────────────────────────────────────────────────────
+
+name: TODO-service-name CI/CD   # e.g. "User Service CI/CD"
 
 on:
   push:
     branches: [ main, develop ]
     paths:
-      - 'monolith/**'
-      - 'docker-compose.microservices.yml'
-      - '.github/workflows/ci-cd.yml'
+      - 'services/TODO-service-dir/**'           # e.g. services/user-service/**
+      - 'services/hrms-common/**'                # rebuild if shared lib changes
+      - '.github/workflows/TODO-workflow-file'   # this file
   pull_request:
     branches: [ main, develop ]
     paths:
-      - 'monolith/**'
-      - '.github/workflows/ci-cd.yml'
+      - 'services/TODO-service-dir/**'
+      - 'services/hrms-common/**'
 
 env:
-  JAVA_VERSION: '17'
+  JAVA_VERSION: '21'
   REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}/hrms-monolith
+  IMAGE_NAME: ${{ github.repository }}/TODO-image-name   # e.g. hrms-user-service
 
 jobs:
 
-  # ─────────────────────────────────────────────────────────────────────────────
-  # Job 1: Test & Build
-  # ─────────────────────────────────────────────────────────────────────────────
   test:
     name: Test & Build
     runs-on: ubuntu-latest
 
+    # Remove this block if the service has no database
     services:
       postgres:
         image: postgres:16-alpine
@@ -51,31 +58,34 @@ jobs:
           distribution: temurin
           cache: maven
 
+      # Install hrms-common into local Maven repo before building the service
+      - name: Install hrms-common
+        working-directory: services/hrms-common
+        run: mvn install -DskipTests -q
+
       - name: Build & test
-        working-directory: monolith
+        working-directory: services/TODO-service-dir
         run: mvn verify
         env:
           DB_URL: jdbc:postgresql://localhost:5432/hrms_test
           DB_USERNAME: hrms_user
           DB_PASSWORD: hrms_pass
           SPRING_PROFILE: test
+          JWT_SECRET: test-secret-key-min-32-characters-long!
 
       - name: Upload test results
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: monolith-test-results
-          path: monolith/target/surefire-reports/
+          name: TODO-service-name-test-results
+          path: services/TODO-service-dir/target/surefire-reports/
 
       - name: Upload JAR
         uses: actions/upload-artifact@v4
         with:
-          name: monolith-jar
-          path: monolith/target/*.jar
+          name: TODO-service-name-jar
+          path: services/TODO-service-dir/target/*.jar
 
-  # ─────────────────────────────────────────────────────────────────────────────
-  # Job 2: Build & Push Docker Image
-  # ─────────────────────────────────────────────────────────────────────────────
   docker:
     name: Build & Push Image
     needs: test
@@ -86,17 +96,14 @@ jobs:
       contents: read
       packages: write
 
-    outputs:
-      image-tag: ${{ steps.meta.outputs.tags }}
-
     steps:
       - uses: actions/checkout@v4
 
       - name: Download JAR
         uses: actions/download-artifact@v4
         with:
-          name: monolith-jar
-          path: monolith/target/
+          name: TODO-service-name-jar
+          path: services/TODO-service-dir/target/
 
       - uses: docker/setup-buildx-action@v3
 
@@ -119,17 +126,14 @@ jobs:
       - name: Build and push
         uses: docker/build-push-action@v5
         with:
-          context: monolith
-          file: monolith/Dockerfile
+          context: services/TODO-service-dir
+          file: services/TODO-service-dir/Dockerfile
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-  # ─────────────────────────────────────────────────────────────────────────────
-  # Job 3: Deploy to Production  (main only)
-  # ─────────────────────────────────────────────────────────────────────────────
   deploy-production:
     name: Deploy to Production
     needs: docker
@@ -150,25 +154,21 @@ jobs:
           port: ${{ secrets.SERVER_SSH_PORT }}
           script: |
             IMAGE=$(echo "ghcr.io/${{ env.IMAGE_NAME }}" | tr '[:upper:]' '[:lower:]')
+            CONTAINER=TODO-container-name   # e.g. hrms-user-service
             cd ~/hrms
-            git pull origin main
             echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
             docker pull $IMAGE:main
-            MONOLITH_IMAGE=$IMAGE:main docker compose -f docker-compose.microservices.yml up -d --no-deps monolith
+            TODO_SERVICE_IMAGE=$IMAGE:main docker compose -f docker-compose.microservices.yml up -d --no-deps TODO-compose-service-name
 
-            echo "Waiting for monolith to become healthy..."
             for i in $(seq 1 12); do
-              STATUS=$(docker inspect --format='{{.State.Health.Status}}' hrms-monolith 2>/dev/null || echo "unknown")
+              STATUS=$(docker inspect --format='{{.State.Health.Status}}' $CONTAINER 2>/dev/null || echo "unknown")
               echo "  Attempt $i/12 — $STATUS"
-              [ "$STATUS" = "healthy" ] && echo "✓ Monolith deployed!" && break
-              [ $i -eq 12 ] && docker logs hrms-monolith --tail 30 && exit 1
+              [ "$STATUS" = "healthy" ] && echo "✓ Deployed $CONTAINER!" && break
+              [ $i -eq 12 ] && docker logs $CONTAINER --tail 30 && exit 1
               sleep 10
             done
             docker image prune -f
 
-  # ─────────────────────────────────────────────────────────────────────────────
-  # Job 4: Deploy to Staging  (develop only)
-  # ─────────────────────────────────────────────────────────────────────────────
   deploy-staging:
     name: Deploy to Staging
     needs: docker
@@ -189,18 +189,17 @@ jobs:
           port: ${{ secrets.SERVER_SSH_PORT }}
           script: |
             IMAGE=$(echo "ghcr.io/${{ env.IMAGE_NAME }}" | tr '[:upper:]' '[:lower:]')
+            CONTAINER=TODO-container-name
             cd ~/hrms-staging
-            git pull origin develop
             echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
             docker pull $IMAGE:develop
-            MONOLITH_IMAGE=$IMAGE:develop docker compose -f docker-compose.microservices.yml up -d --no-deps monolith
+            TODO_SERVICE_IMAGE=$IMAGE:develop docker compose -f docker-compose.microservices.yml up -d --no-deps TODO-compose-service-name
 
-            echo "Waiting for monolith to become healthy..."
             for i in $(seq 1 12); do
-              STATUS=$(docker inspect --format='{{.State.Health.Status}}' hrms-monolith 2>/dev/null || echo "unknown")
+              STATUS=$(docker inspect --format='{{.State.Health.Status}}' $CONTAINER 2>/dev/null || echo "unknown")
               echo "  Attempt $i/12 — $STATUS"
-              [ "$STATUS" = "healthy" ] && echo "✓ Staging monolith deployed!" && break
-              [ $i -eq 12 ] && docker logs hrms-monolith --tail 30 && exit 1
+              [ "$STATUS" = "healthy" ] && echo "✓ Staging $CONTAINER deployed!" && break
+              [ $i -eq 12 ] && docker logs $CONTAINER --tail 30 && exit 1
               sleep 10
             done
             docker image prune -f

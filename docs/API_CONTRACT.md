@@ -1,973 +1,468 @@
-# HRMS API Contract
-**Version:** 1.0.0 | **Base URL:** `https://hrms.nursnerv.uk/api` | **Local:** `http://localhost:8080/api`
+# HRMS API Contract — Complete Frontend Reference
+
+**Version:** 2.0 | **Base URL:** `https://hrms.nursnerv.uk/api` | **Local:** `http://localhost:8080/api`  
+**For:** Nurbol (Frontend Developer)
 
 All requests require `Authorization: Bearer <access_token>` unless marked **Public**.  
-All responses are wrapped: `{ "success": true, "message": "...", "data": <T>, "timestamp": "..." }`.  
-All IDs are UUID strings. All monetary values are decimal strings (e.g. `"245000.00"`).
+All responses wrapped: `{ "success": true, "message": "...", "data": <T>, "timestamp": "..." }`  
+All IDs: UUID strings. All money: decimal strings (`"250575.00"`). All dates: `"2026-03-15"`. All datetimes: `"2026-03-15T09:00:00"`
 
 ---
 
-## Table of Contents
-1. [Authentication](#1-authentication)
-2. [Employees](#2-employees)
-3. [Departments & Positions](#3-departments--positions)
-4. [Payroll Periods](#4-payroll-periods)
-5. [Payslips](#5-payslips)
-6. [Leave](#6-leave)
-7. [Attendance](#7-attendance)
-8. [Notifications](#8-notifications)
-9. [Reports](#9-reports)
-10. [Error Reference](#10-error-reference)
-11. [Roles & Permissions](#11-roles--permissions)
+## Quick Reference — All 142 Endpoints
+
+### Auth & Users (14)
+| Method | Path | Auth | Permission |
+|--------|------|------|------------|
+| POST | `/v1/auth/login` | Public | — |
+| POST | `/v1/auth/refresh` | Public | — |
+| POST | `/v1/auth/forgot-password` | Public | — |
+| POST | `/v1/auth/reset-password` | Public | — |
+| POST | `/v1/auth/logout` | Bearer | any |
+| POST | `/v1/auth/change-password` | Bearer | any |
+| GET | `/v1/auth/me` | Bearer | any |
+| PUT | `/v1/auth/me` | Bearer | any |
+| GET | `/v1/users` | Bearer | SYSTEM_USERS |
+| GET | `/v1/users/{id}` | Bearer | SYSTEM_USERS |
+| POST | `/v1/users` | Bearer | SYSTEM_USERS |
+| PUT | `/v1/users/{id}` | Bearer | SYSTEM_USERS |
+| DELETE | `/v1/users/{id}` | Bearer | SYSTEM_USERS |
+| PUT | `/v1/users/{id}/link-employee` | Bearer | SYSTEM_USERS |
+
+### Employees (21)
+| Method | Path | Permission |
+|--------|------|------------|
+| POST | `/v1/employees` | EMPLOYEE_CREATE |
+| GET | `/v1/employees` | EMPLOYEE_VIEW_* (scoped) |
+| GET | `/v1/employees/{id}` | EMPLOYEE_VIEW_* (scoped) |
+| PUT | `/v1/employees/{id}` | EMPLOYEE_UPDATE |
+| PATCH | `/v1/employees/{id}/status` | EMPLOYEE_UPDATE |
+| DELETE | `/v1/employees/{id}` | EMPLOYEE_DELETE |
+| POST | `/v1/employees/{id}/create-account` | EMPLOYEE_CREATE |
+| POST | `/v1/employees/{id}/terminate` | EMPLOYEE_DELETE |
+| GET | `/v1/employees/{id}/salary-history` | EMPLOYEE_SALARY_VIEW |
+| POST | `/v1/employees/{id}/salary-change` | EMPLOYEE_SALARY_CHANGE |
+| GET | `/v1/employees/{id}/documents` | EMPLOYEE_VIEW_* |
+| POST | `/v1/employees/{id}/documents` | EMPLOYEE_UPDATE |
+| GET | `/v1/employees/{id}/documents/{docId}/download` | EMPLOYEE_VIEW_* |
+| DELETE | `/v1/employees/{id}/documents/{docId}` | EMPLOYEE_UPDATE |
+| GET | `/v1/employees/{id}/emergency-contacts` | EMPLOYEE_VIEW_* |
+| POST | `/v1/employees/{id}/emergency-contacts` | EMPLOYEE_UPDATE |
+| PUT | `/v1/employees/{id}/emergency-contacts/{cId}` | EMPLOYEE_UPDATE |
+| DELETE | `/v1/employees/{id}/emergency-contacts/{cId}` | EMPLOYEE_UPDATE |
+| GET | `/v1/employees/org-chart` | EMPLOYEE_VIEW_TEAM |
+| POST | `/v1/employees/import` | EMPLOYEE_CREATE |
+| GET | `/v1/employees/export` | EMPLOYEE_VIEW_ALL |
+
+### Departments (5) & Positions (5)
+| Method | Path | Permission |
+|--------|------|------------|
+| POST | `/v1/departments` | EMPLOYEE_CREATE |
+| GET | `/v1/departments` | any authenticated |
+| GET | `/v1/departments/{id}` | any authenticated |
+| PUT | `/v1/departments/{id}` | EMPLOYEE_UPDATE |
+| DELETE | `/v1/departments/{id}` | EMPLOYEE_DELETE |
+| POST | `/v1/positions` | EMPLOYEE_CREATE |
+| GET | `/v1/positions` | any authenticated |
+| GET | `/v1/positions/{id}` | any authenticated |
+| PUT | `/v1/positions/{id}` | EMPLOYEE_UPDATE |
+| DELETE | `/v1/positions/{id}` | EMPLOYEE_DELETE |
+
+### Attendance (18)
+| Method | Path | Permission |
+|--------|------|------------|
+| POST | `/v1/attendance/check-in` | ATTENDANCE_CHECKIN |
+| POST | `/v1/attendance/check-out` | ATTENDANCE_CHECKIN |
+| GET | `/v1/attendance/today` | ATTENDANCE_CHECKIN |
+| GET | `/v1/attendance/records` | own records |
+| GET | `/v1/attendance/records/employee/{id}` | ATTENDANCE_VIEW_* |
+| GET | `/v1/attendance/records/department/{id}` | ATTENDANCE_VIEW_TEAM |
+| GET | `/v1/attendance/records/daily` | ATTENDANCE_VIEW_ALL |
+| POST | `/v1/attendance/records` | ATTENDANCE_MANAGE |
+| PUT | `/v1/attendance/records/{id}` | ATTENDANCE_MANAGE |
+| POST | `/v1/attendance/records/bulk-absent` | ATTENDANCE_MANAGE |
+| GET | `/v1/attendance/summary/employee/{id}` | ATTENDANCE_VIEW_* |
+| GET | `/v1/attendance/summary/department/{id}` | ATTENDANCE_VIEW_TEAM |
+| GET | `/v1/attendance/summary/company` | ATTENDANCE_VIEW_ALL |
+| GET | `/v1/attendance/holidays` | any authenticated |
+| POST | `/v1/attendance/holidays` | ATTENDANCE_MANAGE |
+| PUT | `/v1/attendance/holidays/{id}` | ATTENDANCE_MANAGE |
+| DELETE | `/v1/attendance/holidays/{id}` | ATTENDANCE_MANAGE |
+| GET | `/v1/attendance/schedules` | any authenticated |
+
+### Leave (19)
+| Method | Path | Permission |
+|--------|------|------------|
+| GET | `/v1/leave/types` | any authenticated |
+| POST | `/v1/leave/types` | LEAVE_BALANCE_MANAGE |
+| PUT | `/v1/leave/types/{id}` | LEAVE_BALANCE_MANAGE |
+| DELETE | `/v1/leave/types/{id}` | LEAVE_BALANCE_MANAGE |
+| POST | `/v1/leave/requests` | LEAVE_REQUEST_OWN |
+| GET | `/v1/leave/requests` | own requests |
+| GET | `/v1/leave/requests/{id}` | own or LEAVE_APPROVE_* |
+| PUT | `/v1/leave/requests/{id}/approve` | LEAVE_APPROVE_* |
+| PUT | `/v1/leave/requests/{id}/reject` | LEAVE_APPROVE_* |
+| PUT | `/v1/leave/requests/{id}/cancel` | own or LEAVE_APPROVE_ALL |
+| GET | `/v1/leave/requests/pending` | LEAVE_APPROVE_* |
+| GET | `/v1/leave/requests/team` | LEAVE_APPROVE_TEAM |
+| GET | `/v1/leave/requests/all` | LEAVE_APPROVE_ALL |
+| GET | `/v1/leave/balances` | own |
+| GET | `/v1/leave/balances/employee/{id}` | LEAVE_BALANCE_MANAGE |
+| GET | `/v1/leave/balances/department/{id}` | LEAVE_APPROVE_TEAM |
+| POST | `/v1/leave/balances/initialize` | LEAVE_BALANCE_MANAGE |
+| PUT | `/v1/leave/balances/{id}/adjust` | LEAVE_BALANCE_MANAGE |
+| GET | `/v1/leave/calendar` | LEAVE_APPROVE_TEAM |
+
+### Payroll (23)
+| Method | Path | Permission |
+|--------|------|------------|
+| POST | `/v1/payroll/periods` | PAYROLL_PROCESS |
+| GET | `/v1/payroll/periods` | PAYROLL_VIEW |
+| GET | `/v1/payroll/periods/{id}` | PAYROLL_VIEW |
+| POST | `/v1/payroll/periods/{id}/generate` | PAYROLL_PROCESS |
+| POST | `/v1/payroll/periods/{id}/approve` | PAYROLL_APPROVE |
+| POST | `/v1/payroll/periods/{id}/mark-paid` | PAYROLL_PAY |
+| POST | `/v1/payroll/periods/{id}/lock` | SYSTEM_SETTINGS |
+| GET | `/v1/payroll/jobs/{jobId}/status` | PAYROLL_VIEW |
+| GET | `/v1/payroll/periods/{id}/payslips` | PAYROLL_VIEW |
+| GET | `/v1/payroll/payslips/{id}` | PAYROLL_VIEW |
+| PATCH | `/v1/payroll/payslips/{id}/adjust` | PAYSLIP_ADJUST |
+| POST | `/v1/payroll/payslips/{id}/recalculate` | PAYSLIP_ADJUST |
+| GET | `/v1/payroll/payslips/{id}/pdf` | PAYROLL_VIEW |
+| POST | `/v1/payroll/payslips/{id}/approve-flagged` | PAYROLL_APPROVE |
+| GET | `/v1/payroll/my-payslips` | PAYSLIP_VIEW_OWN |
+| GET | `/v1/payroll/my-payslips/period/{id}` | PAYSLIP_VIEW_OWN |
+| GET | `/v1/payroll/my-payslips/{id}/pdf` | PAYSLIP_VIEW_OWN |
+| GET | `/v1/payroll/ytd/employee/{id}` | PAYROLL_VIEW |
+| GET | `/v1/payroll/additions` | PAYROLL_VIEW |
+| POST | `/v1/payroll/additions` | PAYSLIP_ADJUST |
+| PUT | `/v1/payroll/additions/{id}` | PAYSLIP_ADJUST |
+| DELETE | `/v1/payroll/additions/{id}` | PAYSLIP_ADJUST |
+| POST | `/v1/payroll/additions/bulk` | PAYSLIP_ADJUST |
+
+### AI/ML (8)
+| Method | Path | Permission |
+|--------|------|------------|
+| POST | `/v1/ai/payroll/detect` | (internal — payroll-service only) |
+| POST | `/v1/ai/payroll/detect/batch` | (internal) |
+| POST | `/v1/ai/attendance/fraud-detect` | (internal) |
+| GET | `/v1/ai/attrition/risk` | AI_DASHBOARD |
+| GET | `/v1/ai/attrition/risk/employee/{id}` | AI_DASHBOARD |
+| GET | `/v1/ai/attrition/dashboard` | AI_DASHBOARD |
+| GET | `/v1/ai/payroll/forecast` | AI_DASHBOARD |
+| GET | `/v1/ai/health` | SYSTEM_SETTINGS |
+
+### Reports (12)
+| Method | Path | Permission |
+|--------|------|------------|
+| GET | `/v1/reports/payroll-summary` | REPORT_PAYROLL |
+| GET | `/v1/reports/payroll-summary/pdf` | REPORT_PAYROLL |
+| GET | `/v1/reports/form200` | REPORT_FORM200 |
+| GET | `/v1/reports/salary-breakdown` | REPORT_PAYROLL |
+| GET | `/v1/reports/attendance-monthly` | REPORT_ATTENDANCE |
+| GET | `/v1/reports/attendance-summary` | REPORT_ATTENDANCE |
+| GET | `/v1/reports/leave-balances` | REPORT_LEAVE |
+| GET | `/v1/reports/employee-directory` | REPORT_PAYROLL |
+| GET | `/v1/reports/turnover` | REPORT_EXECUTIVE |
+| GET | `/v1/reports/headcount` | REPORT_EXECUTIVE |
+| GET | `/v1/reports/executive-summary` | REPORT_EXECUTIVE |
+| GET | `/v1/reports/ai-insights` | AI_DASHBOARD |
+
+### Notifications (5)
+| Method | Path | Permission |
+|--------|------|------------|
+| GET | `/v1/notifications` | own |
+| GET | `/v1/notifications/unread-count` | own |
+| PUT | `/v1/notifications/{id}/read` | own |
+| PUT | `/v1/notifications/read-all` | own |
+| DELETE | `/v1/notifications/{id}` | own |
+
+### Integration & Settings (7)
+| Method | Path | Permission |
+|--------|------|------------|
+| POST | `/v1/integration/sync/{periodId}` | SYSTEM_SETTINGS |
+| GET | `/v1/integration/sync/status/{jobId}` | SYSTEM_SETTINGS |
+| GET | `/v1/integration/sync/history` | SYSTEM_SETTINGS |
+| POST | `/v1/integration/retry/{jobId}` | SYSTEM_SETTINGS |
+| GET | `/v1/integration/bank-file/{periodId}` | PAYROLL_PAY |
+| GET | `/v1/settings` | SYSTEM_SETTINGS |
+| PUT | `/v1/settings/{key}` | SYSTEM_SETTINGS |
+
+### Dashboard (1)
+| Method | Path | Permission |
+|--------|------|------------|
+| GET | `/v1/dashboard/stats` | any authenticated |
 
 ---
 
-## 1. Authentication
+## Detailed Request/Response Schemas
 
-### POST `/auth/login` — **Public**
+### Auth
 
-**Request:**
+**POST `/v1/auth/login`** — Public
 ```json
+// Request
+{ "email": "admin@hrms.kz", "password": "password123" }
+// Response 200
 {
-  "email": "admin@hrms.kz",
-  "password": "your_password"
-}
-```
-
-**Response `200`:**
-```json
-{
-  "accessToken": "eyJhbGciOiJIUzI1NiJ9...",
-  "refreshToken": "eyJhbGciOiJIUzI1NiJ9...",
+  "accessToken": "eyJ...",
+  "refreshToken": "eyJ...",
   "tokenType": "Bearer",
   "user": {
-    "id": "550e8400-e29b-41d4-a716-446655440000",
+    "id": "uuid",
     "email": "admin@hrms.kz",
     "firstName": "Nursultan",
     "lastName": "Admin",
     "role": "SUPER_ADMIN",
-    "employeeId": null
+    "permissions": ["EMPLOYEE_CREATE", "PAYROLL_PROCESS", ...],
+    "employeeId": "uuid or null"
   }
 }
 ```
 
-**Errors:** `401` Invalid credentials | `400` Validation error
-
----
-
-### POST `/auth/refresh` — **Public**
-
-**Request:**
+**GET `/v1/auth/me`**
 ```json
-{ "refreshToken": "eyJhbGciOiJIUzI1NiJ9..." }
-```
-
-**Response `200`:** Same shape as `/auth/login`
-
-**Errors:** `400` Token expired or invalid
-
----
-
-### POST `/auth/logout` — Authenticated
-
-**Request header:** `Authorization: Bearer <access_token>`  
-**Response `200`:** `{ "message": "Logged out successfully", "data": null }`
-
----
-
-### POST `/auth/change-password` — Authenticated
-
-**Request:**
-```json
+// Response 200
 {
-  "currentPassword": "old_password",
-  "newPassword": "new_password_min8chars"
+  "id": "uuid",
+  "email": "user@hrms.kz",
+  "firstName": "Иван",
+  "lastName": "Иванов",
+  "role": "EMPLOYEE",
+  "permissions": ["EMPLOYEE_VIEW_OWN", "PAYSLIP_VIEW_OWN", "LEAVE_REQUEST_OWN", "ATTENDANCE_CHECKIN"],
+  "employee": {
+    "id": "uuid",
+    "employeeNumber": "EMP-202601-001",
+    "fullName": "Иванов Иван Иванович",
+    "department": { "id": "uuid", "name": "Engineering" },
+    "position": { "id": "uuid", "title": "Senior Developer" },
+    "baseSalary": "300000.00",
+    "hireDate": "2024-01-15",
+    "status": "ACTIVE"
+  }
 }
 ```
 
-**Response `200`:** `{ "message": "Password changed successfully", "data": null }`
+### Employee
 
-**Errors:** `400` Current password incorrect
-
----
-
-### POST `/auth/register` — `SUPER_ADMIN` only
-
-Creates a new user account. Employee link (`employeeId`) can be set later via employee update.
-
-**Request:**
+**POST `/v1/employees`**
 ```json
+// Request
 {
-  "firstName": "Асель",
-  "lastName": "Нурова",
-  "email": "asel.nurova@company.kz",
-  "password": "temp_password123",
-  "role": "HR_MANAGER"
+  "firstName": "Иван", "lastName": "Иванов", "middleName": "Петрович",
+  "email": "ivan@company.kz", "iin": "123456789012",
+  "phone": "+77001234567", "hireDate": "2026-04-01",
+  "dateOfBirth": "1995-05-20",
+  "employmentType": "FULL_TIME",
+  "baseSalary": "300000.00",
+  "departmentId": "uuid", "positionId": "uuid", "managerId": "uuid",
+  "bankAccount": "KZ12345678901234", "bankName": "Kaspi Bank",
+  "isResident": true, "hasDisability": false, "isPensioner": false,
+  "createAccount": true  // optionally create user account
+}
+// Response 201
+{
+  "id": "uuid", "employeeNumber": "EMP-202604-042",
+  "firstName": "Иван", "lastName": "Иванов", "middleName": "Петрович",
+  "fullName": "Иванов Иван Петрович",
+  "email": "ivan@company.kz", "iin": "123456789012",
+  "hireDate": "2026-04-01", "status": "ACTIVE",
+  "employmentType": "FULL_TIME",
+  "baseSalary": "300000.00",
+  "department": { "id": "uuid", "name": "Engineering" },
+  "position": { "id": "uuid", "title": "Developer" },
+  "manager": { "id": "uuid", "fullName": "Петров Петр" }
 }
 ```
 
-**Valid roles:** `SUPER_ADMIN` | `HR_MANAGER` | `ACCOUNTANT` | `MANAGER` | `EMPLOYEE`
-
-**Response `201`:** Same shape as `/auth/login`
-
-**Errors:** `400` Email already registered | `400` Invalid role
-
----
-
-## 2. Employees
-
-### GET `/v1/employees` — `HR_MANAGER`, `ACCOUNTANT`, `MANAGER`
-
-**Query params:**
-| Param | Type | Description |
-|-------|------|-------------|
-| `search` | string | Search by name, email, or employee number |
-| `departmentId` | UUID | Filter by department |
-| `status` | enum | `ACTIVE` \| `ON_LEAVE` \| `TERMINATED` \| `PROBATION` |
-| `page` | int | 0-indexed, default `0` |
-| `size` | int | Default `20` |
-| `sort` | string | Default `lastName` |
-
-**Response `200`:**
+**GET `/v1/employees`** — Paginated
+```
+?search=иванов&departmentId=uuid&status=ACTIVE&type=FULL_TIME&page=0&size=20&sort=lastName,asc
+```
 ```json
+// Response 200 (Page<EmployeeSummary>)
 {
   "content": [
     {
-      "id": "a1b2c3d4-...",
-      "employeeNumber": "EMP-0042",
-      "firstName": "Асель",
-      "lastName": "Нурова",
-      "fullName": "Нурова Асель",
-      "email": "asel.nurova@company.kz",
-      "status": "ACTIVE",
-      "department": { "id": "...", "name": "Разработка" },
-      "position": { "id": "...", "title": "Backend Developer" }
+      "id": "uuid", "employeeNumber": "EMP-202601-001",
+      "fullName": "Иванов Иван Петрович", "email": "ivan@company.kz",
+      "department": "Engineering", "position": "Senior Developer",
+      "status": "ACTIVE", "hireDate": "2024-01-15"
     }
   ],
-  "totalElements": 87,
-  "totalPages": 5,
-  "size": 20,
-  "number": 0,
-  "first": true,
-  "last": false
+  "totalElements": 150, "totalPages": 8, "number": 0, "size": 20
 }
 ```
 
----
+### Leave
 
-### GET `/v1/employees/{id}` — Authenticated
-
-**Response `200`:**
+**POST `/v1/leave/requests`**
 ```json
+// Request
+{ "leaveTypeId": "uuid", "startDate": "2026-06-01", "endDate": "2026-06-06", "reason": "Отпуск" }
+// Response 201
 {
-  "id": "a1b2c3d4-...",
-  "employeeNumber": "EMP-0042",
-  "firstName": "Асель",
-  "lastName": "Нурова",
-  "middleName": "Бекова",
-  "fullName": "Нурова Асель Бекова",
-  "email": "asel.nurova@company.kz",
-  "iin": "950312300145",
-  "phone": "+7 701 234 5678",
-  "hireDate": "2023-03-01",
-  "terminationDate": null,
-  "dateOfBirth": "1995-03-12",
-  "status": "ACTIVE",
-  "employmentType": "FULL_TIME",
-  "baseSalary": "320000.00",
-  "department": { "id": "...", "name": "Разработка" },
-  "position": { "id": "...", "title": "Backend Developer" },
-  "manager": { "id": "...", "fullName": "Нурсултан Тореханов", "email": "n.torekhanov@company.kz" },
-  "bankAccount": "KZ91722C000001234567",
-  "bankName": "Халык Банк",
-  "resident": true,
-  "hasDisability": false,
-  "pensioner": false,
-  "createdAt": "2023-03-01T09:00:00",
-  "updatedAt": "2024-01-15T14:30:00"
+  "id": "uuid",
+  "employee": { "id": "uuid", "fullName": "Иванов Иван" },
+  "leaveType": { "id": "uuid", "name": "Annual Leave", "isPaid": true },
+  "startDate": "2026-06-01", "endDate": "2026-06-06", "daysRequested": 6,
+  "reason": "Отпуск", "status": "PENDING", "createdAt": "2026-05-15T10:30:00"
 }
 ```
 
-**Errors:** `404` Employee not found
-
----
-
-### POST `/v1/employees` — `HR_MANAGER`
-
-**Request:**
+**GET `/v1/leave/balances`** — Own
 ```json
-{
-  "firstName": "Асель",
-  "lastName": "Нурова",
-  "middleName": "Бекова",
-  "email": "asel.nurova@company.kz",
-  "iin": "950312300145",
-  "phone": "+7 701 234 5678",
-  "hireDate": "2024-02-01",
-  "dateOfBirth": "1995-03-12",
-  "employmentType": "FULL_TIME",
-  "baseSalary": "320000.00",
-  "departmentId": "dept-uuid",
-  "positionId": "pos-uuid",
-  "managerId": "manager-uuid",
-  "bankAccount": "KZ91722C000001234567",
-  "bankName": "Халык Банк",
-  "resident": true,
-  "hasDisability": false,
-  "pensioner": false
-}
-```
-
-**`employmentType` values:** `FULL_TIME` | `PART_TIME` | `CONTRACT` | `INTERN`
-
-**Response `201`:** Full employee object (same as GET by id)
-
-**Errors:** `400` Email already exists | `400` IIN already exists | `404` Department/Position/Manager not found
-
----
-
-### PUT `/v1/employees/{id}` — `HR_MANAGER`
-
-All fields optional — only provided fields are updated.
-
-**Request:** Same shape as POST, all fields optional.
-
-**Response `200`:** Updated employee object.
-
----
-
-### PATCH `/v1/employees/{id}/status` — `HR_MANAGER`
-
-**Request:**
-```json
-{
-  "status": "TERMINATED",
-  "terminationDate": "2024-12-31"
-}
-```
-
-> `terminationDate` **required** when `status = TERMINATED`.
-
-**`status` values:** `ACTIVE` | `ON_LEAVE` | `TERMINATED` | `PROBATION`
-
-**Response `200`:** Updated employee object.
-
----
-
-### DELETE `/v1/employees/{id}` — `SUPER_ADMIN`
-
-Soft delete — employee is hidden from all lists but data is preserved.  
-**Response `200`:** `{ "message": "Employee deleted" }`
-
----
-
-## 3. Departments & Positions
-
-### GET `/v1/departments` — Authenticated
-Returns flat list of all departments.
-
-**Response `200`:**
-```json
+// Response 200
 [
   {
-    "id": "...",
-    "name": "Разработка",
-    "description": "Backend and frontend development",
-    "costCenter": "CC-001",
-    "parent": { "id": "...", "name": "Технический отдел" },
-    "manager": { "id": "...", "fullName": "Нурсултан Тореханов", "email": "..." },
-    "employeeCount": 12
+    "id": "uuid",
+    "leaveType": { "id": "uuid", "name": "Annual Leave" },
+    "year": 2026, "entitledDays": 24, "carriedOver": 3,
+    "usedDays": 6, "adjustedDays": 0, "remainingDays": 21
+  },
+  {
+    "leaveType": { "name": "Sick Leave" },
+    "entitledDays": 30, "usedDays": 2, "remainingDays": 28
   }
 ]
 ```
 
-### POST `/v1/departments` — `HR_MANAGER`
+### Attendance
+
+**POST `/v1/attendance/check-in`**
 ```json
-{ "name": "Разработка", "description": "...", "costCenter": "CC-001", "parentId": null, "managerId": "uuid" }
-```
-**Response `201`:** Department object.
-
-### PUT `/v1/departments/{id}` — `HR_MANAGER`  
-### DELETE `/v1/departments/{id}` — `SUPER_ADMIN`
-
----
-
-### GET `/v1/positions` — Authenticated
-
-**Query:** `?departmentId=uuid` — optional filter
-
-**Response `200`:**
-```json
-[
-  {
-    "id": "...",
-    "title": "Backend Developer",
-    "description": "...",
-    "minSalary": "250000.00",
-    "maxSalary": "500000.00",
-    "department": { "id": "...", "name": "Разработка" }
-  }
-]
+// Request (all optional — defaults from JWT)
+{ "method": "WEB", "locationLat": 51.128, "locationLng": 71.430 }
+// Response 200
+{
+  "id": "uuid", "workDate": "2026-04-08",
+  "checkIn": "2026-04-08T09:05:00", "checkOut": null,
+  "status": "PRESENT", "workedHours": null,
+  "method": "WEB"
+}
+// Error 400 if already checked in
 ```
 
-### POST `/v1/positions` — `HR_MANAGER`
+**GET `/v1/attendance/summary/employee/{id}?year=2026&month=3`**
 ```json
-{ "title": "Backend Developer", "minSalary": "250000.00", "maxSalary": "500000.00", "departmentId": "uuid" }
+{
+  "employeeId": "uuid", "year": 2026, "month": 3,
+  "presentDays": 18, "lateDays": 2, "absentDays": 1, "halfDays": 0,
+  "holidayDays": 1, "totalWorkedHours": "152.50", "overtimeHours": "4.25"
+}
 ```
 
-### PUT `/v1/positions/{id}` — `HR_MANAGER`  
-### DELETE `/v1/positions/{id}` — `SUPER_ADMIN`
+### Payroll
 
----
+**GET `/v1/payroll/payslips/{id}`** — Full detail
+```json
+{
+  "id": "uuid",
+  "period": { "id": "uuid", "year": 2026, "month": 3, "name": "Март 2026" },
+  "employee": { "id": "uuid", "fullName": "Иванов Иван", "iin": "123456789012" },
+  "workedDays": 22, "totalWorkingDays": 22,
+  "grossSalary": "300000.00", "earnedSalary": "300000.00",
+  "allowances": "0.00", "otherDeductions": "0.00",
+  "opvAmount": "30000.00", "vosmsAmount": "6000.00",
+  "taxableIncome": "134250.00", "ipnAmount": "13425.00",
+  "totalDeductions": "49425.00", "netSalary": "250575.00",
+  "soAmount": "13500.00", "snAmount": "18000.00", "opvrAmount": "10500.00",
+  "mrpUsed": 4325, "isResident": true,
+  "status": "DRAFT",
+  "anomalyScore": null, "anomalyFlags": null, "aiReviewed": false
+}
+```
 
-## 4. Payroll Periods
+### Notifications
 
-### GET `/v1/payroll/periods` — `HR_MANAGER`, `ACCOUNTANT`, `MANAGER`
-
-**Query:** `?page=0&size=12`
-
-**Response `200`:**
+**GET `/v1/notifications?page=0&size=20`**
 ```json
 {
   "content": [
     {
-      "id": "period-uuid",
-      "year": 2024,
-      "month": 3,
-      "name": "Март 2024",
-      "startDate": "2024-03-01",
-      "endDate": "2024-03-31",
-      "workingDays": 20,
-      "status": "PAID",
-      "summary": {
-        "payslipCount": 87,
-        "approvedCount": 87,
-        "totalGrossSalary": "27840000.00",
-        "totalNetSalary": "22514280.00",
-        "totalIpn": "2497200.00",
-        "totalOpv": "2784000.00",
-        "totalSo": "828456.00"
-      },
-      "createdAt": "2024-03-25T10:00:00",
-      "updatedAt": "2024-03-29T16:45:00"
-    }
-  ],
-  "totalElements": 12,
-  "totalPages": 1,
-  "size": 12,
-  "number": 0
-}
-```
-
-**`status` values:** `DRAFT` → `PROCESSING` → `APPROVED` → `PAID` → `LOCKED`
-
----
-
-### GET `/v1/payroll/periods/{periodId}` — `HR_MANAGER`, `ACCOUNTANT`, `MANAGER`
-
-**Response `200`:** Single period object (same shape as list item).
-
----
-
-### POST `/v1/payroll/periods` — `HR_MANAGER`
-
-**Request:**
-```json
-{ "year": 2024, "month": 4, "workingDays": 22 }
-```
-
-**Response `201`:** Period object with status `DRAFT`.
-
-**Errors:** `400` Period already exists for this year+month.
-
----
-
-### POST `/v1/payroll/periods/{periodId}/generate` — `HR_MANAGER`
-
-Generates payslips for all active employees. If `employeeIds` is empty, generates for everyone.
-
-**Request (optional body):**
-```json
-{ "employeeIds": ["uuid1", "uuid2"] }
-```
-
-**Response `200`:**
-```json
-{
-  "generated": 87,
-  "skipped": 2,
-  "errors": 0,
-  "totalGrossPayout": "27840000.00",
-  "totalNetPayout": "22514280.00",
-  "errorDetails": []
-}
-```
-
-Period status changes `DRAFT` → `PROCESSING` automatically.
-
-**Errors:** `400` Period is LOCKED or PAID.
-
----
-
-### POST `/v1/payroll/periods/{periodId}/approve` — `HR_MANAGER`
-
-Approves all DRAFT payslips. Period moves `PROCESSING` → `APPROVED`.
-
-**Response `200`:** Updated period object.
-
-**Errors:** `400` Period not in PROCESSING status | `400` No payslips generated yet.
-
----
-
-### POST `/v1/payroll/periods/{periodId}/mark-paid` — `ACCOUNTANT`
-
-Period moves `APPROVED` → `PAID`. All payslips set to PAID.
-
-**Response `200`:** Updated period object.
-
----
-
-### POST `/v1/payroll/periods/{periodId}/lock` — `SUPER_ADMIN`
-
-Period moves `PAID` → `LOCKED`. Immutable archive — nothing can be changed.
-
-**Response `200`:** Updated period object.
-
----
-
-## 5. Payslips
-
-### GET `/v1/payroll/periods/{periodId}/payslips` — `HR_MANAGER`, `ACCOUNTANT`
-
-**Query:** `?page=0&size=50`
-
-**Response `200`:** Paginated list of payslip summaries.
-
-**Single payslip shape:**
-```json
-{
-  "id": "payslip-uuid",
-  "period": { "id": "...", "name": "Март 2024", "year": 2024, "month": 3 },
-  "employee": {
-    "id": "...",
-    "employeeNumber": "EMP-0042",
-    "fullName": "Нурова Асель",
-    "email": "asel.nurova@company.kz",
-    "department": "Разработка",
-    "position": "Backend Developer"
-  },
-  "workedDays": 20,
-  "totalWorkingDays": 20,
-  "grossSalary": "320000.00",
-  "earnedSalary": "320000.00",
-  "allowances": "0.00",
-  "opvAmount": "32000.00",
-  "oopvAmount": "0.00",
-  "taxableIncome": "284308.00",
-  "ipnAmount": "28430.80",
-  "otherDeductions": "0.00",
-  "totalDeductions": "60430.80",
-  "netSalary": "259569.20",
-  "soAmount": "10080.00",
-  "snAmount": "20369.96",
-  "mrpUsed": 3692,
-  "resident": true,
-  "status": "APPROVED",
-  "pdfUrl": null,
-  "createdAt": "2024-03-26T14:00:00"
-}
-```
-
-> **Tax breakdown legend:**  
-> `opvAmount` = ОПВ (pension, 10%, employee deduction)  
-> `ipnAmount` = ИПН (income tax, 10%, employee deduction)  
-> `soAmount` = СО (social contribution, 3.5%, employer cost — not deducted)  
-> `snAmount` = СН (social tax, 9.5% - СО, employer cost — not deducted)  
-> `netSalary` = earnedSalary − opv − oopv − ipn + allowances − otherDeductions
-
----
-
-### GET `/v1/payroll/payslips/{payslipId}` — `HR_MANAGER`, `ACCOUNTANT`
-
-**Response `200`:** Single payslip (same shape).
-
----
-
-### PATCH `/v1/payroll/payslips/{payslipId}/adjust` — `HR_MANAGER`
-
-Only works on `DRAFT` payslips. Recalculates automatically after adjustment.
-
-**Request (all fields optional):**
-```json
-{
-  "workedDays": 18,
-  "allowances": "25000.00",
-  "otherDeductions": "5000.00"
-}
-```
-
-**Response `200`:** Recalculated payslip.
-
-**Errors:** `400` Payslip not in DRAFT status.
-
----
-
-### GET `/v1/payroll/my-payslips` — Authenticated
-
-Employee self-service — returns own payslips only.
-
-**Query:** `?page=0&size=12`
-
-**Response `200`:** Paginated list (same payslip shape, period newest first).
-
----
-
-### GET `/v1/payroll/my-payslips/period/{periodId}` — Authenticated
-
-**Response `200`:** Single payslip for that period.
-
-**Errors:** `404` No payslip for this employee in this period.
-
----
-
-## 6. Leave
-
-### GET `/v1/leave/types` — Authenticated
-
-Returns the 5 seeded leave types from Kazakhstan Labour Code.
-
-**Response `200`:**
-```json
-[
-  { "id": "uuid1", "name": "Annual Leave", "daysAllowed": 24, "paid": true, "description": "Ежегодный оплачиваемый отпуск (Art. 88)" },
-  { "id": "uuid2", "name": "Sick Leave", "daysAllowed": 30, "paid": true, "description": "Больничный лист" },
-  { "id": "uuid3", "name": "Maternity Leave", "daysAllowed": 126, "paid": true, "description": "Декретный отпуск" },
-  { "id": "uuid4", "name": "Unpaid Leave", "daysAllowed": 14, "paid": false, "description": "Отпуск без сохранения зарплаты" },
-  { "id": "uuid5", "name": "Study Leave", "daysAllowed": 10, "paid": true, "description": "Учебный отпуск" }
-]
-```
-
----
-
-### GET `/v1/leave/requests` — `HR_MANAGER`
-
-All requests, paginated.  
-**Query:** `?page=0&size=20`
-
-**Response `200`:** Paginated list of leave request objects.
-
-**Single leave request shape:**
-```json
-{
-  "id": "req-uuid",
-  "employee": {
-    "id": "...", "employeeNumber": "EMP-0042",
-    "fullName": "Нурова Асель", "email": "...",
-    "status": "ACTIVE",
-    "department": { "id": "...", "name": "Разработка" },
-    "position": { "id": "...", "title": "Backend Developer" }
-  },
-  "leaveType": { "id": "...", "name": "Annual Leave", "daysAllowed": 24, "paid": true },
-  "startDate": "2024-04-10",
-  "endDate": "2024-04-15",
-  "daysRequested": 4,
-  "reason": "Семейный отпуск",
-  "status": "PENDING",
-  "reviewedBy": null,
-  "reviewedAt": null,
-  "reviewComment": null,
-  "createdAt": "2024-04-01T09:15:00"
-}
-```
-
-**`status` values:** `PENDING` | `APPROVED` | `REJECTED` | `CANCELLED`
-
----
-
-### GET `/v1/leave/requests/my` — Authenticated
-
-Own requests, paginated.  
-**Query:** `?page=0&size=20`
-
----
-
-### GET `/v1/leave/requests/pending` — `MANAGER`, `HR_MANAGER`
-
-Returns list (not paginated) of pending requests for the authenticated manager's direct reports.
-
----
-
-### POST `/v1/leave/requests` — `EMPLOYEE`
-
-**Request:**
-```json
-{
-  "leaveTypeId": "uuid-of-annual-leave",
-  "startDate": "2024-04-10",
-  "endDate": "2024-04-15",
-  "daysRequested": 4,
-  "reason": "Семейный отпуск"
-}
-```
-
-> `daysRequested` must be calculated by the frontend (Mon–Fri only). Backend validates it matches the date range.
-
-**Response `201`:** Leave request with status `PENDING`.
-
-**Errors:**  
-`400` Insufficient leave balance (`"You have 3 days remaining, requested 4"`)  
-`400` Overlapping request exists  
-`400` No leave balance found for this type/year
-
----
-
-### PUT `/v1/leave/requests/{id}/approve` — `MANAGER`, `HR_MANAGER`
-
-**Request (optional):**
-```json
-{ "comment": "Одобрено" }
-```
-
-**Response `200`:** Updated request with status `APPROVED`.
-
-**Errors:** `400` Request not in PENDING status | `403` Manager is not this employee's manager
-
----
-
-### PUT `/v1/leave/requests/{id}/reject` — `MANAGER`, `HR_MANAGER`
-
-**Request:**
-```json
-{ "comment": "Недостаточно сотрудников в период" }
-```
-
-**Response `200`:** Updated request with status `REJECTED`.
-
----
-
-### PUT `/v1/leave/requests/{id}/cancel` — `EMPLOYEE`
-
-Can only cancel own PENDING requests.
-
-**Response `200`:** Updated request with status `CANCELLED`.
-
-**Errors:** `403` Not own request | `400` Request already approved/rejected
-
----
-
-### GET `/v1/leave/balances/my` — Authenticated
-
-Own balances for the current year.
-
-**Response `200`:**
-```json
-[
-  {
-    "id": "...",
-    "leaveType": { "id": "...", "name": "Annual Leave", "daysAllowed": 24, "paid": true },
-    "year": 2024,
-    "entitledDays": 24,
-    "usedDays": 8,
-    "remainingDays": 16
-  }
-]
-```
-
----
-
-### GET `/v1/leave/balances/{employeeId}` — `HR_MANAGER`
-
-Same shape for any employee.
-
----
-
-### POST `/v1/leave/balances/initialize` — `SUPER_ADMIN`
-
-**Query:** `?year=2025`
-
-Initializes leave balances for all active employees for the given year (idempotent — skips existing).
-
-**Response `200`:** `{ "message": "Balances initialized" }`
-
----
-
-## 7. Attendance
-
-### POST `/v1/attendance/check-in` — `EMPLOYEE`
-
-Records today's check-in for the authenticated employee.
-
-**Request:** No body.
-
-**Response `201`:**
-```json
-{
-  "id": "att-uuid",
-  "employee": { "id": "...", "fullName": "Нурова Асель", ... },
-  "workDate": "2024-04-15",
-  "checkIn": "2024-04-15T09:07:00",
-  "checkOut": null,
-  "workedHours": null,
-  "status": "LATE",
-  "note": null,
-  "createdAt": "2024-04-15T09:07:00"
-}
-```
-
-**`status` after check-in:** `PRESENT` (on time) or `LATE` (>10 min after 09:00)
-
-**Errors:** `400` Already checked in today
-
----
-
-### POST `/v1/attendance/check-out` — `EMPLOYEE`
-
-**Request:** No body.
-
-**Response `200`:** Updated record with `checkOut` and `workedHours` set.  
-Status may change to `HALF_DAY` if `workedHours < 4`.
-
-**Errors:** `400` No check-in found for today | `400` Already checked out
-
----
-
-### GET `/v1/attendance/today` — Authenticated
-
-**Response `200`:** Today's attendance record, or `null` if not yet checked in.
-
----
-
-### GET `/v1/attendance/my` — Authenticated
-
-Own monthly records.  
-**Query:** `?month=4&year=2024`
-
-**Response `200`:** Array of attendance records for that month.
-
----
-
-### GET `/v1/attendance/employees/{employeeId}/monthly` — `HR_MANAGER`, `MANAGER`
-
-**Query:** `?month=4&year=2024`
-
-**Response `200`:** Array of attendance records.
-
----
-
-### POST `/v1/attendance/manual` — `HR_MANAGER`
-
-Manual entry for backdating or corrections.
-
-**Request:**
-```json
-{
-  "employeeId": "uuid",
-  "workDate": "2024-04-12",
-  "checkIn": "2024-04-12T09:00:00",
-  "checkOut": "2024-04-12T18:00:00",
-  "status": "PRESENT",
-  "note": "Внесено вручную по причине сбоя системы"
-}
-```
-
-**Response `201`:** Attendance record.
-
-**Errors:** `400` Record already exists for that date
-
----
-
-### GET `/v1/attendance` — `HR_MANAGER`
-
-All employees, filtered by date and/or employee.  
-**Query:** `?date=2024-04-15&employeeId=uuid` (both optional)
-
-**Response `200`:** Array of attendance records.
-
----
-
-## 8. Notifications
-
-### GET `/v1/notifications` — Authenticated
-
-Own notifications, newest first.  
-**Query:** `?page=0&size=20`
-
-**Response `200`:**
-```json
-{
-  "content": [
-    {
-      "id": "notif-uuid",
+      "id": "uuid",
+      "title": "Leave Approved",
+      "message": "Your leave request for 6 days has been approved",
       "type": "LEAVE_APPROVED",
-      "title": "Отпуск одобрен",
-      "body": "Ваш запрос на отпуск 10.04–15.04 одобрен",
-      "referenceId": "leave-request-uuid",
+      "isRead": false,
       "referenceType": "LEAVE_REQUEST",
-      "read": false,
-      "readAt": null,
-      "createdAt": "2024-04-02T10:30:00"
+      "referenceId": "uuid",
+      "createdAt": "2026-04-08T14:30:00"
     }
   ],
-  "totalElements": 5, ...
+  "totalElements": 45
 }
 ```
 
-**Notification types:** `LEAVE_REQUEST` | `LEAVE_APPROVED` | `LEAVE_REJECTED` | `LEAVE_CANCELLED` | `PAYSLIP_READY` | `PAYROLL_PROCESSED` | `ATTENDANCE_ALERT` | `SYSTEM`
-
----
-
-### GET `/v1/notifications/unread-count` — Authenticated
-
-**Response `200`:** `{ "data": 3 }` (integer)
-
-Poll this every 30s for notification badge.
-
----
-
-### PUT `/v1/notifications/{id}/read` — Authenticated
-
-**Response `200`:** `{ "message": "Marked as read" }`
-
----
-
-### PUT `/v1/notifications/read-all` — Authenticated
-
-**Response `200`:** `{ "message": "All marked as read" }`
-
----
-
-## 9. Reports (file downloads)
-
-All report endpoints return binary file content, not JSON.
-
-**Response headers:**
-```
-Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet
-Content-Disposition: attachment; filename="report_name.xlsx"
+**GET `/v1/notifications/unread-count`**
+```json
+{ "count": 3 }
 ```
 
-**Frontend pattern:**
+### AI
+
+**GET `/v1/ai/attrition/risk?departmentId=uuid`**
+```json
+[
+  {
+    "employeeId": "uuid", "fullName": "Иванов Иван",
+    "attritionRisk": 0.72, "riskLevel": "HIGH",
+    "topFactors": [
+      { "factor": "salary_below_average", "impact": 0.35, "detail": "15% below position avg" },
+      { "factor": "no_promotion_18_months", "impact": 0.25 }
+    ],
+    "recommendedActions": ["Schedule retention conversation", "Review salary"]
+  }
+]
+```
+
+### Reports — Download Pattern
+
+All report endpoints return binary files. Frontend must handle as blob:
 ```typescript
-const response = await client.get('/v1/reports/payroll-summary', {
+const response = await api.get('/v1/reports/payroll-summary', {
   params: { periodId },
   responseType: 'blob'
-})
-const url = URL.createObjectURL(response.data)
-const a = document.createElement('a')
-a.href = url; a.download = 'payroll_march_2024.xlsx'; a.click()
-URL.revokeObjectURL(url)
+});
+const url = window.URL.createObjectURL(new Blob([response.data]));
+const link = document.createElement('a');
+link.href = url;
+link.setAttribute('download', 'payroll_summary.xlsx');
+link.click();
 ```
 
 ---
 
-### GET `/v1/reports/payroll-summary` — `HR_MANAGER`, `ACCOUNTANT`
+## Error Response Format
 
-**Query:** `?periodId=uuid`
-
-Returns XLSX: one row per employee with all tax breakdown columns.
-
----
-
-### GET `/v1/reports/form-200` — `HR_MANAGER`, `ACCOUNTANT`
-
-**Query:** `?quarter=1&year=2024` (quarter: 1–4)
-
-Returns XLSX: quarterly KZ tax declaration (Form 200.00 layout).
-
----
-
-### GET `/v1/reports/attendance` — `HR_MANAGER`, `MANAGER`
-
-**Query:** `?from=2024-04-01&to=2024-04-30`
-
-Returns XLSX: attendance summary per employee for the date range.
-
----
-
-### GET `/v1/reports/leave-summary` — `HR_MANAGER`
-
-**Query:** `?year=2024`
-
-Returns XLSX: leave balance and usage per employee for the year.
-
----
-
-## 10. Error Reference
-
-All errors follow this shape:
 ```json
+// 400 Validation Error
 {
   "success": false,
-  "message": "Human-readable error description",
-  "data": null,
-  "errors": { "field": "Validation message" }
+  "message": "Validation failed",
+  "errors": {
+    "email": "Invalid email format",
+    "baseSalary": "Salary must be positive"
+  },
+  "timestamp": "2026-04-08T10:00:00"
 }
+
+// 401 Unauthorized
+{ "success": false, "message": "Invalid or expired token" }
+
+// 403 Forbidden
+{ "success": false, "message": "Insufficient permissions" }
+
+// 404 Not Found
+{ "success": false, "message": "Employee not found with id: uuid" }
+
+// 409 Conflict
+{ "success": false, "message": "Email already registered" }
 ```
 
-| HTTP Status | When |
-|-------------|------|
-| `400` | Business rule violation (`BusinessException`) or validation error |
-| `401` | Missing or invalid/expired JWT token |
-| `403` | Authenticated but insufficient role (`@PreAuthorize` failed) |
-| `404` | Entity not found (`ResourceNotFoundException`) |
-| `409` | Conflict — duplicate resource (email, IIN, period) |
-| `500` | Unexpected server error — check backend logs |
+## Formatting Notes for Nurbol
 
----
-
-## 11. Roles & Permissions
-
-| Role | Description |
-|------|-------------|
-| `SUPER_ADMIN` | Full access to everything including user registration and locking periods |
-| `HR_MANAGER` | Employee CRUD, payroll generation/approval, leave final approval, all reports |
-| `ACCOUNTANT` | Read-only payroll, mark periods as paid, download reports |
-| `MANAGER` | Read team employees, approve/reject leave for direct reports, read payroll periods |
-| `EMPLOYEE` | Own payslips, submit leave requests, check-in/out, own notifications |
-
-### Endpoint Permission Matrix
-
-| Endpoint group | SUPER_ADMIN | HR_MANAGER | ACCOUNTANT | MANAGER | EMPLOYEE |
-|----------------|:-----------:|:----------:|:----------:|:-------:|:--------:|
-| Auth (login/refresh/logout) | ✅ | ✅ | ✅ | ✅ | ✅ |
-| Register user | ✅ | — | — | — | — |
-| Employee CRUD | ✅ | ✅ | — | — | — |
-| Employee read list | ✅ | ✅ | ✅ | ✅ | — |
-| Employee read single | ✅ | ✅ | ✅ | ✅ | own |
-| Payroll periods (read) | ✅ | ✅ | ✅ | ✅ | — |
-| Payroll generate/approve | ✅ | ✅ | — | — | — |
-| Mark period paid | ✅ | — | ✅ | — | — |
-| Lock period | ✅ | — | — | — | — |
-| Payslip adjust | ✅ | ✅ | — | — | — |
-| My payslips | ✅ | ✅ | ✅ | ✅ | ✅ |
-| Leave requests (all) | ✅ | ✅ | — | — | — |
-| Leave requests (pending) | ✅ | ✅ | — | ✅ | — |
-| Submit leave request | ✅ | ✅ | ✅ | ✅ | ✅ |
-| Approve/reject leave | ✅ | ✅ | — | ✅ | — |
-| My leave / balances | ✅ | ✅ | ✅ | ✅ | ✅ |
-| Initialize leave balances | ✅ | — | — | — | — |
-| Attendance check-in/out | ✅ | ✅ | ✅ | ✅ | ✅ |
-| Manual attendance | ✅ | ✅ | — | — | — |
-| Attendance read all | ✅ | ✅ | — | ✅ | — |
-| Reports (download) | ✅ | ✅ | ✅ | attendance | — |
-| Notifications | ✅ | ✅ | ✅ | ✅ | ✅ |
-
----
-
-## Quick Reference — Frontend Integration Notes
-
-1. **Token storage:** store `accessToken` + `refreshToken` in `localStorage` (or Zustand persist). Attach as `Authorization: Bearer <token>` header.
-
-2. **Auto-refresh:** on any `401` response, POST `/auth/refresh` with the stored refreshToken, update stored tokens, retry original request once.
-
-3. **Money fields:** always `string` (e.g. `"320000.00"`). Parse with `parseFloat()` only for display math. Use `Intl.NumberFormat` with `currency: 'KZT'` for display.
-
-4. **Date fields:** always ISO-8601 strings (`"2024-04-15"` for dates, `"2024-04-15T09:07:00"` for datetimes). Use `dayjs` for parsing and formatting.
-
-5. **Pagination:** all list endpoints return Spring's `Page<T>` shape — use `content[]`, `totalElements`, `number` (0-indexed page), `size`.
-
-6. **File downloads:** set `responseType: 'blob'` on axios, then `URL.createObjectURL()` to trigger browser download.
-
-7. **Leave days calculation:** the frontend must calculate `daysRequested` (Mon–Fri only, excluding the dates) before submitting. Backend validates the number matches.
-
-8. **Swagger UI:** available at `https://hrms.nursnerv.uk/api/swagger-ui.html` (or local `/api/swagger-ui.html`) — auto-generated from code, always in sync with actual endpoints.
+- Dates display: `dd.MM.yyyy` (Kazakhstan standard: `08.04.2026`)
+- Money display: `₸ 300,000.00` — use `Intl.NumberFormat('ru-KZ', {style:'currency', currency:'KZT'})`
+- Status badge colors: ACTIVE/APPROVED/PRESENT=green, PENDING/PROCESSING=yellow, REJECTED/ABSENT/FLAGGED=red, DRAFT=gray, PAID=blue, LOCKED=purple
+- Pagination: backend uses 0-indexed pages. UI shows 1-indexed.

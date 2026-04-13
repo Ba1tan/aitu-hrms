@@ -1,0 +1,144 @@
+# docker-compose.microservices.yml — MIGRATION PHASE
+#
+# Topology:
+#   nginx / NPM  →  :8090  →  api-gateway:8080  →  monolith:8081
+#                                                 ↘  (future: user-service:8081, etc.)
+#
+# Usage:
+#   docker compose -f docker-compose.microservices.yml up -d --build
+#   docker compose -f docker-compose.microservices.yml logs -f gateway
+#   docker compose -f docker-compose.microservices.yml down
+
+services:
+
+  # ────────── Infrastructure ──────────
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: hrms-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DB_NAME:-hrms}
+      POSTGRES_USER: ${DB_USERNAME:-hrms_user}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-hrms_pass}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./scripts/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql:ro
+    networks:
+      - hrms-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:-hrms_user} -d ${DB_NAME:-hrms}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: hrms-redis
+    restart: unless-stopped
+    command: redis-server --requirepass ${REDIS_PASSWORD:-hrms_redis_pass} --save 60 1
+    volumes:
+      - redis_data:/data
+    networks:
+      - hrms-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD:-hrms_redis_pass}", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    container_name: hrms-rabbitmq
+    restart: unless-stopped
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-hrms}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASS:-hrms_pass}
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    networks:
+      - hrms-network
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  # ────────── Monolith (moves from :8080 → :8081) ──────────
+  # Local dev:  docker compose -f docker-compose.microservices.yml up -d --build monolith
+  # Production: MONOLITH_IMAGE=ghcr.io/…/hrms-monolith:main docker compose … up -d --no-deps monolith
+
+  monolith:
+    image: ${MONOLITH_IMAGE:-hrms-monolith:local}
+    build:
+      context: ./monolith
+      dockerfile: Dockerfile
+    container_name: hrms-monolith
+    restart: unless-stopped
+    # Not exposed on host — only reachable by the gateway inside hrms-network
+    environment:
+      SPRING_PROFILE: ${SPRING_PROFILE:-prod}
+      SERVER_PORT: 8081
+      DB_URL: jdbc:postgresql://postgres:5432/${DB_NAME:-hrms}
+      DB_USERNAME: ${DB_USERNAME:-hrms_user}
+      DB_PASSWORD: ${DB_PASSWORD:-hrms_pass}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-hrms_redis_pass}
+      JWT_SECRET: ${JWT_SECRET}
+      CORS_ORIGINS: ${CORS_ORIGINS:-https://hrms.nursnerv.uk,http://localhost:5173}
+    networks:
+      - hrms-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8081/api/actuator/health | grep -q UP || exit 1"]
+      interval: 30s
+      timeout: 10s
+      start_period: 60s
+      retries: 3
+
+  # ────────── API Gateway (takes :8090 → public) ──────────
+  # Local dev:  docker compose -f docker-compose.microservices.yml up -d --build gateway
+  # Production: GATEWAY_IMAGE=ghcr.io/…/hrms-gateway:main docker compose … up -d --no-deps gateway
+
+  gateway:
+    image: ${GATEWAY_IMAGE:-hrms-gateway:local}
+    build:
+      context: ./services/api-gateway
+      dockerfile: Dockerfile
+    container_name: hrms-gateway
+    restart: unless-stopped
+    ports:
+      - "8090:8080"    # nginx / NPM → localhost:8090 → gateway
+    environment:
+      MONOLITH_URI: http://monolith:8081
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-hrms_redis_pass}
+      JWT_SECRET: ${JWT_SECRET}
+    networks:
+      - hrms-network
+    depends_on:
+      monolith:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8080/actuator/health | grep -q UP || exit 1"]
+      interval: 15s
+      timeout: 5s
+      start_period: 30s
+      retries: 3
+
+volumes:
+  postgres_data:
+  redis_data:
+  rabbitmq_data:
+
+networks:
+  hrms-network:
+    driver: bridge

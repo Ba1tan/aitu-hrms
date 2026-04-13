@@ -28,8 +28,6 @@ public class JwtService {
     @Value("${app.jwt.refresh-token-expiry-ms:0}")
     private long refreshTokenExpiryMs;
 
-    // ── Generation (user-service only) ────────────────────────────────────────
-
     public String generateAccessToken(UserDetails userDetails) {
         return buildToken(new HashMap<>(), userDetails.getUsername(), accessTokenExpiryMs);
     }
@@ -38,11 +36,6 @@ public class JwtService {
         return buildToken(new HashMap<>(), userDetails.getUsername(), refreshTokenExpiryMs);
     }
 
-    // ── Validation (all services) ─────────────────────────────────────────────
-
-    /**
-     * Returns true if the token has a valid signature and is not expired.
-     */
     public boolean isValid(String token) {
         try {
             extractAllClaims(token);
@@ -61,7 +54,6 @@ public class JwtService {
         return extractExpiration(token).before(new Date());
     }
 
-    // ── Claim extraction ──────────────────────────────────────────────────────
 
     public String extractUsername(String token) {
         return extractClaim(token, Claims::getSubject);
@@ -84,7 +76,6 @@ public class JwtService {
         return claimsResolver.apply(extractAllClaims(token));
     }
 
-    // ── Internals ─────────────────────────────────────────────────────────────
 
     private Date extractExpiration(String token) {
         return extractClaim(token, Claims::getExpiration);

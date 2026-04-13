@@ -1,0 +1,48 @@
+name: hrms-common Publish
+
+# Publishes kz.aitu:hrms-common to GitHub Packages Maven registry.
+# All services that declare it as a dependency can then pull it from:
+#   https://maven.pkg.github.com/OWNER/hrms-backend
+#
+# One-time setup:
+#   1. Replace OWNER in services/hrms-common/pom.xml distributionManagement URL
+#      with your actual GitHub username/org.
+#   2. Ensure the repo has packages:write permission (default for GITHUB_TOKEN).
+
+on:
+  push:
+    branches: [ main, develop ]
+    paths:
+      - 'services/hrms-common/**'
+      - '.github/workflows/hrms-common-publish.yml'
+
+env:
+  JAVA_VERSION: '17'
+
+jobs:
+  publish:
+    name: Build & Publish to GitHub Packages
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: temurin
+          cache: maven
+          server-id: github
+          server-username: GITHUB_ACTOR
+          server-password: GITHUB_TOKEN
+
+      - name: Publish hrms-common
+        working-directory: services/hrms-common
+        run: mvn --batch-mode deploy -DskipTests
+        env:
+          GITHUB_ACTOR: ${{ github.actor }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

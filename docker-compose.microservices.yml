@@ -1,0 +1,188 @@
+# docker-compose.microservices.yml — MIGRATION PHASE
+#
+# Topology:
+#   nginx / NPM  →  :${GATEWAY_PORT}  →  api-gateway:8080  →  monolith:8081
+#
+# Container names and volumes are prefixed by COMPOSE_PROJECT_NAME so prod
+# and staging can coexist on the same host without conflicts:
+#
+#   prod    → COMPOSE_PROJECT_NAME=hrms          GATEWAY_PORT=8090
+#   staging → COMPOSE_PROJECT_NAME=hrms-staging  GATEWAY_PORT=8091
+#
+# Usage:
+#   docker compose -f docker-compose.microservices.yml up -d --build
+#   docker compose -f docker-compose.microservices.yml logs -f gateway
+#   docker compose -f docker-compose.microservices.yml down
+
+services:
+
+  #Infrastructure
+
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DB_NAME:-hrms}
+      POSTGRES_USER: ${DB_USERNAME:-hrms_user}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-hrms_pass}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./scripts/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql:ro
+    networks:
+      - hrms-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:-hrms_user} -d ${DB_NAME:-hrms}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: redis-server --requirepass ${REDIS_PASSWORD:-hrms_redis_pass} --save 60 1
+    volumes:
+      - redis_data:/data
+    networks:
+      - hrms-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD:-hrms_redis_pass}", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    restart: unless-stopped
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-hrms}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASS:-hrms_pass}
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    networks:
+      - hrms-network
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  #Monolith (internal only — not exposed on host)
+
+  monolith:
+    image: ${MONOLITH_IMAGE:-hrms-monolith:local}
+    build:
+      context: ./monolith
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    environment:
+      SPRING_PROFILE: ${SPRING_PROFILE:-prod}
+      SERVER_PORT: 8081
+      DB_URL: jdbc:postgresql://postgres:5432/${DB_NAME:-hrms}
+      DB_USERNAME: ${DB_USERNAME:-hrms_user}
+      DB_PASSWORD: ${DB_PASSWORD:-hrms_pass}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-hrms_redis_pass}
+      JWT_SECRET: ${JWT_SECRET}
+      CORS_ORIGINS: ${CORS_ORIGINS:-https://hrms.nursnerv.uk}
+      MANAGEMENT_HEALTH_MAIL_ENABLED: ${MAIL_HEALTH_ENABLED:-false}
+    networks:
+      - hrms-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8081/api/actuator/health | grep -q UP || exit 1"]
+      interval: 30s
+      timeout: 10s
+      start_period: 60s
+      retries: 3
+
+  #API Gateway
+
+  gateway:
+    image: ${GATEWAY_IMAGE:-hrms-gateway:local}
+    build:
+      context: ./services
+      dockerfile: api-gateway/Dockerfile
+    restart: unless-stopped
+    ports:
+      - "${GATEWAY_PORT:-8090}:8080"
+    environment:
+      MONOLITH_URI: http://monolith:8081
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-hrms_redis_pass}
+      JWT_SECRET: ${JWT_SECRET}
+      CORS_ORIGINS: ${CORS_ORIGINS:-https://hrms.nursnerv.uk,http://localhost:5173}
+    networks:
+      - hrms-network
+    depends_on:
+      monolith:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8080/actuator/health | grep -q UP || exit 1"]
+      interval: 15s
+      timeout: 5s
+      start_period: 30s
+      retries: 3
+
+  #Frontend
+  # Staging: accessible directly on FRONTEND_PORT (default 3000)
+  # Production: not exposed directly — nginx reverse proxy handles routing
+
+  frontend:
+    image: ${FRONTEND_IMAGE:-hrms-frontend:local}
+    restart: unless-stopped
+    ports:
+      - "${FRONTEND_PORT:-}:80"
+    networks:
+      - hrms-network
+    depends_on:
+      gateway:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "nginx", "-t"]
+      interval: 30s
+      timeout: 5s
+      start_period: 10s
+      retries: 3
+
+  # ────────── Nginx reverse proxy (production only) ──────────
+  # Routes /api/* → gateway, /* → frontend
+  # Only starts when --profile production is passed:
+  #   prod:    docker compose --profile production up -d
+  #   staging: docker compose up -d   (nginx absent)
+
+  nginx:
+    profiles: [production]
+    image: nginx:alpine
+    restart: unless-stopped
+    ports:
+      - "${NGINX_PORT:-8092}:80"
+    volumes:
+      - ./docker/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    networks:
+      - hrms-network
+    depends_on:
+      - frontend
+      - gateway
+    healthcheck:
+      test: ["CMD", "nginx", "-t"]
+      interval: 30s
+      timeout: 5s
+      start_period: 10s
+      retries: 3
+
+volumes:
+  postgres_data:
+  redis_data:
+  rabbitmq_data:
+
+networks:
+  hrms-network:
+    driver: bridge

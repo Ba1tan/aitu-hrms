@@ -1,8 +1,13 @@
 # docker-compose.microservices.yml — MIGRATION PHASE
 #
 # Topology:
-#   nginx / NPM  →  :8090  →  api-gateway:8080  →  monolith:8081
-#                                                 ↘  (future: user-service:8081, etc.)
+#   nginx / NPM  →  :${GATEWAY_PORT}  →  api-gateway:8080  →  monolith:8081
+#
+# Container names and volumes are prefixed by COMPOSE_PROJECT_NAME so prod
+# and staging can coexist on the same host without conflicts:
+#
+#   prod    → COMPOSE_PROJECT_NAME=hrms          GATEWAY_PORT=8090
+#   staging → COMPOSE_PROJECT_NAME=hrms-staging  GATEWAY_PORT=8091
 #
 # Usage:
 #   docker compose -f docker-compose.microservices.yml up -d --build
@@ -15,7 +20,6 @@ services:
 
   postgres:
     image: postgres:16-alpine
-    container_name: hrms-postgres
     restart: unless-stopped
     environment:
       POSTGRES_DB: ${DB_NAME:-hrms}
@@ -34,7 +38,6 @@ services:
 
   redis:
     image: redis:7-alpine
-    container_name: hrms-redis
     restart: unless-stopped
     command: redis-server --requirepass ${REDIS_PASSWORD:-hrms_redis_pass} --save 60 1
     volumes:
@@ -49,7 +52,6 @@ services:
 
   rabbitmq:
     image: rabbitmq:3-management-alpine
-    container_name: hrms-rabbitmq
     restart: unless-stopped
     environment:
       RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-hrms}
@@ -64,18 +66,14 @@ services:
       timeout: 10s
       retries: 5
 
-  # ────────── Monolith (moves from :8080 → :8081) ──────────
-  # Local dev:  docker compose -f docker-compose.microservices.yml up -d --build monolith
-  # Production: MONOLITH_IMAGE=ghcr.io/…/hrms-monolith:main docker compose … up -d --no-deps monolith
+  # ────────── Monolith (internal only — not exposed on host) ──────────
 
   monolith:
     image: ${MONOLITH_IMAGE:-hrms-monolith:local}
     build:
       context: ./monolith
       dockerfile: Dockerfile
-    container_name: hrms-monolith
     restart: unless-stopped
-    # Not exposed on host — only reachable by the gateway inside hrms-network
     environment:
       SPRING_PROFILE: ${SPRING_PROFILE:-prod}
       SERVER_PORT: 8081
@@ -86,7 +84,7 @@ services:
       REDIS_PORT: 6379
       REDIS_PASSWORD: ${REDIS_PASSWORD:-hrms_redis_pass}
       JWT_SECRET: ${JWT_SECRET}
-      CORS_ORIGINS: ${CORS_ORIGINS:-https://hrms.nursnerv.uk,http://localhost:5173}
+      CORS_ORIGINS: ${CORS_ORIGINS:-https://hrms.nursnerv.uk}
     networks:
       - hrms-network
     depends_on:
@@ -101,19 +99,16 @@ services:
       start_period: 60s
       retries: 3
 
-  # ────────── API Gateway (takes :8090 → public) ──────────
-  # Local dev:  docker compose -f docker-compose.microservices.yml up -d --build gateway
-  # Production: GATEWAY_IMAGE=ghcr.io/…/hrms-gateway:main docker compose … up -d --no-deps gateway
+  # ────────── API Gateway ──────────
 
   gateway:
     image: ${GATEWAY_IMAGE:-hrms-gateway:local}
     build:
       context: ./services/api-gateway
       dockerfile: Dockerfile
-    container_name: hrms-gateway
     restart: unless-stopped
     ports:
-      - "8090:8080"    # nginx / NPM → localhost:8090 → gateway
+      - "${GATEWAY_PORT:-8090}:8080"
     environment:
       MONOLITH_URI: http://monolith:8081
       REDIS_HOST: redis

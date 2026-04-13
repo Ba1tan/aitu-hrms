@@ -138,11 +138,12 @@ jobs:
             GATEWAY_IMAGE=$IMAGE:main docker compose -f docker-compose.microservices.yml up -d --no-deps gateway
 
             echo "Waiting for gateway to become healthy..."
+            CID=$(docker compose -f docker-compose.microservices.yml ps -q gateway)
             for i in $(seq 1 8); do
-              STATUS=$(docker inspect --format='{{.State.Health.Status}}' hrms-gateway 2>/dev/null || echo "unknown")
+              STATUS=$(docker inspect --format='{{.State.Health.Status}}' $CID 2>/dev/null || echo "unknown")
               echo "  Attempt $i/8 — $STATUS"
               [ "$STATUS" = "healthy" ] && echo "✓ Gateway deployed!" && break
-              [ $i -eq 8 ] && docker logs hrms-gateway --tail 30 && exit 1
+              [ $i -eq 8 ] && docker logs $CID --tail 30 && exit 1
               sleep 10
             done
             docker image prune -f
@@ -175,11 +176,12 @@ jobs:
             GATEWAY_IMAGE=$IMAGE:develop docker compose -f docker-compose.microservices.yml up -d --no-deps gateway
 
             echo "Waiting for gateway to become healthy..."
+            CID=$(docker compose -f docker-compose.microservices.yml ps -q gateway)
             for i in $(seq 1 8); do
-              STATUS=$(docker inspect --format='{{.State.Health.Status}}' hrms-gateway 2>/dev/null || echo "unknown")
+              STATUS=$(docker inspect --format='{{.State.Health.Status}}' $CID 2>/dev/null || echo "unknown")
               echo "  Attempt $i/8 — $STATUS"
               [ "$STATUS" = "healthy" ] && echo "✓ Staging gateway deployed!" && break
-              [ $i -eq 8 ] && docker logs hrms-gateway --tail 30 && exit 1
+              [ $i -eq 8 ] && docker logs $CID --tail 30 && exit 1
               sleep 10
             done
             docker image prune -f

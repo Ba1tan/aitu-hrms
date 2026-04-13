@@ -157,11 +157,12 @@ jobs:
             MONOLITH_IMAGE=$IMAGE:main docker compose -f docker-compose.microservices.yml up -d --no-deps monolith
 
             echo "Waiting for monolith to become healthy..."
+            CID=$(docker compose -f docker-compose.microservices.yml ps -q monolith)
             for i in $(seq 1 12); do
-              STATUS=$(docker inspect --format='{{.State.Health.Status}}' hrms-monolith 2>/dev/null || echo "unknown")
+              STATUS=$(docker inspect --format='{{.State.Health.Status}}' $CID 2>/dev/null || echo "unknown")
               echo "  Attempt $i/12 — $STATUS"
               [ "$STATUS" = "healthy" ] && echo "✓ Monolith deployed!" && break
-              [ $i -eq 12 ] && docker logs hrms-monolith --tail 30 && exit 1
+              [ $i -eq 12 ] && docker logs $CID --tail 30 && exit 1
               sleep 10
             done
             docker image prune -f
@@ -196,11 +197,12 @@ jobs:
             MONOLITH_IMAGE=$IMAGE:develop docker compose -f docker-compose.microservices.yml up -d --no-deps monolith
 
             echo "Waiting for monolith to become healthy..."
+            CID=$(docker compose -f docker-compose.microservices.yml ps -q monolith)
             for i in $(seq 1 12); do
-              STATUS=$(docker inspect --format='{{.State.Health.Status}}' hrms-monolith 2>/dev/null || echo "unknown")
+              STATUS=$(docker inspect --format='{{.State.Health.Status}}' $CID 2>/dev/null || echo "unknown")
               echo "  Attempt $i/12 — $STATUS"
               [ "$STATUS" = "healthy" ] && echo "✓ Staging monolith deployed!" && break
-              [ $i -eq 12 ] && docker logs hrms-monolith --tail 30 && exit 1
+              [ $i -eq 12 ] && docker logs $CID --tail 30 && exit 1
               sleep 10
             done
             docker image prune -f

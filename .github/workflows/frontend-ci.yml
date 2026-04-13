@@ -40,7 +40,7 @@ jobs:
 
       - name: Type check
         working-directory: frontend/hrms-web
-        run: pnpm typecheck || true
+        run: pnpm typecheck
 
       - name: Build
         working-directory: frontend/hrms-web
@@ -129,7 +129,7 @@ jobs:
             git pull origin main
             echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
             docker pull $IMAGE:main
-            FRONTEND_IMAGE=$IMAGE:main docker compose -f docker-compose.microservices.yml up -d --no-deps frontend
+            FRONTEND_IMAGE=$IMAGE:main docker compose --profile production -f docker-compose.microservices.yml up -d --no-deps frontend
             sleep 5
             CID=$(docker compose -f docker-compose.microservices.yml ps -q frontend)
             docker inspect --format='{{.State.Status}}' $CID
@@ -144,7 +144,7 @@ jobs:
 
     environment:
       name: staging
-      url: http://192.168.100.53:3000
+      url: ${{ vars.STAGING_URL }}
 
     steps:
       - name: Deploy via SSH

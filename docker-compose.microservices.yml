@@ -16,7 +16,7 @@
 
 services:
 
-  # ────────── Infrastructure ──────────
+  #Infrastructure
 
   postgres:
     image: postgres:16-alpine
@@ -66,7 +66,7 @@ services:
       timeout: 10s
       retries: 5
 
-  # ────────── Monolith (internal only — not exposed on host) ──────────
+  #Monolith (internal only — not exposed on host)
 
   monolith:
     image: ${MONOLITH_IMAGE:-hrms-monolith:local}
@@ -100,7 +100,7 @@ services:
       start_period: 60s
       retries: 3
 
-  # ────────── API Gateway ──────────
+  #API Gateway
 
   gateway:
     image: ${GATEWAY_IMAGE:-hrms-gateway:local}
@@ -116,6 +116,7 @@ services:
       REDIS_PORT: 6379
       REDIS_PASSWORD: ${REDIS_PASSWORD:-hrms_redis_pass}
       JWT_SECRET: ${JWT_SECRET}
+      CORS_ORIGINS: ${CORS_ORIGINS:-https://hrms.nursnerv.uk,http://localhost:5173}
     networks:
       - hrms-network
     depends_on:
@@ -130,7 +131,7 @@ services:
       start_period: 30s
       retries: 3
 
-  # ────────── Frontend ──────────
+  #Frontend
   # Staging: accessible directly on FRONTEND_PORT (default 3000)
   # Production: not exposed directly — nginx reverse proxy handles routing
 
@@ -153,9 +154,12 @@ services:
 
   # ────────── Nginx reverse proxy (production only) ──────────
   # Routes /api/* → gateway, /* → frontend
-  # In staging, comment this out and use FRONTEND_PORT instead.
+  # Only starts when --profile production is passed:
+  #   prod:    docker compose --profile production up -d
+  #   staging: docker compose up -d   (nginx absent)
 
   nginx:
+    profiles: [production]
     image: nginx:alpine
     restart: unless-stopped
     ports:

@@ -21,41 +21,73 @@ public class JwtService {
     @Value("${app.jwt.secret}")
     private String secretKey;
 
-    @Value("${app.jwt.access-token-expiry-ms}")
+    // Default 0 — services that only validate tokens (e.g. api-gateway) don't need these.
+    @Value("${app.jwt.access-token-expiry-ms:0}")
     private long accessTokenExpiryMs;
 
-    @Value("${app.jwt.refresh-token-expiry-ms}")
+    @Value("${app.jwt.refresh-token-expiry-ms:0}")
     private long refreshTokenExpiryMs;
 
+    // ── Generation (user-service only) ────────────────────────────────────────
+
     public String generateAccessToken(UserDetails userDetails) {
-        Map<String, Object> claims = new HashMap<>();
-        return buildToken(claims, userDetails.getUsername(), accessTokenExpiryMs);
+        return buildToken(new HashMap<>(), userDetails.getUsername(), accessTokenExpiryMs);
     }
 
     public String generateRefreshToken(UserDetails userDetails) {
         return buildToken(new HashMap<>(), userDetails.getUsername(), refreshTokenExpiryMs);
     }
 
-    public String extractUsername(String token) {
-        return extractClaim(token, Claims::getSubject);
+    // ── Validation (all services) ─────────────────────────────────────────────
+
+    /**
+     * Returns true if the token has a valid signature and is not expired.
+     */
+    public boolean isValid(String token) {
+        try {
+            extractAllClaims(token);
+            return true;
+        } catch (JwtException | IllegalArgumentException e) {
+            log.debug("JWT validation failed: {}", e.getMessage());
+            return false;
+        }
     }
 
     public boolean isTokenValid(String token, UserDetails userDetails) {
-        final String username = extractUsername(token);
-        return username.equals(userDetails.getUsername()) && !isTokenExpired(token);
+        return extractUsername(token).equals(userDetails.getUsername()) && !isTokenExpired(token);
     }
 
     public boolean isTokenExpired(String token) {
         return extractExpiration(token).before(new Date());
     }
 
-    private Date extractExpiration(String token) {
-        return extractClaim(token, Claims::getExpiration);
+    // ── Claim extraction ──────────────────────────────────────────────────────
+
+    public String extractUsername(String token) {
+        return extractClaim(token, Claims::getSubject);
+    }
+
+    /** Alias for extractUsername — used by gateway filter. */
+    public String extractUserId(String token) {
+        return extractClaim(token, Claims::getSubject);
+    }
+
+    public String extractEmail(String token) {
+        return extractClaim(token, claims -> claims.get("email", String.class));
+    }
+
+    public String extractRole(String token) {
+        return extractClaim(token, claims -> claims.get("role", String.class));
     }
 
     public <T> T extractClaim(String token, Function<Claims, T> claimsResolver) {
-        final Claims claims = extractAllClaims(token);
-        return claimsResolver.apply(claims);
+        return claimsResolver.apply(extractAllClaims(token));
+    }
+
+    // ── Internals ─────────────────────────────────────────────────────────────
+
+    private Date extractExpiration(String token) {
+        return extractClaim(token, Claims::getExpiration);
     }
 
     private Claims extractAllClaims(String token) {

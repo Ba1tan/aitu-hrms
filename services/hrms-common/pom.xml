@@ -65,5 +65,23 @@
             <version>6.1.14</version>
             <scope>provided</scope>
         </dependency>
+
+        <!-- Spring Security (for UserDetails in JwtService.generate*) -->
+        <dependency>
+            <groupId>org.springframework.security</groupId>
+            <artifactId>spring-security-core</artifactId>
+            <version>6.3.4</version>
+            <scope>provided</scope>
+        </dependency>
     </dependencies>
+
+    <!-- Publish to GitHub Packages Maven registry.
+         Replace OWNER with your GitHub username/org before running mvn deploy. -->
+    <distributionManagement>
+        <repository>
+            <id>github</id>
+            <name>GitHub Packages</name>
+            <url>https://maven.pkg.github.com/ba1tan/hrms-backend</url>
+        </repository>
+    </distributionManagement>
 </project>

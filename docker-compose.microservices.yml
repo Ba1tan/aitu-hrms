@@ -130,6 +130,23 @@ services:
       start_period: 30s
       retries: 3
 
+  # ────────── Frontend ──────────
+
+  frontend:
+    image: ${FRONTEND_IMAGE:-hrms-frontend:local}
+    restart: unless-stopped
+    networks:
+      - hrms-network
+    depends_on:
+      gateway:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "nginx", "-t"]
+      interval: 30s
+      timeout: 5s
+      start_period: 10s
+      retries: 3
+
 volumes:
   postgres_data:
   redis_data:

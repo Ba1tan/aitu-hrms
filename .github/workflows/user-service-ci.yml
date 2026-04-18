@@ -1,46 +1,31 @@
-name: Monolith CI/CD
+name: User Service CI/CD
 
 on:
   push:
     branches: [ main, develop ]
     paths:
-      - 'monolith/**'
+      - 'services/user-service/**'
+      - 'services/hrms-common/**'
       - 'docker-compose.microservices.yml'
-      - '.github/workflows/ci-cd.yml'
+      - '.github/workflows/user-service-ci.yml'
   pull_request:
     branches: [ main, develop ]
     paths:
-      - 'monolith/**'
-      - '.github/workflows/ci-cd.yml'
+      - 'services/user-service/**'
+      - 'services/hrms-common/**'
+      - '.github/workflows/user-service-ci.yml'
 
 env:
   JAVA_VERSION: '17'
   REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}/hrms-monolith
+  IMAGE_NAME: ${{ github.repository }}/hrms-user-service
 
 jobs:
 
-  # ─────────────────────────────────────────────────────────────────────────────
-  # Job 1: Test & Build
-  # ─────────────────────────────────────────────────────────────────────────────
+  # Job 1: Test & Build (H2 in-memory, Flyway disabled in test profile)
   test:
     name: Test & Build
     runs-on: ubuntu-latest
-
-    services:
-      postgres:
-        image: postgres:16-alpine
-        env:
-          POSTGRES_DB: hrms_test
-          POSTGRES_USER: hrms_user
-          POSTGRES_PASSWORD: hrms_pass
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-        ports:
-          - 5432:5432
 
     steps:
       - uses: actions/checkout@v4
@@ -51,31 +36,29 @@ jobs:
           distribution: temurin
           cache: maven
 
+      - name: Install hrms-common
+        working-directory: services/hrms-common
+        run: mvn install -DskipTests --no-transfer-progress
+
       - name: Build & test
-        working-directory: monolith
-        run: mvn verify
-        env:
-          DB_URL: jdbc:postgresql://localhost:5432/hrms_test
-          DB_USERNAME: hrms_user
-          DB_PASSWORD: hrms_pass
-          SPRING_PROFILE: test
+        working-directory: services/user-service
+        run: mvn verify --no-transfer-progress
 
       - name: Upload test results
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: monolith-test-results
-          path: monolith/target/surefire-reports/
+          name: user-service-test-results
+          path: services/user-service/target/surefire-reports/
 
       - name: Upload JAR
         uses: actions/upload-artifact@v4
         with:
-          name: monolith-jar
-          path: monolith/target/*.jar
+          name: user-service-jar
+          path: services/user-service/target/*.jar
 
-  # ─────────────────────────────────────────────────────────────────────────────
+
   # Job 2: Build & Push Docker Image
-  # ─────────────────────────────────────────────────────────────────────────────
   docker:
     name: Build & Push Image
     needs: test
@@ -113,17 +96,19 @@ jobs:
       - name: Build and push
         uses: docker/build-push-action@v5
         with:
-          context: monolith
-          file: monolith/Dockerfile
+          context: services
+          file: services/user-service/Dockerfile
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+          build-args: |
+            GITHUB_ACTOR=${{ github.actor }}
+            GITHUB_TOKEN=${{ secrets.GITHUB_TOKEN }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-  # ─────────────────────────────────────────────────────────────────────────────
-  # Job 3: Deploy to Production  (main only)
-  # ─────────────────────────────────────────────────────────────────────────────
+
+  # Job 3: Deploy to Production (main only)
   deploy-production:
     name: Deploy to Production
     needs: docker
@@ -148,22 +133,21 @@ jobs:
             git fetch origin main && git reset --hard origin/main
             echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
             docker pull $IMAGE:main
-            MONOLITH_IMAGE=$IMAGE:main docker compose --profile production -f docker-compose.microservices.yml up -d --no-deps monolith
+            USER_SERVICE_IMAGE=$IMAGE:main docker compose --profile production -f docker-compose.microservices.yml up -d --no-deps user-service
 
-            echo "Waiting for monolith to become healthy..."
-            CID=$(docker compose -f docker-compose.microservices.yml ps -q monolith)
+            echo "Waiting for user-service to become healthy..."
+            CID=$(docker compose -f docker-compose.microservices.yml ps -q user-service)
             for i in $(seq 1 12); do
               STATUS=$(docker inspect --format='{{.State.Health.Status}}' $CID 2>/dev/null || echo "unknown")
               echo "  Attempt $i/12 — $STATUS"
-              [ "$STATUS" = "healthy" ] && echo "✓ Monolith deployed!" && break
-              [ $i -eq 12 ] && docker logs $CID --tail 30 && exit 1
+              [ "$STATUS" = "healthy" ] && echo "✓ user-service deployed!" && break
+              [ $i -eq 12 ] && docker logs $CID --tail 40 && exit 1
               sleep 10
             done
             docker image prune -f
 
-  # ─────────────────────────────────────────────────────────────────────────────
-  # Job 4: Deploy to Staging  (develop only)
-  # ─────────────────────────────────────────────────────────────────────────────
+
+  # Job 4: Deploy to Staging (develop only)
   deploy-staging:
     name: Deploy to Staging
     needs: docker
@@ -188,15 +172,15 @@ jobs:
             git fetch origin develop && git reset --hard origin/develop
             echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
             docker pull $IMAGE:develop
-            MONOLITH_IMAGE=$IMAGE:develop docker compose -f docker-compose.microservices.yml up -d --no-deps monolith
+            USER_SERVICE_IMAGE=$IMAGE:develop docker compose -f docker-compose.microservices.yml up -d --no-deps user-service
 
-            echo "Waiting for monolith to become healthy..."
-            CID=$(docker compose -f docker-compose.microservices.yml ps -q monolith)
+            echo "Waiting for user-service to become healthy..."
+            CID=$(docker compose -f docker-compose.microservices.yml ps -q user-service)
             for i in $(seq 1 12); do
               STATUS=$(docker inspect --format='{{.State.Health.Status}}' $CID 2>/dev/null || echo "unknown")
               echo "  Attempt $i/12 — $STATUS"
-              [ "$STATUS" = "healthy" ] && echo "✓ Staging monolith deployed!" && break
-              [ $i -eq 12 ] && docker logs $CID --tail 30 && exit 1
+              [ "$STATUS" = "healthy" ] && echo "✓ Staging user-service deployed!" && break
+              [ $i -eq 12 ] && docker logs $CID --tail 40 && exit 1
               sleep 10
             done
             docker image prune -f

@@ -23,6 +23,16 @@
         <spring-cloud.version>2023.0.3</spring-cloud.version>
     </properties>
 
+    <repositories>
+        <repository>
+            <id>github</id>
+            <name>GitHub Packages (hrms-common)</name>
+            <url>https://maven.pkg.github.com/ba1tan/aitu-hrms</url>
+            <releases><enabled>true</enabled></releases>
+            <snapshots><enabled>true</enabled></snapshots>
+        </repository>
+    </repositories>
+
     <dependencies>
         <!-- Spring Cloud Gateway (reactive) -->
         <dependency>

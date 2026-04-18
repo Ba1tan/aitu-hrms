@@ -20,11 +20,14 @@ spring:
     show-sql: false
     properties:
       hibernate:
+        default_schema: public
         dialect: org.hibernate.dialect.PostgreSQLDialect
         format_sql: true
 
   flyway:
     enabled: true
+    default-schema: public
+    schemas: public
     locations: classpath:db/migration
     baseline-on-migrate: true
 

@@ -77,7 +77,7 @@ services:
     environment:
       SPRING_PROFILE: ${SPRING_PROFILE:-prod}
       SERVER_PORT: 8081
-      DB_URL: jdbc:postgresql://postgres:5432/${DB_NAME:-hrms}
+      DB_URL: jdbc:postgresql://postgres:5432/${DB_NAME:-hrms}?currentSchema=public
       DB_USERNAME: ${DB_USERNAME:-hrms_user}
       DB_PASSWORD: ${DB_PASSWORD:-hrms_pass}
       REDIS_HOST: redis
@@ -100,6 +100,53 @@ services:
       start_period: 60s
       retries: 3
 
+  #User Service
+
+  user-service:
+    image: ${USER_SERVICE_IMAGE:-hrms-user-service:local}
+    build:
+      context: ./services
+      dockerfile: user-service/Dockerfile
+      args:
+        GITHUB_ACTOR: ${GITHUB_ACTOR}
+        GITHUB_TOKEN: ${GITHUB_TOKEN}
+    restart: unless-stopped
+    environment:
+      SERVER_PORT: 8081
+      DB_URL: jdbc:postgresql://postgres:5432/${DB_NAME:-hrms}?currentSchema=hrms_user
+      DB_USERNAME: ${DB_USERNAME:-hrms_user}
+      DB_PASSWORD: ${DB_PASSWORD:-hrms_pass}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-hrms_redis_pass}
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
+      RABBITMQ_USER: ${RABBITMQ_USER:-hrms}
+      RABBITMQ_PASS: ${RABBITMQ_PASS:-hrms_pass}
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_ACCESS_EXPIRY: ${JWT_ACCESS_EXPIRY:-900000}
+      JWT_REFRESH_EXPIRY: ${JWT_REFRESH_EXPIRY:-604800000}
+      MAIL_HOST: ${MAIL_HOST:-smtp.gmail.com}
+      MAIL_PORT: ${MAIL_PORT:-587}
+      MAIL_USERNAME: ${MAIL_USERNAME:-}
+      MAIL_PASSWORD: ${MAIL_PASSWORD:-}
+      MAIL_HEALTH_ENABLED: ${MAIL_HEALTH_ENABLED:-false}
+    networks:
+      - hrms-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8081/actuator/health | grep -q UP || exit 1"]
+      interval: 30s
+      timeout: 10s
+      start_period: 60s
+      retries: 3
+
   #API Gateway
 
   gateway:
@@ -107,11 +154,15 @@ services:
     build:
       context: ./services
       dockerfile: api-gateway/Dockerfile
+      args:
+        GITHUB_ACTOR: ${GITHUB_ACTOR}
+        GITHUB_TOKEN: ${GITHUB_TOKEN}
     restart: unless-stopped
     ports:
       - "${GATEWAY_PORT:-8090}:8080"
     environment:
       MONOLITH_URI: http://monolith:8081
+      USER_SERVICE_URI: http://user-service:8081
       REDIS_HOST: redis
       REDIS_PORT: 6379
       REDIS_PASSWORD: ${REDIS_PASSWORD:-hrms_redis_pass}
@@ -121,6 +172,8 @@ services:
       - hrms-network
     depends_on:
       monolith:
+        condition: service_healthy
+      user-service:
         condition: service_healthy
       redis:
         condition: service_healthy
@@ -137,6 +190,9 @@ services:
 
   frontend:
     image: ${FRONTEND_IMAGE:-hrms-frontend:local}
+    build:
+      context: ./frontend/hrms-web
+      dockerfile: Dockerfile
     restart: unless-stopped
     ports:
       - "${FRONTEND_PORT:-}:80"

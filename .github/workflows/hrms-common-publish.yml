@@ -2,7 +2,7 @@ name: hrms-common Publish
 
 # Publishes kz.aitu:hrms-common to GitHub Packages Maven registry.
 # All services that declare it as a dependency can then pull it from:
-#   https://maven.pkg.github.com/OWNER/hrms-backend
+#   https://maven.pkg.github.com/ba1tan/aitu-hrms
 #
 # One-time setup:
 #   1. Replace OWNER in services/hrms-common/pom.xml distributionManagement URL

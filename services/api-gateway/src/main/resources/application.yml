@@ -28,14 +28,18 @@ spring:
       # ---------------------------------------------------------------
       routes:
         - id: auth
-          uri: ${MONOLITH_URI:http://localhost:8081}
+          uri: ${USER_SERVICE_URI:http://localhost:8081}
           predicates:
             - Path=/api/auth/**
+          filters:
+            - StripPrefix=1
 
         - id: users
-          uri: ${MONOLITH_URI:http://localhost:8081}
+          uri: ${USER_SERVICE_URI:http://localhost:8081}
           predicates:
             - Path=/api/v1/users/**
+          filters:
+            - StripPrefix=1
 
         - id: employees
           uri: ${MONOLITH_URI:http://localhost:8081}
@@ -106,4 +110,4 @@ management:
 logging:
   level:
     org.springframework.cloud.gateway: INFO
-    kz.aitu.hrms.gateway: DEBUG
+    kz.aitu.hrms.gateway: INFO

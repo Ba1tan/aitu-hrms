@@ -24,7 +24,13 @@ public final class JwtAuthFilter implements GlobalFilter, Ordered {
             "/api/auth/refresh",
             "/api/auth/forgot-password",
             "/api/auth/reset-password",
-            "/actuator/health"
+            "/actuator/health",
+            "/api/swagger-ui",
+            "/api/v3/api-docs",
+            "/user-api/swagger-ui",
+            "/user-api/v3/api-docs",
+            "/employee-api/swagger-ui",
+            "/employee-api/v3/api-docs"
     );
 
     private final JwtTokenValidator jwtTokenValidator;

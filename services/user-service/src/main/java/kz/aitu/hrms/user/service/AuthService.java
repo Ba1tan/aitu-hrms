@@ -183,7 +183,7 @@ public class AuthService {
         return getProfile(user);
     }
 
-    // ── helpers ──
+    //helpers
 
     private void recordFailedLogin(User user) {
         int attempts = user.getFailedLoginCount() + 1;

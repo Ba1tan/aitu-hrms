@@ -1,13 +1,15 @@
 server:
-  port: ${SERVER_PORT:8081}
+  port: ${SERVER_PORT:8082}
+  servlet:
+    context-path: /api
   forward-headers-strategy: framework
 
 spring:
   application:
-    name: user-service
+    name: employee-service
 
   datasource:
-    url: ${DB_URL:jdbc:postgresql://localhost:5432/hrms?currentSchema=hrms_user}
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/hrms?currentSchema=hrms_employee}
     username: ${DB_USERNAME:hrms_user}
     password: ${DB_PASSWORD:hrms_pass}
     driver-class-name: org.postgresql.Driver
@@ -22,14 +24,14 @@ spring:
     show-sql: false
     properties:
       hibernate:
-        default_schema: hrms_user
+        default_schema: hrms_employee
         dialect: org.hibernate.dialect.PostgreSQLDialect
         format_sql: true
 
   flyway:
     enabled: true
-    default-schema: hrms_user
-    schemas: hrms_user
+    default-schema: hrms_employee
+    schemas: hrms_employee
     locations: classpath:db/migration
     baseline-on-migrate: true
 
@@ -46,14 +48,10 @@ spring:
     username: ${RABBITMQ_USER:hrms}
     password: ${RABBITMQ_PASS:hrms_pass}
 
-  mail:
-    host: ${MAIL_HOST:smtp.gmail.com}
-    port: ${MAIL_PORT:587}
-    username: ${MAIL_USERNAME:}
-    password: ${MAIL_PASSWORD:}
-    properties:
-      mail.smtp.auth: true
-      mail.smtp.starttls.enable: true
+  servlet:
+    multipart:
+      max-file-size: 20MB
+      max-request-size: 25MB
 
   jackson:
     serialization:
@@ -64,14 +62,12 @@ spring:
 app:
   jwt:
     secret: ${JWT_SECRET:}
-    access-token-expiry-ms: ${JWT_ACCESS_EXPIRY:900000}       # 15 min
-    refresh-token-expiry-ms: ${JWT_REFRESH_EXPIRY:604800000}  # 7 days
 
-  security:
-    lockout-minutes: ${LOCKOUT_MINUTES:30}
+  storage:
+    base-path: ${STORAGE_BASE_PATH:/data/hrms/uploads}
 
-  password-reset:
-    ttl-seconds: ${PWD_RESET_TTL:1800}  # 30 min
+  services:
+    user-service-uri: ${USER_SERVICE_URI:http://localhost:8081}
 
 management:
   endpoints:
@@ -81,9 +77,6 @@ management:
   endpoint:
     health:
       show-details: when-authorized
-  health:
-    mail:
-      enabled: ${MAIL_HEALTH_ENABLED:false}
 
 springdoc:
   api-docs:
@@ -93,6 +86,6 @@ springdoc:
 
 logging:
   level:
-    kz.aitu.hrms.user: INFO
+    kz.aitu.hrms.employee: INFO
     org.springframework.security: WARN
     org.hibernate.SQL: WARN

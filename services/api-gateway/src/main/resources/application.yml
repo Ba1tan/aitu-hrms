@@ -30,13 +30,13 @@ spring:
         - id: monolith-swagger
           uri: ${MONOLITH_URI:http://localhost:8081}
           predicates:
-            - Path=/api/swagger-ui/**,/api/v3/api-docs/**
+            - Path=/api/swagger-ui/**,/api/swagger-ui.html,/api/v3/api-docs/**
 
 
         - id: user-service-swagger
           uri: ${USER_SERVICE_URI:http://localhost:8081}
           predicates:
-            - Path=/user-api/swagger-ui/**,/user-api/v3/api-docs/**
+            - Path=/user-api/swagger-ui/**,/user-api/swagger-ui.html,/user-api/v3/api-docs/**
           filters:
             - StripPrefix=1
 
@@ -57,7 +57,7 @@ spring:
         - id: employee-service-swagger
           uri: ${EMPLOYEE_SERVICE_URI:http://localhost:8082}
           predicates:
-            - Path=/employee-api/swagger-ui/**,/employee-api/v3/api-docs/**
+            - Path=/employee-api/swagger-ui/**,/employee-api/swagger-ui.html,/employee-api/v3/api-docs/**
           filters:
             - RewritePath=/employee-api/(?<segment>.*), /api/$\{segment}
             - AddRequestHeader=X-Forwarded-Prefix, /employee-api

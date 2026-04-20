@@ -147,6 +147,50 @@ services:
       start_period: 60s
       retries: 3
 
+  #Employee Service
+
+  employee-service:
+    image: ${EMPLOYEE_SERVICE_IMAGE:-hrms-employee-service:local}
+    build:
+      context: ./services
+      dockerfile: employee-service/Dockerfile
+      args:
+        GITHUB_ACTOR: ${GITHUB_ACTOR}
+        GITHUB_TOKEN: ${GITHUB_TOKEN}
+    restart: unless-stopped
+    environment:
+      SERVER_PORT: 8082
+      DB_URL: jdbc:postgresql://postgres:5432/${DB_NAME:-hrms}?currentSchema=hrms_employee
+      DB_USERNAME: ${DB_USERNAME:-hrms_user}
+      DB_PASSWORD: ${DB_PASSWORD:-hrms_pass}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-hrms_redis_pass}
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
+      RABBITMQ_USER: ${RABBITMQ_USER:-hrms}
+      RABBITMQ_PASS: ${RABBITMQ_PASS:-hrms_pass}
+      JWT_SECRET: ${JWT_SECRET}
+      USER_SERVICE_URI: http://user-service:8081
+      STORAGE_BASE_PATH: /data/hrms/uploads
+    volumes:
+      - employee_uploads:/data/hrms/uploads
+    networks:
+      - hrms-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8082/api/actuator/health | grep -q UP || exit 1"]
+      interval: 30s
+      timeout: 10s
+      start_period: 60s
+      retries: 3
+
   #API Gateway
 
   gateway:
@@ -163,6 +207,7 @@ services:
     environment:
       MONOLITH_URI: http://monolith:8081
       USER_SERVICE_URI: http://user-service:8081
+      EMPLOYEE_SERVICE_URI: http://employee-service:8082
       REDIS_HOST: redis
       REDIS_PORT: 6379
       REDIS_PASSWORD: ${REDIS_PASSWORD:-hrms_redis_pass}
@@ -174,6 +219,8 @@ services:
       monolith:
         condition: service_healthy
       user-service:
+        condition: service_healthy
+      employee-service:
         condition: service_healthy
       redis:
         condition: service_healthy
@@ -238,6 +285,7 @@ volumes:
   postgres_data:
   redis_data:
   rabbitmq_data:
+  employee_uploads:
 
 networks:
   hrms-network:

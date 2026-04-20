@@ -27,6 +27,19 @@ spring:
       # As each service is extracted, replace the uri for that route.
       # ---------------------------------------------------------------
       routes:
+        - id: monolith-swagger
+          uri: ${MONOLITH_URI:http://localhost:8081}
+          predicates:
+            - Path=/api/swagger-ui/**,/api/v3/api-docs/**
+
+
+        - id: user-service-swagger
+          uri: ${USER_SERVICE_URI:http://localhost:8081}
+          predicates:
+            - Path=/user-api/swagger-ui/**,/user-api/v3/api-docs/**
+          filters:
+            - StripPrefix=1
+
         - id: auth
           uri: ${USER_SERVICE_URI:http://localhost:8081}
           predicates:
@@ -41,8 +54,16 @@ spring:
           filters:
             - StripPrefix=1
 
-        - id: employees
-          uri: ${MONOLITH_URI:http://localhost:8081}
+        - id: employee-service-swagger
+          uri: ${EMPLOYEE_SERVICE_URI:http://localhost:8082}
+          predicates:
+            - Path=/employee-api/swagger-ui/**,/employee-api/v3/api-docs/**
+          filters:
+            - RewritePath=/employee-api/(?<segment>.*), /api/$\{segment}
+            - AddRequestHeader=X-Forwarded-Prefix, /employee-api
+
+        - id: employee-service
+          uri: ${EMPLOYEE_SERVICE_URI:http://localhost:8082}
           predicates:
             - Path=/api/v1/employees/**,/api/v1/departments/**,/api/v1/positions/**
 

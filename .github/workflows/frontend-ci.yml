@@ -166,3 +166,4 @@ jobs:
             docker inspect --format='{{.State.Status}}' $CID
             echo "✓ Frontend deployed"
             docker image prune -f
+

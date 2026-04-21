@@ -42,7 +42,7 @@ public class BiometricData extends BaseEntity {
     private String embeddingPath;
 
     @JdbcTypeCode(SqlTypes.ARRAY)
-    @Column(name = "photo_urls", columnDefinition = "text[]")
+    @Column(name = "photo_urls")
     @Builder.Default
     private List<String> photoUrls = new ArrayList<>();
 

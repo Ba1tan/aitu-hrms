@@ -61,7 +61,7 @@ class DepartmentControllerSecurityTest {
     }
 
     @Test
-    @WithMockUser(roles = "HR_MANAGER")
+    @WithMockUser(authorities = "DEPT_MANAGE")
     void hrManagerCanCreateDepartment() throws Exception {
         when(departmentService.create(any())).thenReturn(
                 DepartmentDtos.DepartmentResponse.builder().name("Engineering").build());
@@ -76,20 +76,18 @@ class DepartmentControllerSecurityTest {
 
     @Test
     @WithMockUser(roles = "HR_SPECIALIST")
-    void hrSpecialistCanCreateDepartment() throws Exception {
-        when(departmentService.create(any())).thenReturn(
-                DepartmentDtos.DepartmentResponse.builder().name("Engineering").build());
+    void hrSpecialistCannotCreateDepartment() throws Exception {
         DepartmentDtos.CreateDepartmentRequest req = new DepartmentDtos.CreateDepartmentRequest();
         req.setName("Engineering");
         mvc.perform(post("/v1/departments")
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(req)))
-                .andExpect(status().isCreated());
+                .andExpect(status().isForbidden());
     }
 
     @Test
-    @WithMockUser(roles = "HR_MANAGER")
+    @WithMockUser(authorities = "DEPT_MANAGE")
     void hrManagerCanDeleteDepartment() throws Exception {
         mvc.perform(delete("/v1/departments/11111111-1111-1111-1111-111111111111")
                         .with(csrf()))
@@ -105,7 +103,7 @@ class DepartmentControllerSecurityTest {
     }
 
     @Test
-    @WithMockUser(roles = "SUPER_ADMIN")
+    @WithMockUser(authorities = "DEPT_MANAGE")
     void superAdminCanDeleteDepartment() throws Exception {
         mvc.perform(delete("/v1/departments/11111111-1111-1111-1111-111111111111")
                         .with(csrf()))

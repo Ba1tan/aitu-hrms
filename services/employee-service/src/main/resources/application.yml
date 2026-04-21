@@ -68,6 +68,7 @@ app:
 
   services:
     user-service-uri: ${USER_SERVICE_URI:http://localhost:8081}
+    ai-ml-service-uri: ${AI_ML_SERVICE_URI:http://localhost:8086}
 
 management:
   endpoints:

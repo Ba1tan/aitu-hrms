@@ -172,6 +172,7 @@ services:
       RABBITMQ_PASS: ${RABBITMQ_PASS:-hrms_pass}
       JWT_SECRET: ${JWT_SECRET}
       USER_SERVICE_URI: http://user-service:8081
+      AI_ML_SERVICE_URI: ${AI_ML_SERVICE_URI:-http://ai-ml-service:8086}
       STORAGE_BASE_PATH: /data/hrms/uploads
     volumes:
       - employee_uploads:/data/hrms/uploads

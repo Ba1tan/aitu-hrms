@@ -39,7 +39,7 @@ public class EmergencyContactController {
 
     @Operation(summary = "Add an emergency contact")
     @PostMapping
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'HR_MANAGER', 'HR_SPECIALIST')")
+    @PreAuthorize("hasAuthority('EMPLOYEE_UPDATE')")
     public ResponseEntity<ApiResponse<EmergencyContactDtos.ContactResponse>> create(
             @PathVariable UUID id,
             @Valid @RequestBody EmergencyContactDtos.CreateContactRequest req) {
@@ -48,7 +48,7 @@ public class EmergencyContactController {
 
     @Operation(summary = "Update an emergency contact")
     @PutMapping("/{cId}")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'HR_MANAGER', 'HR_SPECIALIST')")
+    @PreAuthorize("hasAuthority('EMPLOYEE_UPDATE')")
     public ResponseEntity<ApiResponse<EmergencyContactDtos.ContactResponse>> update(
             @PathVariable UUID id,
             @PathVariable UUID cId,
@@ -58,7 +58,7 @@ public class EmergencyContactController {
 
     @Operation(summary = "Delete an emergency contact")
     @DeleteMapping("/{cId}")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'HR_MANAGER', 'HR_SPECIALIST')")
+    @PreAuthorize("hasAuthority('EMPLOYEE_UPDATE')")
     public ResponseEntity<ApiResponse<Void>> delete(@PathVariable UUID id, @PathVariable UUID cId) {
         contactService.delete(id, cId);
         return ResponseEntity.ok(ApiResponse.noContent("Contact deleted"));

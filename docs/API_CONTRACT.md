@@ -68,27 +68,32 @@ All IDs: UUID strings. All money: decimal strings (`"250575.00"`). All dates: `"
 | PUT | `/v1/positions/{id}` | EMPLOYEE_UPDATE |
 | DELETE | `/v1/positions/{id}` | EMPLOYEE_DELETE |
 
-### Attendance (18)
-| Method | Path | Permission |
-|--------|------|------------|
-| POST | `/v1/attendance/check-in` | ATTENDANCE_CHECKIN |
-| POST | `/v1/attendance/check-out` | ATTENDANCE_CHECKIN |
-| GET | `/v1/attendance/today` | ATTENDANCE_CHECKIN |
-| GET | `/v1/attendance/records` | own records |
-| GET | `/v1/attendance/records/employee/{id}` | ATTENDANCE_VIEW_* |
-| GET | `/v1/attendance/records/department/{id}` | ATTENDANCE_VIEW_TEAM |
-| GET | `/v1/attendance/records/daily` | ATTENDANCE_VIEW_ALL |
-| POST | `/v1/attendance/records` | ATTENDANCE_MANAGE |
-| PUT | `/v1/attendance/records/{id}` | ATTENDANCE_MANAGE |
-| POST | `/v1/attendance/records/bulk-absent` | ATTENDANCE_MANAGE |
-| GET | `/v1/attendance/summary/employee/{id}` | ATTENDANCE_VIEW_* |
-| GET | `/v1/attendance/summary/department/{id}` | ATTENDANCE_VIEW_TEAM |
-| GET | `/v1/attendance/summary/company` | ATTENDANCE_VIEW_ALL |
-| GET | `/v1/attendance/holidays` | any authenticated |
-| POST | `/v1/attendance/holidays` | ATTENDANCE_MANAGE |
-| PUT | `/v1/attendance/holidays/{id}` | ATTENDANCE_MANAGE |
-| DELETE | `/v1/attendance/holidays/{id}` | ATTENDANCE_MANAGE |
-| GET | `/v1/attendance/schedules` | any authenticated |
+### Attendance (20)
+
+**Config-driven:** Frontend reads `GET /v1/settings` → `attendance.check_in_methods` to decide which check-in UI to show. If includes `WEB` → show button on dashboard. If includes `FACE` → show camera button. If `attendance.require_face=true` → face only.
+
+| Method | Path | Permission | Notes |
+|--------|------|------------|-------|
+| POST | `/v1/attendance/check-in/face` | permitAll (face IS the auth) | Multipart: photo file |
+| POST | `/v1/attendance/check-out/face` | permitAll | Multipart: photo file |
+| POST | `/v1/attendance/check-in` | ATTENDANCE_CHECKIN | Web/manual: JWT auth, {method?} |
+| POST | `/v1/attendance/check-out` | ATTENDANCE_CHECKIN | Web/manual check-out |
+| GET | `/v1/attendance/today` | ATTENDANCE_CHECKIN | own status |
+| GET | `/v1/attendance/records` | own records | |
+| GET | `/v1/attendance/records/employee/{id}` | ATTENDANCE_VIEW_* | |
+| GET | `/v1/attendance/records/department/{id}` | ATTENDANCE_VIEW_TEAM | |
+| GET | `/v1/attendance/records/daily` | ATTENDANCE_VIEW_ALL | |
+| POST | `/v1/attendance/records` | ATTENDANCE_MANAGE | manual entry |
+| PUT | `/v1/attendance/records/{id}` | ATTENDANCE_MANAGE | |
+| POST | `/v1/attendance/records/bulk-absent` | ATTENDANCE_MANAGE | |
+| GET | `/v1/attendance/summary/employee/{id}` | ATTENDANCE_VIEW_* | |
+| GET | `/v1/attendance/summary/department/{id}` | ATTENDANCE_VIEW_TEAM | |
+| GET | `/v1/attendance/summary/company` | ATTENDANCE_VIEW_ALL | |
+| GET | `/v1/attendance/holidays` | any authenticated | |
+| POST | `/v1/attendance/holidays` | ATTENDANCE_MANAGE | |
+| PUT | `/v1/attendance/holidays/{id}` | ATTENDANCE_MANAGE | |
+| DELETE | `/v1/attendance/holidays/{id}` | ATTENDANCE_MANAGE | |
+| GET | `/v1/attendance/schedules` | any authenticated | |
 
 ### Leave (19)
 | Method | Path | Permission |
@@ -329,7 +334,44 @@ All IDs: UUID strings. All money: decimal strings (`"250575.00"`). All dates: `"
 
 ### Attendance
 
-**POST `/v1/attendance/check-in`**
+**Config check (do this on page load):**
+```typescript
+// Fetch settings to determine which check-in UI to show
+const settings = await api.get('/v1/settings');
+const methods = settings.data['attendance.check_in_methods']; // "FACE,WEB,MANUAL"
+const requireFace = settings.data['attendance.require_face'] === 'true';
+
+const showWebButton = methods.includes('WEB') && !requireFace;
+const showFaceButton = methods.includes('FACE');
+```
+
+**POST `/v1/attendance/check-in/face`** — Face recognition (no JWT needed, face IS the auth)
+```typescript
+// Request: multipart/form-data with photo file
+const formData = new FormData();
+formData.append('photo', capturedImageBlob, 'face.jpg');
+const response = await fetch('/api/v1/attendance/check-in/face', {
+  method: 'POST',
+  body: formData   // NO Authorization header — kiosk mode
+});
+```
+```json
+// Response 200 — face matched, checked in
+{
+  "id": "uuid", "workDate": "2026-04-08",
+  "checkIn": "2026-04-08T09:05:00", "checkOut": null,
+  "status": "PRESENT", "workedHours": null,
+  "method": "FACE",
+  "employeeName": "Иванов Иван",
+  "faceConfidence": 0.94
+}
+// Response 401 — face not recognized
+{ "success": false, "message": "Face not recognized: no_match" }
+// Response 503 — AI service down
+{ "success": false, "message": "Face recognition unavailable. Use manual check-in." }
+```
+
+**POST `/v1/attendance/check-in`** — Web/manual (requires JWT)
 ```json
 // Request (all optional — defaults from JWT)
 { "method": "WEB", "locationLat": 51.128, "locationLng": 71.430 }
@@ -341,6 +383,23 @@ All IDs: UUID strings. All money: decimal strings (`"250575.00"`). All dates: `"
   "method": "WEB"
 }
 // Error 400 if already checked in
+// Error 403 if method not allowed by config
+{ "success": false, "message": "Check-in method 'WEB' is not enabled. Allowed: FACE" }
+```
+
+**GET `/v1/attendance/today`** — My status
+```json
+// Response 200 (checked in)
+{
+  "checkedIn": true,
+  "checkInTime": "2026-04-08T09:05:00",
+  "checkedOut": false,
+  "status": "PRESENT",
+  "method": "FACE",
+  "workedHours": null
+}
+// Response 200 (not checked in)
+{ "checkedIn": false }
 ```
 
 **GET `/v1/attendance/summary/employee/{id}?year=2026&month=3`**

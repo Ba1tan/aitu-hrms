@@ -1,4 +1,4 @@
-# Payroll Service — CLAUDE.md
+# Payroll Service.md
 
 **Port:** 8085 | **Schema:** hrms_payroll | **Owner:** Nursultan
 

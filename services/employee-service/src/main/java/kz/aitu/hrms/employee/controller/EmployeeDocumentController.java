@@ -43,7 +43,7 @@ public class EmployeeDocumentController {
 
     @Operation(summary = "Upload a new document")
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'HR_MANAGER', 'HR_SPECIALIST')")
+    @PreAuthorize("hasAuthority('EMPLOYEE_DOCUMENTS')")
     public ResponseEntity<ApiResponse<EmployeeDocumentDtos.DocumentResponse>> upload(
             @PathVariable UUID id,
             @RequestParam("file") MultipartFile file,
@@ -70,7 +70,7 @@ public class EmployeeDocumentController {
 
     @Operation(summary = "Soft-delete a document")
     @DeleteMapping("/{docId}")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'HR_MANAGER')")
+    @PreAuthorize("hasAuthority('EMPLOYEE_DOCUMENTS')")
     public ResponseEntity<ApiResponse<Void>> delete(@PathVariable UUID id, @PathVariable UUID docId) {
         documentService.delete(id, docId);
         return ResponseEntity.ok(ApiResponse.noContent("Document deleted"));

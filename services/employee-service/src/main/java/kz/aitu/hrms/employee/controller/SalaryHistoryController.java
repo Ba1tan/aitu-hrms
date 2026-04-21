@@ -29,7 +29,7 @@ public class SalaryHistoryController {
 
     @Operation(summary = "List salary history (most recent first)")
     @GetMapping("/salary-history")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'DIRECTOR', 'HR_MANAGER', 'ACCOUNTANT')")
+    @PreAuthorize("hasAuthority('PAYROLL_READ_ALL')")
     public ResponseEntity<ApiResponse<List<SalaryHistoryDtos.SalaryHistoryResponse>>> list(
             @PathVariable UUID id) {
         return ResponseEntity.ok(ApiResponse.ok(salaryHistoryService.listForEmployee(id)));
@@ -37,7 +37,7 @@ public class SalaryHistoryController {
 
     @Operation(summary = "Record a salary change (updates base_salary and history)")
     @PostMapping("/salary-change")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'HR_MANAGER')")
+    @PreAuthorize("hasAuthority('PAYROLL_ADJUST')")
     public ResponseEntity<ApiResponse<SalaryHistoryDtos.SalaryHistoryResponse>> change(
             @PathVariable UUID id,
             @Valid @RequestBody SalaryHistoryDtos.SalaryChangeRequest req) {

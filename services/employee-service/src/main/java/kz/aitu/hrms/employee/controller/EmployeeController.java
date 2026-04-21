@@ -46,7 +46,7 @@ public class EmployeeController {
 
     @Operation(summary = "Create a new employee (auto-generates employee_number)")
     @PostMapping
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'HR_MANAGER', 'HR_SPECIALIST')")
+    @PreAuthorize("hasAuthority('EMPLOYEE_CREATE')")
     public ResponseEntity<ApiResponse<EmployeeDtos.EmployeeResponse>> create(
             @Valid @RequestBody EmployeeDtos.CreateEmployeeRequest req) {
         return ResponseEntity.status(201).body(ApiResponse.created(employeeService.create(req)));
@@ -81,7 +81,7 @@ public class EmployeeController {
 
     @Operation(summary = "Bulk-import employees from XLSX")
     @PostMapping(path = "/import", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'HR_MANAGER', 'HR_SPECIALIST')")
+    @PreAuthorize("hasAuthority('EMPLOYEE_CREATE')")
     public ResponseEntity<ApiResponse<EmployeeDtos.ImportResult>> importXlsx(
             @RequestParam("file") MultipartFile file) {
         return ResponseEntity.ok(ApiResponse.ok(importExportService.importFromXlsx(file)));
@@ -89,7 +89,7 @@ public class EmployeeController {
 
     @Operation(summary = "Export all employees as XLSX")
     @GetMapping("/export")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'DIRECTOR', 'HR_MANAGER', 'HR_SPECIALIST')")
+    @PreAuthorize("hasAuthority('EMPLOYEE_READ')")
     public ResponseEntity<InputStreamResource> exportXlsx() {
         InputStreamResource body = new InputStreamResource(importExportService.exportToXlsx());
         return ResponseEntity.ok()
@@ -108,7 +108,7 @@ public class EmployeeController {
 
     @Operation(summary = "Update an employee")
     @PutMapping("/{id}")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'HR_MANAGER', 'HR_SPECIALIST')")
+    @PreAuthorize("hasAuthority('EMPLOYEE_UPDATE')")
     public ResponseEntity<ApiResponse<EmployeeDtos.EmployeeResponse>> update(
             @PathVariable UUID id,
             @Valid @RequestBody EmployeeDtos.UpdateEmployeeRequest req) {
@@ -117,7 +117,7 @@ public class EmployeeController {
 
     @Operation(summary = "Change employee employment status")
     @PatchMapping("/{id}/status")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'HR_MANAGER', 'HR_SPECIALIST')")
+    @PreAuthorize("hasAuthority('EMPLOYEE_UPDATE')")
     public ResponseEntity<ApiResponse<EmployeeDtos.EmployeeResponse>> updateStatus(
             @PathVariable UUID id,
             @Valid @RequestBody EmployeeDtos.UpdateStatusRequest req) {
@@ -126,7 +126,7 @@ public class EmployeeController {
 
     @Operation(summary = "Soft-delete an employee")
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'HR_MANAGER')")
+    @PreAuthorize("hasAuthority('EMPLOYEE_DELETE')")
     public ResponseEntity<ApiResponse<Void>> delete(@PathVariable UUID id) {
         employeeService.delete(id);
         return ResponseEntity.ok(ApiResponse.noContent("Employee deleted"));
@@ -134,14 +134,14 @@ public class EmployeeController {
 
     @Operation(summary = "Publish EmployeeCreatedEvent → user-service creates an account")
     @PostMapping("/{id}/create-account")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'HR_MANAGER')")
+    @PreAuthorize("hasAuthority('EMPLOYEE_UPDATE')")
     public ResponseEntity<ApiResponse<EmployeeDtos.EmployeeResponse>> createAccount(@PathVariable UUID id) {
         return ResponseEntity.ok(ApiResponse.ok(employeeService.createAccount(id)));
     }
 
     @Operation(summary = "Terminate employment")
     @PostMapping("/{id}/terminate")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'HR_MANAGER')")
+    @PreAuthorize("hasAuthority('EMPLOYEE_DELETE')")
     public ResponseEntity<ApiResponse<EmployeeDtos.EmployeeResponse>> terminate(
             @PathVariable UUID id,
             @Valid @RequestBody EmployeeDtos.TerminateRequest req) {

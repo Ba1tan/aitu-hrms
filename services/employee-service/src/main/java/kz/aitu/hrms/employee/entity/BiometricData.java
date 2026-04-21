@@ -53,5 +53,6 @@ public class BiometricData extends BaseEntity {
     private UUID enrolledBy;
 
     @Column(name = "is_active", nullable = false)
+    @Builder.Default
     private boolean active = true;
 }

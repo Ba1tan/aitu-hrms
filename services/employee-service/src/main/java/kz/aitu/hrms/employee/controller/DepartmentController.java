@@ -31,7 +31,7 @@ public class DepartmentController {
 
     @Operation(summary = "Create a new department")
     @PostMapping
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'HR_MANAGER', 'HR_SPECIALIST')")
+    @PreAuthorize("hasAuthority('DEPT_MANAGE')")
     public ResponseEntity<ApiResponse<DepartmentDtos.DepartmentResponse>> create(
             @Valid @RequestBody DepartmentDtos.CreateDepartmentRequest req) {
         return ResponseEntity.status(201).body(ApiResponse.created(departmentService.create(req)));
@@ -53,7 +53,7 @@ public class DepartmentController {
 
     @Operation(summary = "Update department")
     @PutMapping("/{id}")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'HR_MANAGER', 'HR_SPECIALIST')")
+    @PreAuthorize("hasAuthority('DEPT_MANAGE')")
     public ResponseEntity<ApiResponse<DepartmentDtos.DepartmentResponse>> update(
             @PathVariable UUID id,
             @Valid @RequestBody DepartmentDtos.UpdateDepartmentRequest req) {
@@ -62,7 +62,7 @@ public class DepartmentController {
 
     @Operation(summary = "Delete department (only if empty)")
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'HR_MANAGER')")
+    @PreAuthorize("hasAuthority('DEPT_MANAGE')")
     public ResponseEntity<ApiResponse<Void>> delete(@PathVariable UUID id) {
         departmentService.delete(id);
         return ResponseEntity.ok(ApiResponse.noContent("Department deleted"));

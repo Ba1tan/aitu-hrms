@@ -70,7 +70,7 @@ class EmployeeControllerSecurityTest {
     }
 
     @Test
-    @WithMockUser(roles = "HR_MANAGER")
+    @WithMockUser(authorities = "EMPLOYEE_CREATE")
     void hrManagerCanCreateEmployee() throws Exception {
         when(employeeService.create(any())).thenReturn(
                 EmployeeDtos.EmployeeResponse.builder()
@@ -88,7 +88,7 @@ class EmployeeControllerSecurityTest {
     }
 
     @Test
-    @WithMockUser(roles = "HR_SPECIALIST")
+    @WithMockUser(authorities = "EMPLOYEE_CREATE")
     void hrSpecialistCanCreateEmployee() throws Exception {
         when(employeeService.create(any())).thenReturn(
                 EmployeeDtos.EmployeeResponse.builder()
@@ -113,7 +113,7 @@ class EmployeeControllerSecurityTest {
     }
 
     @Test
-    @WithMockUser(roles = "HR_MANAGER")
+    @WithMockUser(authorities = "EMPLOYEE_CREATE")
     void rejectsInvalidIinShapeBeforeHittingService() throws Exception {
         EmployeeDtos.CreateEmployeeRequest req = validCreateRequest();
         req.setIin("abc");
@@ -125,7 +125,7 @@ class EmployeeControllerSecurityTest {
     }
 
     @Test
-    @WithMockUser(roles = "HR_MANAGER")
+    @WithMockUser(authorities = "EMPLOYEE_DELETE")
     void hrManagerCanDeleteEmployee() throws Exception {
         mvc.perform(delete("/v1/employees/11111111-1111-1111-1111-111111111111")
                         .with(csrf()))
@@ -141,7 +141,7 @@ class EmployeeControllerSecurityTest {
     }
 
     @Test
-    @WithMockUser(roles = "SUPER_ADMIN")
+    @WithMockUser(authorities = "EMPLOYEE_DELETE")
     void superAdminCanDeleteEmployee() throws Exception {
         mvc.perform(delete("/v1/employees/11111111-1111-1111-1111-111111111111")
                         .with(csrf()))
@@ -156,7 +156,7 @@ class EmployeeControllerSecurityTest {
     }
 
     @Test
-    @WithMockUser(roles = "DIRECTOR")
+    @WithMockUser(authorities = "EMPLOYEE_READ")
     void directorCanExport() throws Exception {
         when(importExportService.exportToXlsx())
                 .thenReturn(new java.io.ByteArrayInputStream(new byte[0]));

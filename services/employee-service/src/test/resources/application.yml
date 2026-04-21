@@ -34,3 +34,4 @@ app:
     base-path: /tmp/hrms-test-uploads
   services:
     user-service-uri: http://localhost:8081
+    ai-ml-service-uri: http://localhost:8086

@@ -48,6 +48,7 @@ class EmployeeServiceImplTest {
     @Mock private PositionRepository positionRepository;
     @Mock private EventPublisher eventPublisher;
     @Mock private EmployeeAccessControl accessControl;
+    @Mock private BiometricService biometricService;
 
     private EmployeeMapper mapper;
     private EmployeeServiceImpl service;
@@ -57,7 +58,7 @@ class EmployeeServiceImplTest {
         mapper = new EmployeeMapper();
         service = new EmployeeServiceImpl(
                 employeeRepository, departmentRepository, positionRepository,
-                eventPublisher, accessControl, mapper);
+                eventPublisher, accessControl, mapper, biometricService);
     }
 
     @Test

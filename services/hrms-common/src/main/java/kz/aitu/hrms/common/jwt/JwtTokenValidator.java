@@ -9,6 +9,8 @@ import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
 import java.util.Base64;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * Lightweight JWT validator for services that only need to verify and parse tokens
@@ -44,6 +46,15 @@ public class JwtTokenValidator {
 
     public String extractRole(String token) {
         return parseClaims(token).get("role", String.class);
+    }
+
+    @SuppressWarnings("unchecked")
+    public List<String> extractPermissions(String token) {
+        Object raw = parseClaims(token).get("permissions");
+        if (raw instanceof List<?> list) {
+            return (List<String>) list;
+        }
+        return Collections.emptyList();
     }
 
     private Claims parseClaims(String token) {

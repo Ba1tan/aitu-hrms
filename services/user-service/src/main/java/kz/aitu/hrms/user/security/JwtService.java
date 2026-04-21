@@ -11,9 +11,12 @@ import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
 import java.util.Base64;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Function;
 
 /**
@@ -27,6 +30,7 @@ public class JwtService {
 
     private static final String CLAIM_EMAIL = "email";
     private static final String CLAIM_ROLE = "role";
+    private static final String CLAIM_PERMISSIONS = "permissions";
     private static final String CLAIM_TYPE = "type";
     private static final String TYPE_ACCESS = "access";
     private static final String TYPE_REFRESH = "refresh";
@@ -44,10 +48,11 @@ public class JwtService {
         this.refreshTokenExpiryMs = refreshTokenExpiryMs;
     }
 
-    public String generateAccessToken(User user) {
+    public String generateAccessToken(User user, Set<String> permissions) {
         Map<String, Object> claims = new HashMap<>();
         claims.put(CLAIM_EMAIL, user.getEmail());
         claims.put(CLAIM_ROLE, user.getRole().name());
+        claims.put(CLAIM_PERMISSIONS, permissions != null ? permissions : Collections.emptySet());
         claims.put(CLAIM_TYPE, TYPE_ACCESS);
         return build(claims, user.getId().toString(), accessTokenExpiryMs);
     }
@@ -87,6 +92,15 @@ public class JwtService {
 
     public String extractRole(String token) {
         return extractClaim(token, c -> c.get(CLAIM_ROLE, String.class));
+    }
+
+    @SuppressWarnings("unchecked")
+    public List<String> extractPermissions(String token) {
+        Object raw = extractClaim(token, c -> c.get(CLAIM_PERMISSIONS));
+        if (raw instanceof List<?> list) {
+            return (List<String>) list;
+        }
+        return Collections.emptyList();
     }
 
     public Date extractExpiration(String token) {

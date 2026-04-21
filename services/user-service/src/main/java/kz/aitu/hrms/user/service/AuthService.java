@@ -20,6 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 @Slf4j
 @Service
@@ -196,7 +197,8 @@ public class AuthService {
     }
 
     private AuthDtos.AuthResponse buildAuthResponse(User user) {
-        String accessToken  = jwtService.generateAccessToken(user);
+        Set<String> permissions = rolePermissionRepository.findPermissionCodesByRole(user.getRole());
+        String accessToken  = jwtService.generateAccessToken(user, permissions);
         String refreshToken = jwtService.generateRefreshToken(user);
 
         AuthDtos.AuthResponse.UserInfo info = new AuthDtos.AuthResponse.UserInfo();

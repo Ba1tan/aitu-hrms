@@ -1,6 +1,6 @@
 package kz.aitu.hrms.employee.config;
 
-import kz.aitu.hrms.employee.security.JwtAuthenticationFilter;
+import kz.aitu.hrms.common.security.JwtAuthenticationFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

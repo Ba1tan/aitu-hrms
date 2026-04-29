@@ -1,4 +1,4 @@
-package kz.aitu.hrms.employee.security;
+package kz.aitu.hrms.common.security;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -20,16 +20,23 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- * Validates the JWT issued by user-service and populates the SecurityContext with an
- * {@link AuthenticatedUser} principal. Permission-level authorities are resolved
- * lazily by services that call user-service (or from a Redis-cached role→permission map).
+ * Shared JWT filter for consumer services (everything except user-service, which
+ * has its own filter that does DB lookup + Redis blacklist). Validates the token
+ * issued by user-service and populates the SecurityContext with an
+ * {@link AuthenticatedUser} principal carrying userId/email/role/employeeId.
+ *
+ * Permissions from the {@code permissions} claim become {@link SimpleGrantedAuthority}
+ * entries verbatim (e.g. {@code ATTENDANCE_MANAGE}); the role becomes {@code ROLE_<role>}.
+ *
+ * Endpoints permitted by SecurityConfig (actuator, swagger, kiosk) flow through
+ * this filter unchanged when no Authorization header is present.
  */
 @Slf4j
 @Component
 @RequiredArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
-    private final JwtTokenValidator jwtTokenValidator;
+    private final JwtTokenValidator validator;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,
@@ -43,21 +50,24 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         String token = header.substring(7);
         try {
-            if (!jwtTokenValidator.isValid(token)) {
+            if (!validator.isValid(token)) {
                 chain.doFilter(request, response);
                 return;
             }
             if (SecurityContextHolder.getContext().getAuthentication() == null) {
-                UUID userId = UUID.fromString(jwtTokenValidator.extractUserId(token));
-                String email = jwtTokenValidator.extractEmail(token);
-                String role = jwtTokenValidator.extractRole(token);
-                List<String> permissions = jwtTokenValidator.extractPermissions(token);
+                UUID userId = UUID.fromString(validator.extractUserId(token));
+                String email = validator.extractEmail(token);
+                String role = validator.extractRole(token);
+                List<String> permissions = validator.extractPermissions(token);
+                UUID employeeId = validator.extractEmployeeId(token);
 
                 List<SimpleGrantedAuthority> authorities = new ArrayList<>(permissions.size() + 1);
-                authorities.add(new SimpleGrantedAuthority("ROLE_" + role));
+                if (role != null) {
+                    authorities.add(new SimpleGrantedAuthority("ROLE_" + role));
+                }
                 permissions.forEach(p -> authorities.add(new SimpleGrantedAuthority(p)));
 
-                AuthenticatedUser principal = new AuthenticatedUser(userId, email, role);
+                AuthenticatedUser principal = new AuthenticatedUser(userId, email, role, employeeId);
                 UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(
                         principal, null, authorities);
                 auth.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));

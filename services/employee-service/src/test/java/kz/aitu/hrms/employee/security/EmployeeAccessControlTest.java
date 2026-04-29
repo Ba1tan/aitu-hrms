@@ -1,5 +1,6 @@
 package kz.aitu.hrms.employee.security;
 
+import kz.aitu.hrms.common.security.AuthenticatedUser;
 import kz.aitu.hrms.employee.entity.Employee;
 import kz.aitu.hrms.employee.repository.EmployeeRepository;
 import org.junit.jupiter.api.AfterEach;
@@ -32,7 +33,7 @@ class EmployeeAccessControlTest {
         Employee e = new Employee();
         e.setId(currentEmployeeId);
         when(repo.findByEmailAndDeletedFalse(anyString())).thenReturn(Optional.of(e));
-        AuthenticatedUser principal = new AuthenticatedUser(UUID.randomUUID(), "user@example.com", role);
+        AuthenticatedUser principal = new AuthenticatedUser(UUID.randomUUID(), "user@example.com", role, null);
         SecurityContextHolder.getContext().setAuthentication(
                 new UsernamePasswordAuthenticationToken(principal, null, java.util.List.of()));
     }

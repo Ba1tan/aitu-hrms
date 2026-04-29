@@ -1,6 +1,6 @@
 package kz.aitu.hrms.employee.config;
 
-import kz.aitu.hrms.employee.security.AuthenticatedUser;
+import kz.aitu.hrms.common.security.AuthenticatedUser;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.domain.AuditorAware;

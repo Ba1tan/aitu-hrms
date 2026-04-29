@@ -1,5 +1,6 @@
 package kz.aitu.hrms.employee.security;
 
+import kz.aitu.hrms.common.security.AuthenticatedUser;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 

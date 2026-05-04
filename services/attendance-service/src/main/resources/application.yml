@@ -1,0 +1,100 @@
+server:
+  port: ${SERVER_PORT:8083}
+  servlet:
+    context-path: /api
+  forward-headers-strategy: framework
+
+spring:
+  application:
+    name: attendance-service
+
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/hrms?currentSchema=hrms_attendance}
+    username: ${DB_USERNAME:hrms_user}
+    password: ${DB_PASSWORD:hrms_pass}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 2
+      connection-timeout: 30000
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+    properties:
+      hibernate:
+        default_schema: hrms_attendance
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+
+  flyway:
+    enabled: true
+    default-schema: hrms_attendance
+    schemas: hrms_attendance
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
+      timeout: 2000ms
+
+  rabbitmq:
+    host: ${RABBITMQ_HOST:localhost}
+    port: ${RABBITMQ_PORT:5672}
+    username: ${RABBITMQ_USER:hrms}
+    password: ${RABBITMQ_PASS:hrms_pass}
+
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 12MB
+
+  jackson:
+    serialization:
+      write-dates-as-timestamps: false
+    default-property-inclusion: NON_NULL
+    time-zone: Asia/Almaty
+
+app:
+  jwt:
+    secret: ${JWT_SECRET:}
+
+  zone: Asia/Almaty
+
+  attendance:
+    fraud:
+      # If a check-in within `recent-window-min` minutes of the previous one is observed
+      # we run AI fraud detection and block above `block-threshold`.
+      recent-window-min: 30
+      block-threshold: 0.65
+      review-threshold: 0.30
+
+  services:
+    user-service-uri: ${USER_SERVICE_URI:http://localhost:8081}
+    employee-service-uri: ${EMPLOYEE_SERVICE_URI:http://localhost:8082}
+    ai-ml-service-uri: ${AI_ML_SERVICE_URI:http://localhost:8086}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: when-authorized
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+
+logging:
+  level:
+    kz.aitu.hrms.attendance: INFO
+    org.springframework.security: WARN
+    org.hibernate.SQL: WARN

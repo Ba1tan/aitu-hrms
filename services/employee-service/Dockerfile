@@ -1,36 +1,28 @@
-# Build context must be services/ (parent of employee-service).
+# Build context must be services/ (parent of employee-service and hrms-common).
 # CI:         context: services,  file: services/employee-service/Dockerfile
 # Compose:    context: ./services, dockerfile: employee-service/Dockerfile
 #
-# hrms-common is pulled from GitHub Packages — requires GITHUB_ACTOR and
-# GITHUB_TOKEN (with read:packages scope) passed as build args.
+# hrms-common is built from local source — no GitHub Packages auth needed.
+# The Dockerfile installs hrms-common into the local .m2 cache before building
+# the service, so any change to hrms-common is picked up immediately without
+# republishing a SNAPSHOT.
 
 FROM eclipse-temurin:17-jdk-alpine AS builder
 WORKDIR /build
 
-ARG GITHUB_ACTOR
-ARG GITHUB_TOKEN
-
 RUN apk add --no-cache maven
 
-# Maven settings.xml for GitHub Packages auth (builder layer only — never in runtime image)
-RUN mkdir -p /root/.m2 && printf '%s\n' \
-    '<settings xmlns="http://maven.apache.org/SETTINGS/1.0.0">' \
-    '  <servers>' \
-    '    <server>' \
-    '      <id>github</id>' \
-    "      <username>${GITHUB_ACTOR}</username>" \
-    "      <password>${GITHUB_TOKEN}</password>" \
-    '    </server>' \
-    '  </servers>' \
-    '</settings>' > /root/.m2/settings.xml
+# Install hrms-common into the local repo (cached unless its source changes)
+COPY hrms-common/pom.xml hrms-common/pom.xml
+COPY hrms-common/src     hrms-common/src
+RUN cd hrms-common && mvn install -DskipTests -q
 
-# Resolve dependencies (cached layer — only re-runs if pom.xml changes)
-COPY employee-service/pom.xml        employee-service/pom.xml
+# Resolve service dependencies (cached unless its pom.xml changes)
+COPY employee-service/pom.xml employee-service/pom.xml
 RUN cd employee-service && mvn dependency:go-offline -q
 
-# Build employee-service
-COPY employee-service/src            employee-service/src
+# Build service
+COPY employee-service/src employee-service/src
 RUN cd employee-service && mvn package -DskipTests -q
 
 

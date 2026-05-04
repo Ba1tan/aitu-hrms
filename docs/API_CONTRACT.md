@@ -29,44 +29,48 @@ All IDs: UUID strings. All money: decimal strings (`"250575.00"`). All dates: `"
 | DELETE | `/v1/users/{id}` | Bearer | SYSTEM_USERS |
 | PUT | `/v1/users/{id}/link-employee` | Bearer | SYSTEM_USERS |
 
-### Employees (21)
+### Employees (25)
 | Method | Path | Permission |
 |--------|------|------------|
 | POST | `/v1/employees` | EMPLOYEE_CREATE |
-| GET | `/v1/employees` | EMPLOYEE_VIEW_* (scoped) |
-| GET | `/v1/employees/{id}` | EMPLOYEE_VIEW_* (scoped) |
+| GET | `/v1/employees` | any authenticated (service-side scoping) |
+| GET | `/v1/employees/{id}` | any authenticated (service-side scoping) |
 | PUT | `/v1/employees/{id}` | EMPLOYEE_UPDATE |
 | PATCH | `/v1/employees/{id}/status` | EMPLOYEE_UPDATE |
 | DELETE | `/v1/employees/{id}` | EMPLOYEE_DELETE |
-| POST | `/v1/employees/{id}/create-account` | EMPLOYEE_CREATE |
+| POST | `/v1/employees/{id}/create-account` | EMPLOYEE_UPDATE |
 | POST | `/v1/employees/{id}/terminate` | EMPLOYEE_DELETE |
-| GET | `/v1/employees/{id}/salary-history` | EMPLOYEE_SALARY_VIEW |
-| POST | `/v1/employees/{id}/salary-change` | EMPLOYEE_SALARY_CHANGE |
-| GET | `/v1/employees/{id}/documents` | EMPLOYEE_VIEW_* |
-| POST | `/v1/employees/{id}/documents` | EMPLOYEE_UPDATE |
-| GET | `/v1/employees/{id}/documents/{docId}/download` | EMPLOYEE_VIEW_* |
-| DELETE | `/v1/employees/{id}/documents/{docId}` | EMPLOYEE_UPDATE |
-| GET | `/v1/employees/{id}/emergency-contacts` | EMPLOYEE_VIEW_* |
+| GET | `/v1/employees/{id}/salary-history` | PAYROLL_READ_ALL |
+| POST | `/v1/employees/{id}/salary-change` | PAYROLL_ADJUST |
+| GET | `/v1/employees/{id}/documents` | EMPLOYEE_DOCUMENTS |
+| POST | `/v1/employees/{id}/documents` | EMPLOYEE_DOCUMENTS |
+| GET | `/v1/employees/{id}/documents/{docId}/download` | EMPLOYEE_DOCUMENTS |
+| DELETE | `/v1/employees/{id}/documents/{docId}` | EMPLOYEE_DOCUMENTS |
+| GET | `/v1/employees/{id}/emergency-contacts` | EMPLOYEE_UPDATE |
 | POST | `/v1/employees/{id}/emergency-contacts` | EMPLOYEE_UPDATE |
 | PUT | `/v1/employees/{id}/emergency-contacts/{cId}` | EMPLOYEE_UPDATE |
 | DELETE | `/v1/employees/{id}/emergency-contacts/{cId}` | EMPLOYEE_UPDATE |
-| GET | `/v1/employees/org-chart` | EMPLOYEE_VIEW_TEAM |
+| POST | `/v1/employees/{id}/biometric/enroll` | EMPLOYEE_BIOMETRIC — multipart: photos[] (3-5) |
+| GET | `/v1/employees/{id}/biometric/status` | EMPLOYEE_VIEW_OWN or EMPLOYEE_VIEW_ALL |
+| DELETE | `/v1/employees/{id}/biometric` | EMPLOYEE_BIOMETRIC |
+| GET | `/v1/employees/{id}/biometric/photos/{filename}` | EMPLOYEE_VIEW_OWN or EMPLOYEE_VIEW_ALL |
+| GET | `/v1/employees/org-chart` | any authenticated |
 | POST | `/v1/employees/import` | EMPLOYEE_CREATE |
-| GET | `/v1/employees/export` | EMPLOYEE_VIEW_ALL |
+| GET | `/v1/employees/export` | EMPLOYEE_READ |
 
 ### Departments (5) & Positions (5)
 | Method | Path | Permission |
 |--------|------|------------|
-| POST | `/v1/departments` | EMPLOYEE_CREATE |
+| POST | `/v1/departments` | DEPT_MANAGE |
 | GET | `/v1/departments` | any authenticated |
 | GET | `/v1/departments/{id}` | any authenticated |
-| PUT | `/v1/departments/{id}` | EMPLOYEE_UPDATE |
-| DELETE | `/v1/departments/{id}` | EMPLOYEE_DELETE |
-| POST | `/v1/positions` | EMPLOYEE_CREATE |
+| PUT | `/v1/departments/{id}` | DEPT_MANAGE |
+| DELETE | `/v1/departments/{id}` | DEPT_MANAGE |
+| POST | `/v1/positions` | DEPT_MANAGE |
 | GET | `/v1/positions` | any authenticated |
 | GET | `/v1/positions/{id}` | any authenticated |
-| PUT | `/v1/positions/{id}` | EMPLOYEE_UPDATE |
-| DELETE | `/v1/positions/{id}` | EMPLOYEE_DELETE |
+| PUT | `/v1/positions/{id}` | DEPT_MANAGE |
+| DELETE | `/v1/positions/{id}` | DEPT_MANAGE |
 
 ### Attendance (20)
 

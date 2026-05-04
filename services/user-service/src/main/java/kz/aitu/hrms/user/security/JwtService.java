@@ -4,6 +4,7 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
+import kz.aitu.hrms.common.jwt.JwtClaims;
 import kz.aitu.hrms.user.entity.User;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -17,6 +18,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 import java.util.function.Function;
 
 /**
@@ -27,13 +29,6 @@ import java.util.function.Function;
 @Slf4j
 @Component
 public class JwtService {
-
-    private static final String CLAIM_EMAIL = "email";
-    private static final String CLAIM_ROLE = "role";
-    private static final String CLAIM_PERMISSIONS = "permissions";
-    private static final String CLAIM_TYPE = "type";
-    private static final String TYPE_ACCESS = "access";
-    private static final String TYPE_REFRESH = "refresh";
 
     private final SecretKey signingKey;
     private final long accessTokenExpiryMs;
@@ -50,17 +45,20 @@ public class JwtService {
 
     public String generateAccessToken(User user, Set<String> permissions) {
         Map<String, Object> claims = new HashMap<>();
-        claims.put(CLAIM_EMAIL, user.getEmail());
-        claims.put(CLAIM_ROLE, user.getRole().name());
-        claims.put(CLAIM_PERMISSIONS, permissions != null ? permissions : Collections.emptySet());
-        claims.put(CLAIM_TYPE, TYPE_ACCESS);
+        claims.put(JwtClaims.EMAIL, user.getEmail());
+        claims.put(JwtClaims.ROLE, user.getRole().name());
+        claims.put(JwtClaims.PERMISSIONS, permissions != null ? permissions : Collections.emptySet());
+        if (user.getEmployeeId() != null) {
+            claims.put(JwtClaims.EMPLOYEE_ID, user.getEmployeeId().toString());
+        }
+        claims.put(JwtClaims.TYPE, JwtClaims.TYPE_ACCESS);
         return build(claims, user.getId().toString(), accessTokenExpiryMs);
     }
 
     public String generateRefreshToken(User user) {
         Map<String, Object> claims = new HashMap<>();
-        claims.put(CLAIM_EMAIL, user.getEmail());
-        claims.put(CLAIM_TYPE, TYPE_REFRESH);
+        claims.put(JwtClaims.EMAIL, user.getEmail());
+        claims.put(JwtClaims.TYPE, JwtClaims.TYPE_REFRESH);
         return build(claims, user.getId().toString(), refreshTokenExpiryMs);
     }
 
@@ -75,11 +73,11 @@ public class JwtService {
     }
 
     public boolean isAccessToken(String token) {
-        return TYPE_ACCESS.equals(extractClaim(token, c -> c.get(CLAIM_TYPE, String.class)));
+        return JwtClaims.TYPE_ACCESS.equals(extractClaim(token, c -> c.get(JwtClaims.TYPE, String.class)));
     }
 
     public boolean isRefreshToken(String token) {
-        return TYPE_REFRESH.equals(extractClaim(token, c -> c.get(CLAIM_TYPE, String.class)));
+        return JwtClaims.TYPE_REFRESH.equals(extractClaim(token, c -> c.get(JwtClaims.TYPE, String.class)));
     }
 
     public String extractUserId(String token) {
@@ -87,20 +85,30 @@ public class JwtService {
     }
 
     public String extractEmail(String token) {
-        return extractClaim(token, c -> c.get(CLAIM_EMAIL, String.class));
+        return extractClaim(token, c -> c.get(JwtClaims.EMAIL, String.class));
     }
 
     public String extractRole(String token) {
-        return extractClaim(token, c -> c.get(CLAIM_ROLE, String.class));
+        return extractClaim(token, c -> c.get(JwtClaims.ROLE, String.class));
     }
 
     @SuppressWarnings("unchecked")
     public List<String> extractPermissions(String token) {
-        Object raw = extractClaim(token, c -> c.get(CLAIM_PERMISSIONS));
+        Object raw = extractClaim(token, c -> c.get(JwtClaims.PERMISSIONS));
         if (raw instanceof List<?> list) {
             return (List<String>) list;
         }
         return Collections.emptyList();
+    }
+
+    public UUID extractEmployeeId(String token) {
+        String raw = extractClaim(token, c -> c.get(JwtClaims.EMPLOYEE_ID, String.class));
+        if (raw == null || raw.isBlank()) return null;
+        try {
+            return UUID.fromString(raw);
+        } catch (IllegalArgumentException e) {
+            return null;
+        }
     }
 
     public Date extractExpiration(String token) {

@@ -30,7 +30,9 @@ public final class JwtAuthFilter implements GlobalFilter, Ordered {
             "/user-api/swagger-ui",
             "/user-api/v3/api-docs",
             "/employee-api/swagger-ui",
-            "/employee-api/v3/api-docs"
+            "/employee-api/v3/api-docs",
+            "/attendance-api/swagger-ui",
+            "/attendance-api/v3/api-docs"
     );
 
     private final JwtTokenValidator jwtTokenValidator;

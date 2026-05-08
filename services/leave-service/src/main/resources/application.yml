@@ -1,0 +1,90 @@
+server:
+  port: ${SERVER_PORT:8084}
+  servlet:
+    context-path: /api
+  forward-headers-strategy: framework
+
+spring:
+  application:
+    name: leave-service
+
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/hrms?currentSchema=hrms_leave}
+    username: ${DB_USERNAME:hrms_user}
+    password: ${DB_PASSWORD:hrms_pass}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 2
+      connection-timeout: 30000
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+    properties:
+      hibernate:
+        default_schema: hrms_leave
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+
+  flyway:
+    enabled: true
+    default-schema: hrms_leave
+    schemas: hrms_leave
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
+      timeout: 2000ms
+
+  rabbitmq:
+    host: ${RABBITMQ_HOST:localhost}
+    port: ${RABBITMQ_PORT:5672}
+    username: ${RABBITMQ_USER:hrms}
+    password: ${RABBITMQ_PASS:hrms_pass}
+
+  jackson:
+    serialization:
+      write-dates-as-timestamps: false
+    default-property-inclusion: NON_NULL
+    time-zone: Asia/Almaty
+
+app:
+  jwt:
+    secret: ${JWT_SECRET:}
+
+  zone: Asia/Almaty
+
+  leave:
+    # Default: max 50% of annual leave can be carried over to the next year.
+    carryover-max-percent: 0.5
+
+  services:
+    user-service-uri: ${USER_SERVICE_URI:http://localhost:8081}
+    employee-service-uri: ${EMPLOYEE_SERVICE_URI:http://localhost:8082}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: when-authorized
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+
+logging:
+  level:
+    kz.aitu.hrms.leave: INFO
+    org.springframework.security: WARN
+    org.hibernate.SQL: WARN

@@ -1,0 +1,49 @@
+meta {
+  name: 10 Manual create user (alternative)
+  type: http
+  seq: 10
+}
+
+post {
+  url: {{gateway}}/api/v1/users
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+body:json {
+  {
+    "email": "{{employeeEmail}}",
+    "password": "{{employeePassword}}",
+    "firstName": "Иван",
+    "lastName": "Иванов",
+    "role": "EMPLOYEE",
+    "employeeId": "{{employeeId}}"
+  }
+}
+
+script:post-response {
+  if ((res.status === 200 || res.status === 201) && res.body && res.body.data && res.body.data.id) {
+    bru.setEnvVar("newUserId", res.body.data.id);
+  }
+}
+
+assert {
+  res.status: lte 201
+}
+
+docs {
+  Alternative to "08 Create user account for employee" — directly creates
+  a user with a KNOWN password ({{employeePassword}}) instead of relying on
+  auto-provisioning (which generates a random password that's lost until
+  notification-service ships).
+
+  Use this OR step 08, not both — they collide on the email unique constraint.
+  Skip step 08 and run this one if you want to log in as the employee right
+  away.
+
+  Requires SYSTEM_USERS permission. Admin has it by default.
+}

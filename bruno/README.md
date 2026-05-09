@@ -57,6 +57,26 @@ not `res.body`. New requests should follow that — e.g. extracting an id is
 `res.body.data.id`, not `res.body.id`. The Spring Actuator
 `/actuator/health` endpoint is the one exception — it's not wrapped.
 
+## Logging in as the new employee
+
+`02-Setup/08 Create user account for employee` triggers auto-provisioning
+via `EmployeeCreatedEvent`. The temp password is published inside
+`UserAccountCreatedEvent` for notification-service to email — but until
+that service ships, the password is effectively lost.
+
+Two ways to work around it:
+
+1. **Manual create (no rebuild needed).** Skip step 08. Run
+   `10 Manual create user (alternative)` instead — it directly creates the
+   user with a known password (`{{employeePassword}}` from the env). This
+   is the easiest path for testing today.
+2. **Read the temp password from the user-service logs.** Once
+   `app.user.log-temp-password-on-auto-provision=true` is set in
+   user-service `application.yml` (already enabled by default in dev/staging),
+   the listener prints a `[DEV] Temp password for ...` line at WARN level
+   right after the auto-provision succeeds. `docker compose logs user-service`
+   to find it. Disable this property in production.
+
 ## Seeded credentials
 
 ```

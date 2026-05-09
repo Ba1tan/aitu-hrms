@@ -73,6 +73,13 @@ app:
   password-reset:
     ttl-seconds: ${PWD_RESET_TTL:1800}  # 30 min
 
+  user:
+    # When true, logs the random temp password generated during EMPLOYEE
+    # auto-provisioning. Required until notification-service ships and can
+    # email the password to the new user. Set to false in production once
+    # the email delivery path is live.
+    log-temp-password-on-auto-provision: ${LOG_TEMP_PASSWORD:true}
+
 management:
   endpoints:
     web:

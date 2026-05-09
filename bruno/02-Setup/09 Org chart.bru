@@ -1,0 +1,19 @@
+meta {
+  name: 09 Org chart
+  type: http
+  seq: 9
+}
+
+get {
+  url: {{gateway}}/api/v1/employees/org-chart
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+assert {
+  res.status: eq 200
+}

@@ -1,0 +1,24 @@
+meta {
+  name: 09 My payslips
+  type: http
+  seq: 9
+}
+
+get {
+  url: {{gateway}}/api/v1/payroll/my-payslips
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+assert {
+  res.status: eq 200
+}
+
+docs {
+  Self-service. Returns only the caller's own payslips. The JWT must
+  carry an employeeId claim — admin without one gets 400.
+}

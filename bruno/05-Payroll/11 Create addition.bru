@@ -1,0 +1,39 @@
+meta {
+  name: 11 Create addition
+  type: http
+  seq: 11
+}
+
+post {
+  url: {{gateway}}/api/v1/payroll/additions
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+body:json {
+  {
+    "employeeId": "{{employeeId}}",
+    "periodId": "{{periodId}}",
+    "type": "ADDITION",
+    "category": "BONUS_PERFORMANCE",
+    "description": "Q2 performance bonus",
+    "amount": 100000,
+    "isTaxable": true
+  }
+}
+
+assert {
+  res.status: lte 201
+}
+
+docs {
+  type: ADDITION | DEDUCTION
+  category: see AdditionCategory enum (MEAL_ALLOWANCE, OVERTIME,
+  BONUS_PERFORMANCE, BONUS_HOLIDAY, FINE, ADVANCE_REPAYMENT, ...).
+  After creating, run "02 Generate payslips" again or
+  "POST /v1/payroll/payslips/{id}/recalculate" to apply.
+}

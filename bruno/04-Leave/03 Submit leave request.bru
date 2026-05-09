@@ -1,0 +1,41 @@
+meta {
+  name: 03 Submit leave request
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{gateway}}/api/v1/leave/requests
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+body:json {
+  {
+    "leaveTypeId": "{{leaveTypeId}}",
+    "startDate": "2026-06-15",
+    "endDate": "2026-06-19",
+    "reason": "Family vacation"
+  }
+}
+
+script:post-response {
+  if ((res.status === 200 || res.status === 201) && res.body && res.body.id) {
+    bru.setEnvVar("leaveRequestId", res.body.id);
+  }
+}
+
+assert {
+  res.status: lte 201
+  res.body.id: isDefined
+}
+
+docs {
+  The submitter is taken from the JWT's employeeId claim. If you're logged in
+  as the seeded admin (no employeeId), this will 400 — log in as the new
+  employee first (06-Self-service/01).
+}

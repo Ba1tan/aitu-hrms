@@ -1,0 +1,31 @@
+meta {
+  name: 05 Approve request
+  type: http
+  seq: 5
+}
+
+put {
+  url: {{gateway}}/api/v1/leave/requests/{{leaveRequestId}}/approve
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+body:json {
+  {
+    "comment": "Approved — enjoy the break"
+  }
+}
+
+assert {
+  res.status: eq 200
+}
+
+docs {
+  Requires LEAVE_APPROVE_TEAM (manager) or LEAVE_APPROVE_ALL (admin/HR).
+  Publishes LeaveApprovedEvent → attendance-service auto-marks ON_LEAVE
+  for the requested days.
+}

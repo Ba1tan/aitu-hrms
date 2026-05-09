@@ -1,0 +1,24 @@
+meta {
+  name: 08 Mark paid
+  type: http
+  seq: 8
+}
+
+post {
+  url: {{gateway}}/api/v1/payroll/periods/{{periodId}}/mark-paid
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+assert {
+  res.status: lte 200
+}
+
+docs {
+  Requires PAYROLL_PAY (ACCOUNTANT or SUPER_ADMIN). Marks the period and all
+  payslips as PAID.
+}

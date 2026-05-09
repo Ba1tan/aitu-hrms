@@ -1,0 +1,35 @@
+meta {
+  name: 01 Login as admin
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{gateway}}/api/auth/login
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "email": "{{email}}",
+    "password": "{{password}}"
+  }
+}
+
+script:post-response {
+  if (res.status === 200 && res.body) {
+    bru.setEnvVar("accessToken", res.body.accessToken);
+    bru.setEnvVar("refreshToken", res.body.refreshToken);
+  }
+}
+
+assert {
+  res.status: eq 200
+  res.body.accessToken: isDefined
+}
+
+docs {
+  Logs in the seeded SUPER_ADMIN. Stores accessToken + refreshToken in env vars.
+  Run this first — every other request depends on accessToken.
+}

@@ -1,0 +1,24 @@
+meta {
+  name: 06 Payslip detail
+  type: http
+  seq: 6
+}
+
+get {
+  url: {{gateway}}/api/v1/payroll/payslips/{{payslipId}}
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+assert {
+  res.status: eq 200
+}
+
+docs {
+  Full tax breakdown: earned, OPV, ВОСМС, deduction, taxable, IPN, net,
+  plus employer-side SO/SN/ОПВР and the AI anomaly_score/flags if present.
+}

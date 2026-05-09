@@ -1,0 +1,19 @@
+meta {
+  name: 02 List departments
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{gateway}}/api/v1/departments
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+assert {
+  res.status: eq 200
+}

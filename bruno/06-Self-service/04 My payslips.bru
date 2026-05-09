@@ -1,0 +1,19 @@
+meta {
+  name: 04 My payslips
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{gateway}}/api/v1/payroll/my-payslips
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+assert {
+  res.status: eq 200
+}

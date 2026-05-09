@@ -1,0 +1,29 @@
+meta {
+  name: 06 Create work schedule
+  type: http
+  seq: 6
+}
+
+post {
+  url: {{gateway}}/api/v1/attendance/schedules
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+body:json {
+  {
+    "name": "Standard 9-18",
+    "startTime": "09:00:00",
+    "endTime": "18:00:00",
+    "lateThresholdMinutes": 10,
+    "workingDays": ["MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY"]
+  }
+}
+
+assert {
+  res.status: lte 201
+}

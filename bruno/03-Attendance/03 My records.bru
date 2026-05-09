@@ -1,0 +1,24 @@
+meta {
+  name: 03 My records
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{gateway}}/api/v1/attendance/records?from=2026-05-01&to=2026-05-31
+  body: none
+  auth: bearer
+}
+
+params:query {
+  from: 2026-05-01
+  to: 2026-05-31
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+assert {
+  res.status: eq 200
+}

@@ -1,0 +1,19 @@
+meta {
+  name: 03 My today attendance
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{gateway}}/api/v1/attendance/today
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+assert {
+  res.status: eq 200
+}

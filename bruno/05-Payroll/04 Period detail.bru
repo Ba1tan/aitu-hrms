@@ -1,0 +1,20 @@
+meta {
+  name: 04 Period detail
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{gateway}}/api/v1/payroll/periods/{{periodId}}
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+assert {
+  res.status: eq 200
+  res.body.id: eq {{periodId}}
+}

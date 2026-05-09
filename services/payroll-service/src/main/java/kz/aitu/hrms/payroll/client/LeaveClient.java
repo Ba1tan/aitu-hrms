@@ -15,7 +15,7 @@ import java.util.UUID;
 @FeignClient(
         name = "leave-service",
         url = "${app.services.leave-service-uri}",
-        path = "/v1"
+        path = "/api/v1"
 )
 public interface LeaveClient {
 

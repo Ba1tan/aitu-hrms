@@ -21,7 +21,7 @@ import java.util.UUID;
 @FeignClient(
         name = "employee-service",
         url = "${app.services.employee-service-uri}",
-        path = "/v1"
+        path = "/api/v1"
 )
 public interface EmployeeClient {
 

@@ -5,6 +5,16 @@
 **Team:** Nursultan Bukenbayev, Askar Seralinov, Nurbol Sembayev  
 **Version:** 2.0 — Enterprise Microservices Architecture  
 
+> **Sources of truth.** This document gives the full system shape (infra,
+> data flow, schemas, endpoint inventory). For day-to-day work prefer the
+> narrower authoritative docs:
+> - **Permissions** — `docs/PERMISSIONS.md` (canonical role/permission catalog)
+> - **Events** — `docs/EVENTS.md` (canonical RabbitMQ event payloads + routing)
+> - **Per-service endpoints** — `services/{name}/{SERVICE}.md` (always more current)
+> - **Migrations** — `docs/MIGRATIONS.md`
+> - **Operations / Compliance / Testing** — `docs/OPERATIONS.md`, `docs/COMPLIANCE.md`, `docs/TESTING.md`
+> - **Integrations (1C, banks)** — `docs/INTEGRATIONS.md`
+
 ---
 
 ## 1. System Overview
@@ -138,7 +148,7 @@ SYSTEM_ROLES               AI_DASHBOARD
 | 1 | **api-gateway** | 8080 | — | Spring Cloud Gateway | JWT validation, routing, rate limiting, CORS |
 | 2 | **user-service** | 8081 | hrms_user | Spring Boot | Auth, RBAC, user CRUD, permissions, sessions |
 | 3 | **employee-service** | 8082 | hrms_employee | Spring Boot | Employee CRUD, departments, positions, org chart, documents, salary history |
-| 4 | **attendance-service** | 8083 | hrms_attendance | Spring Boot | Check-in/out, holidays, schedules, biometric WebSocket |
+| 4 | **attendance-service** | 8083 | hrms_attendance | Spring Boot | Check-in/out (face recognition primary, manual fallback), holidays, schedules |
 | 5 | **leave-service** | 8084 | hrms_leave | Spring Boot | Leave types, requests, approvals, balances, calendar |
 | 6 | **payroll-service** | 8085 | hrms_payroll | Spring Boot | KZ tax calculator, Spring Batch, payslip generation, additions |
 | 7 | **ai-ml-service** | 8086 | — (stateless) | Python FastAPI | Isolation Forest anomaly/fraud, XGBoost attrition, forecasting |
@@ -156,9 +166,9 @@ SYSTEM_ROLES               AI_DASHBOARD
 - Event-driven workflows where response is not needed immediately
 - Decouples services — failure in one doesn't cascade
 
-**Real-time (WebSocket):**
-- Biometric devices → Attendance Service (fingerprint check-in stream)
-- Future: live dashboard updates
+**Real-time:**
+- Kiosk/tablet → Attendance Service (face photo upload → AI verification → record). HTTP multipart, not WebSocket.
+- Future: WebSocket for live dashboard updates.
 
 ### 2.4 Event Catalog
 
@@ -460,22 +470,28 @@ CREATE TABLE hrms_attendance.attendance_records (
     UNIQUE (employee_id, work_date)
 );
 
--- Biometric data (fingerprint hashes for verification)
+-- Biometric data (face enrollment metadata; embeddings live in ai-ml-service / employee-service)
+-- Note: enrollment workflow is owned by employee-service; attendance reads this to know
+-- which employees can use face check-in. Schema location TBD — see services/employee-service/EMPLOYEE_SERVICE.md
+-- and services/attendance-service/ATTENDANCE_SERVICE.md for the current ownership split.
 CREATE TABLE hrms_attendance.biometric_data (
     id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     employee_id     UUID NOT NULL UNIQUE,
-    fingerprint_hash VARCHAR(128) NOT NULL,
+    method          VARCHAR(16) NOT NULL CHECK (method IN ('FACE','FINGERPRINT')),
+    embedding_path  VARCHAR(500),                -- Path on ai-ml-service host
+    photo_urls      JSONB NOT NULL DEFAULT '[]', -- Enrollment photo paths
     enrolled_at     TIMESTAMP NOT NULL DEFAULT NOW(),
     enrolled_by     UUID,
     is_active       BOOLEAN NOT NULL DEFAULT TRUE
 );
 
--- Failed biometric attempts (security log)
+-- Failed biometric attempts (security log) — only face attempts now; fingerprint is Phase 5+
 CREATE TABLE hrms_attendance.biometric_attempts (
     id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    fingerprint_hash VARCHAR(128) NOT NULL,
+    employee_id     UUID,                        -- Nullable: not always known on failure
+    method          VARCHAR(16) NOT NULL CHECK (method IN ('FACE','FINGERPRINT')),
     device_id       VARCHAR(50),
-    result          VARCHAR(20) NOT NULL CHECK (result IN ('SUCCESS','FAILED','BLOCKED')),
+    result          VARCHAR(20) NOT NULL CHECK (result IN ('SUCCESS','FAILED','BLOCKED','LIVENESS_FAILED')),
     fraud_score     NUMERIC(5,4),
     created_at      TIMESTAMP NOT NULL DEFAULT NOW()
 );
@@ -779,7 +795,7 @@ DELETE /v1/users/{id}                                  # Soft delete
 PUT    /v1/users/{id}/link-employee                    # Link to employee {employeeId}
 ```
 
-### 4.3 Employee Service — 25 endpoints
+### 4.3 Employee Service — 38 endpoints (see services/employee-service/EMPLOYEE_SERVICE.md for full list)
 
 ```
 # Employees (EMPLOYEE_*)
@@ -831,7 +847,7 @@ PUT    /v1/positions/{id}                              # Update
 DELETE /v1/positions/{id}                              # Soft delete
 ```
 
-### 4.4 Attendance Service — 18 endpoints
+### 4.4 Attendance Service — 20 endpoints (see services/attendance-service/ATTENDANCE_SERVICE.md for full list)
 
 ```
 # Check-in/out (ATTENDANCE_CHECKIN)
@@ -866,9 +882,10 @@ GET    /v1/attendance/schedules
 POST   /v1/attendance/schedules
 PUT    /v1/attendance/schedules/{id}
 
-# Biometric (Phase 5 — WebSocket)
-# WS   /ws/biometric                                  # Real-time fingerprint check-in stream
-POST   /v1/attendance/biometric/enroll                 # {employeeId, fingerprintHash}
+# Face Recognition Check-in (ATTENDANCE_CHECKIN) — primary check-in method
+POST   /v1/attendance/check-in/face                    # Multipart: face photo → AI verifies → record
+POST   /v1/attendance/check-out/face                   # Same on exit
+# Enrollment lives in employee-service: POST /v1/employees/{id}/biometric/enroll
 ```
 
 ### 4.5 Leave Service — 19 endpoints

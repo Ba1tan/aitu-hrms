@@ -1,0 +1,110 @@
+# notification-service — application.yml template
+#
+# Copy to src/main/resources/application.yml when scaffolding the service.
+
+server:
+  port: ${SERVER_PORT:8088}
+  servlet:
+    context-path: /api
+  forward-headers-strategy: framework
+
+spring:
+  application:
+    name: notification-service
+
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/hrms?currentSchema=hrms_notification}
+    username: ${DB_USERNAME:hrms_user}
+    password: ${DB_PASSWORD:hrms_pass}
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        default_schema: hrms_notification
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+
+  flyway:
+    enabled: true
+    default-schema: hrms_notification
+    schemas: hrms_notification
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
+
+  rabbitmq:
+    host: ${RABBITMQ_HOST:localhost}
+    port: ${RABBITMQ_PORT:5672}
+    username: ${RABBITMQ_USER:hrms}
+    password: ${RABBITMQ_PASS:hrms_pass}
+    listener:
+      simple:
+        retry:
+          enabled: true
+          initial-interval: 2s
+          max-attempts: 3
+          multiplier: 2.0
+
+  mail:
+    host:     ${MAIL_HOST:smtp.gmail.com}
+    port:     ${MAIL_PORT:587}
+    username: ${MAIL_USERNAME:}
+    password: ${MAIL_PASSWORD:}
+    properties:
+      mail.smtp.auth: true
+      mail.smtp.starttls.enable: true
+
+  jackson:
+    serialization:
+      write-dates-as-timestamps: false
+    default-property-inclusion: NON_NULL
+    time-zone: Asia/Almaty
+
+app:
+  jwt:
+    secret: ${JWT_SECRET:}
+
+  notifications:
+    from-email:        ${NOTIFICATION_FROM_EMAIL:hrms@nursnerv.uk}
+    from-name:         ${NOTIFICATION_FROM_NAME:HRMS}
+    template-base:     classpath:/templates/
+    locale-default:    ru                          # ru | kk | en
+    fcm-credentials:   ${FCM_CREDENTIALS_JSON:}    # Path to service account JSON, optional
+    sms-provider:      ${SMS_PROVIDER:none}        # none | mobizon | twilio (none = SMS disabled)
+    retention-days:    180                         # Soft-delete after N days
+
+  services:
+    user-service-uri:     ${USER_SERVICE_URI:http://localhost:8081}
+    employee-service-uri: ${EMPLOYEE_SERVICE_URI:http://localhost:8082}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: when-authorized
+      probes:
+        enabled: true
+  health:
+    mail:
+      enabled: ${MAIL_HEALTH_ENABLED:false}
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+
+logging:
+  level:
+    kz.aitu.hrms.notification: INFO
+    org.springframework.security: WARN

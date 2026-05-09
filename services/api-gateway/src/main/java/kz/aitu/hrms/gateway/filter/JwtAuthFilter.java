@@ -14,6 +14,7 @@ import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
 import java.util.List;
+import java.util.regex.Pattern;
 
 @Component
 public final class JwtAuthFilter implements GlobalFilter, Ordered {
@@ -24,16 +25,15 @@ public final class JwtAuthFilter implements GlobalFilter, Ordered {
             "/api/auth/refresh",
             "/api/auth/forgot-password",
             "/api/auth/reset-password",
-            "/actuator/health",
-            "/api/swagger-ui",
-            "/api/v3/api-docs",
-            "/user-api/swagger-ui",
-            "/user-api/v3/api-docs",
-            "/employee-api/swagger-ui",
-            "/employee-api/v3/api-docs",
-            "/attendance-api/swagger-ui",
-            "/attendance-api/v3/api-docs"
+            "/actuator/health"
     );
+
+    // Matches any service's Swagger UI or OpenAPI docs regardless of prefix
+    // (e.g. /payroll-api/swagger-ui/*, /leave-api/v3/api-docs, /api/swagger-ui.html).
+    // New services don't need to edit this filter — their swagger routes work as soon
+    // as they're added to application.yml.
+    private static final Pattern PUBLIC_SWAGGER_PATTERN =
+            Pattern.compile("/(swagger-ui|v3/api-docs)");
 
     private final JwtTokenValidator jwtTokenValidator;
 
@@ -71,7 +71,8 @@ public final class JwtAuthFilter implements GlobalFilter, Ordered {
     }
 
     private boolean isPublic(String path) {
-        return PUBLIC_PATHS.stream().anyMatch(path::startsWith);
+        return PUBLIC_PATHS.stream().anyMatch(path::startsWith)
+                || PUBLIC_SWAGGER_PATTERN.matcher(path).find();
     }
 
     private String extractToken(ServerHttpRequest request) {

@@ -1,0 +1,96 @@
+# reporting-service — application.yml template
+#
+# Copy to src/main/resources/application.yml when scaffolding the service.
+# Mirror the conventions in services/payroll-service/src/main/resources/application.yml.
+
+server:
+  port: ${SERVER_PORT:8087}
+  servlet:
+    context-path: /api
+  forward-headers-strategy: framework
+
+spring:
+  application:
+    name: reporting-service
+
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/hrms?currentSchema=hrms_reporting}
+    username: ${DB_USERNAME:hrms_user}
+    password: ${DB_PASSWORD:hrms_pass}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 5    # Reporting is read-heavy; small pool is enough
+      minimum-idle: 1
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        default_schema: hrms_reporting
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+
+  flyway:
+    enabled: true
+    default-schema: hrms_reporting
+    schemas: hrms_reporting
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
+      timeout: 2000ms
+
+  rabbitmq:
+    host: ${RABBITMQ_HOST:localhost}
+    port: ${RABBITMQ_PORT:5672}
+    username: ${RABBITMQ_USER:hrms}
+    password: ${RABBITMQ_PASS:hrms_pass}
+
+  jackson:
+    serialization:
+      write-dates-as-timestamps: false
+    default-property-inclusion: NON_NULL
+    time-zone: Asia/Almaty
+
+app:
+  jwt:
+    secret: ${JWT_SECRET:}
+
+  zone: Asia/Almaty
+
+  reporting:
+    dashboard-cache-ttl-seconds: 30        # Per (userId, role) tuple
+    xlsx-temp-dir: ${REPORT_TMP_DIR:/tmp/hrms-reports}
+    pdf-font-path: ${PDF_FONT_PATH:/data/hrms/fonts}    # Required for KZ Cyrillic + Kazakh
+
+  services:
+    user-service-uri:       ${USER_SERVICE_URI:http://localhost:8081}
+    employee-service-uri:   ${EMPLOYEE_SERVICE_URI:http://localhost:8082}
+    attendance-service-uri: ${ATTENDANCE_SERVICE_URI:http://localhost:8083}
+    leave-service-uri:      ${LEAVE_SERVICE_URI:http://localhost:8084}
+    payroll-service-uri:    ${PAYROLL_SERVICE_URI:http://localhost:8085}
+    ai-ml-service-uri:      ${AI_ML_SERVICE_URI:http://localhost:8086}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: when-authorized
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+
+logging:
+  level:
+    kz.aitu.hrms.reporting: INFO
+    org.springframework.security: WARN

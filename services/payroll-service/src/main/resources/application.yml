@@ -1,0 +1,115 @@
+server:
+  port: ${SERVER_PORT:8085}
+  servlet:
+    context-path: /api
+  forward-headers-strategy: framework
+
+spring:
+  application:
+    name: payroll-service
+
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/hrms?currentSchema=hrms_payroll}
+    username: ${DB_USERNAME:hrms_user}
+    password: ${DB_PASSWORD:hrms_pass}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 2
+      connection-timeout: 30000
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+    properties:
+      hibernate:
+        default_schema: hrms_payroll
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+
+  flyway:
+    enabled: true
+    default-schema: hrms_payroll
+    schemas: hrms_payroll
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
+      timeout: 2000ms
+
+  rabbitmq:
+    host: ${RABBITMQ_HOST:localhost}
+    port: ${RABBITMQ_PORT:5672}
+    username: ${RABBITMQ_USER:hrms}
+    password: ${RABBITMQ_PASS:hrms_pass}
+
+  batch:
+    jdbc:
+      initialize-schema: always
+      table-prefix: hrms_payroll.BATCH_
+    job:
+      enabled: false        # Jobs are launched explicitly from REST endpoints
+
+  jackson:
+    serialization:
+      write-dates-as-timestamps: false
+    default-property-inclusion: NON_NULL
+    time-zone: Asia/Almaty
+
+app:
+  jwt:
+    secret: ${JWT_SECRET:}
+
+  zone: Asia/Almaty
+
+  # Kazakhstan 2026 Tax Code constants
+  payroll:
+    mrp: 4325                     # Месячный расчётный показатель
+    min-wage: 85000               # Минимальная заработная плата
+    standard-deduction-mrp: 30    # Standard tax deduction in МРП units
+    opv-cap-mzp: 50               # OPV cap = 50 × МЗП
+    opv-rate: 0.10                # 10% pension contribution
+    vosms-rate: 0.02              # 2% medical insurance
+    ipn-rate: 0.10                # 10% income tax (residents)
+    ipn-rate-non-resident: 0.20   # 20% for non-residents
+    so-rate: 0.05                 # 5% employer social
+    sn-rate: 0.06                 # 6% employer social tax (fixed)
+    opvr-rate: 0.035              # 3.5% employer pension
+    oopv-rate: 0.0                # ООПВ — 0 for most employees
+    anomaly-flag-threshold: 0.65  # AI anomaly score above this → FLAGGED
+    pdf-storage-path: ${PAYSLIP_PDF_PATH:/data/hrms/payslips}
+    batch-threshold: 50           # Use Spring Batch for periods with > N employees
+
+  services:
+    user-service-uri: ${USER_SERVICE_URI:http://localhost:8081}
+    employee-service-uri: ${EMPLOYEE_SERVICE_URI:http://localhost:8082}
+    attendance-service-uri: ${ATTENDANCE_SERVICE_URI:http://localhost:8083}
+    leave-service-uri: ${LEAVE_SERVICE_URI:http://localhost:8084}
+    ai-ml-service-uri: ${AI_ML_SERVICE_URI:http://localhost:8086}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: when-authorized
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+
+logging:
+  level:
+    kz.aitu.hrms.payroll: INFO
+    org.springframework.security: WARN
+    org.hibernate.SQL: WARN
+    org.springframework.batch: INFO

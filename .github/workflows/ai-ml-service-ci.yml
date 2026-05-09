@@ -1,0 +1,172 @@
+name: AI/ML Service CI/CD
+
+# Scaffolding for the not-yet-implemented ai-ml-service (Python FastAPI).
+# Activates automatically once services/ai-ml-service/requirements.txt exists.
+
+on:
+  push:
+    branches: [ main, develop ]
+    paths:
+      - 'services/ai-ml-service/**'
+      - '.github/workflows/ai-ml-service-ci.yml'
+  pull_request:
+    branches: [ main, develop ]
+    paths:
+      - 'services/ai-ml-service/**'
+      - '.github/workflows/ai-ml-service-ci.yml'
+
+env:
+  PYTHON_VERSION: '3.11'
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}/hrms-ai-ml-service
+
+jobs:
+
+  guard:
+    name: Detect service source
+    runs-on: ubuntu-latest
+    outputs:
+      ready: ${{ steps.check.outputs.ready }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: check
+        run: |
+          if [ -f services/ai-ml-service/requirements.txt ] && [ -f services/ai-ml-service/Dockerfile ]; then
+            echo "ready=true" >> $GITHUB_OUTPUT
+          else
+            echo "ready=false" >> $GITHUB_OUTPUT
+            echo "::notice::ai-ml-service is still planning-only — requirements.txt/Dockerfile not yet present. CI will activate when source lands."
+          fi
+
+  test:
+    name: Test
+    needs: guard
+    if: needs.guard.outputs.ready == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+          cache-dependency-path: services/ai-ml-service/requirements.txt
+      - name: Install deps
+        working-directory: services/ai-ml-service
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pytest pytest-cov ruff
+      - name: Lint
+        working-directory: services/ai-ml-service
+        run: ruff check .
+      - name: Run tests
+        working-directory: services/ai-ml-service
+        run: pytest -v --cov=app --cov-report=xml
+      - name: Upload coverage
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ai-ml-coverage
+          path: services/ai-ml-service/coverage.xml
+
+  docker:
+    name: Build & Push Image
+    needs: test
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push'
+    permissions:
+      contents: read
+      packages: write
+    outputs:
+      image-tag: ${{ steps.meta.outputs.tags }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Extract Docker metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=ref,event=branch
+            type=sha,prefix={{branch}}-
+            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
+      - name: Build and push
+        uses: docker/build-push-action@v5
+        with:
+          context: services/ai-ml-service
+          file: services/ai-ml-service/Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  deploy-production:
+    name: Deploy to Production
+    needs: docker
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    environment:
+      name: production
+      url: https://hrms.nursnerv.uk
+    steps:
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          port: ${{ secrets.SERVER_SSH_PORT }}
+          script: |
+            IMAGE=$(echo "ghcr.io/${{ env.IMAGE_NAME }}" | tr '[:upper:]' '[:lower:]')
+            cd ~/hrms
+            git fetch origin main && git reset --hard origin/main
+            echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+            docker pull $IMAGE:main
+            AI_ML_SERVICE_IMAGE=$IMAGE:main docker compose --profile production -f docker-compose.microservices.yml up -d --no-deps ai-ml-service
+            CID=$(docker compose -f docker-compose.microservices.yml ps -q ai-ml-service)
+            for i in $(seq 1 12); do
+              STATUS=$(docker inspect --format='{{.State.Health.Status}}' $CID 2>/dev/null || echo "unknown")
+              [ "$STATUS" = "healthy" ] && echo "ai-ml-service deployed!" && break
+              [ $i -eq 12 ] && docker logs $CID --tail 40 && exit 1
+              sleep 10
+            done
+            docker image prune -f
+
+  deploy-staging:
+    name: Deploy to Staging
+    needs: docker
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/develop' && github.event_name == 'push'
+    environment:
+      name: staging
+      url: ${{ vars.STAGING_URL }}
+    steps:
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          port: ${{ secrets.SERVER_SSH_PORT }}
+          script: |
+            IMAGE=$(echo "ghcr.io/${{ env.IMAGE_NAME }}" | tr '[:upper:]' '[:lower:]')
+            cd ~/hrms-staging
+            git fetch origin develop && git reset --hard origin/develop
+            echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+            docker pull $IMAGE:develop
+            AI_ML_SERVICE_IMAGE=$IMAGE:develop docker compose -f docker-compose.microservices.yml up -d --no-deps ai-ml-service
+            CID=$(docker compose -f docker-compose.microservices.yml ps -q ai-ml-service)
+            for i in $(seq 1 12); do
+              STATUS=$(docker inspect --format='{{.State.Health.Status}}' $CID 2>/dev/null || echo "unknown")
+              [ "$STATUS" = "healthy" ] && echo "Staging ai-ml-service deployed!" && break
+              [ $i -eq 12 ] && docker logs $CID --tail 40 && exit 1
+              sleep 10
+            done
+            docker image prune -f

@@ -1,164 +1,137 @@
-# Fusion Starter
+# HRMS Web — AGENTS.md
 
-A production-ready full-stack React application template with integrated Express server, featuring React Router 6 SPA mode, TypeScript, Vitest, Zod and modern tooling.
+**Owner:** Nurbol Sembayev | **Stack:** React 18 + TypeScript + Vite + TailwindCSS + Radix UI
 
-While the starter comes with a express server, only create endpoint when strictly neccesary, for example to encapsulate logic that must leave in the server, such as private keys handling, or certain DB operations, db...
+This is the React frontend for HRMS. It talks to the backend exclusively
+through the API gateway at `${VITE_API_BASE}/api/...` (default
+`https://hrms.nursnerv.uk/api` in prod, `http://localhost:8080/api` in dev).
 
-## Tech Stack
+## Source of truth
 
-- **PNPM**: Prefer pnpm
-- **Frontend**: React 18 + React Router 6 (spa) + TypeScript + Vite + TailwindCSS 3
-- **Backend**: Express server integrated with Vite dev server
-- **Testing**: Vitest
-- **UI**: Radix UI + TailwindCSS 3 + Lucide React icons
+- **Backend API:** `docs/API_CONTRACT.md` at the repo root — every endpoint,
+  permission, request/response shape, and frontend display convention.
+- **Architecture / event flow:** `docs/HRMS_ENTERPRISE_ARCHITECTURE.md`.
+- **Permissions:** `docs/PERMISSIONS.md` — role/permission catalog. Use these
+  exact codes when guarding UI elements.
 
-## Project Structure
+If the contract and a backend `services/{name}/{SERVICE}.md` disagree, the
+backend service spec is authoritative — let Nursultan/Askar know.
+
+## Project structure
 
 ```
-client/                   # React SPA frontend
-├── pages/                # Route components (Index.tsx = home)
-├── components/ui/        # Pre-built UI component library
-├── App.tsx                # App entry point and with SPA routing setup
-└── global.css            # TailwindCSS 3 theming and global styles
-
-server/                   # Express API backend
-├── index.ts              # Main server setup (express config + routes)
-└── routes/               # API handlers
-
-shared/                   # Types used by both client & server
-└── api.ts                # Example of how to share api interfaces
+frontend/hrms-web/
+├── client/              # React SPA
+│   ├── pages/           # Route components
+│   ├── components/      # Reusable UI; ui/ is the Radix-based primitive layer
+│   ├── lib/             # API client, auth, utilities
+│   ├── App.tsx          # Router setup
+│   └── global.css       # Tailwind + theme
+├── shared/              # Types shared with the express dev shim (not used in prod)
+├── public/              # Static assets
+└── nginx.conf           # Production reverse proxy config
 ```
 
-## Key Features
+## Conventions
 
-## SPA Routing System
+- All API calls go through `client/lib/api.ts` (axios with JWT interceptor +
+  refresh-token retry).
+- Permission gating: `<RequirePermission code="EMPLOYEE_VIEW_ALL">…</RequirePermission>`.
+  Permission codes come from `docs/PERMISSIONS.md` — do not invent new codes.
+- Forms: React Hook Form + Zod schemas mirroring backend DTOs.
+- Tables: TanStack Table with server-side paging (`?page=&size=`).
+- Dates: ISO-8601 on the wire; render with date-fns and the user's locale.
+- Money: backend returns numeric strings — never JS `number`. Display with
+  `Intl.NumberFormat('ru-KZ', { style: 'currency', currency: 'KZT' })`.
+- i18n: Russian primary, Kazakh + English supported. Use `react-i18next` keys,
+  not hardcoded strings.
 
-The routing system is powered by React Router 6:
-
-- `client/pages/Index.tsx` represents the home page.
-- Routes are defined in `client/App.tsx` using the `react-router-dom` import
-- Route files are located in the `client/pages/` directory
-
-For example, routes can be defined with:
-
-```typescript
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-
-<Routes>
-  <Route path="/" element={<Index />} />
-  {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-  <Route path="*" element={<NotFound />} />
-</Routes>;
-```
-
-### Styling System
-
-- **Primary**: TailwindCSS 3 utility classes
-- **Theme and design tokens**: Configure in `client/global.css` 
-- **UI components**: Pre-built library in `client/components/ui/`
-- **Utility**: `cn()` function combines `clsx` + `tailwind-merge` for conditional classes
-
-```typescript
-// cn utility usage
-className={cn(
-  "base-classes",
-  { "conditional-class": condition },
-  props.className  // User overrides
-)}
-```
-
-### Express Server Integration
-
-- **Development**: Single port (8080) for both frontend/backend
-- **Hot reload**: Both client and server code
-- **API endpoints**: Prefixed with `/api/`
-
-#### Example API Routes
-- `GET /api/ping` - Simple ping api
-- `GET /api/demo` - Demo endpoint  
-
-### Shared Types
-Import consistent types in both client and server:
-```typescript
-import { DemoResponse } from '@shared/api';
-```
-
-Path aliases:
-- `@shared/*` - Shared folder
-- `@/*` - Client folder
-
-## Development Commands
+## Dev commands
 
 ```bash
-pnpm dev        # Start dev server (client + server)
-pnpm build      # Production build
-pnpm start      # Start production server
-pnpm typecheck  # TypeScript validation
-pnpm test          # Run Vitest tests
+pnpm install
+pnpm dev          # Vite dev server on :3000 with proxy to gateway
+pnpm typecheck
+pnpm test         # Vitest
+pnpm build        # Production build → dist/
 ```
 
-## Adding Features
+## Adding a feature
 
-### Add new colors to the theme
+1. Find the endpoint in `docs/API_CONTRACT.md`.
+2. Add the typed call to `client/lib/api/{domain}.ts`.
+3. Wrap the page in the appropriate permission gate.
+4. Use existing primitives in `components/ui/` before adding new ones.
+5. If the backend response shape isn't yet documented in the contract, ask
+   the service owner (`services/{name}/{SERVICE}.md` lists the owner).
 
-Open `client/global.css` and `tailwind.config.ts` and add new tailwind colors.
+## First-start setup wizard (`/setup`)
 
-### New API Route
-1. **Optional**: Create a shared interface in `shared/api.ts`:
-```typescript
-export interface MyRouteResponse {
-  message: string;
-  // Add other response properties here
+A fresh deploy has no company configuration — only the seeded SUPER_ADMIN
+account and KZ holidays exist. The wizard runs once per tenant and writes
+into the `company_settings` table via integration-hub. See
+`services/integration-hub/INTEGRATION_HUB.md` "First-start configuration" for the
+authoritative key list and the `/v1/settings/setup-status` contract.
+
+### Routing logic
+
+After every successful login, the auth bootstrap calls
+`GET /v1/settings/setup-status`:
+
+```ts
+const { configured } = await api.get('/v1/settings/setup-status');
+
+if (!configured) {
+  if (currentUser.role === 'SUPER_ADMIN') {
+    navigate('/setup');                 // Run the wizard
+  } else {
+    navigate('/awaiting-setup');         // "Your administrator must finish setup" lock screen
+  }
+} else {
+  navigate(intendedRoute ?? '/dashboard');
 }
 ```
 
-2. Create a new route handler in `server/routes/my-route.ts`:
-```typescript
-import { RequestHandler } from "express";
-import { MyRouteResponse } from "@shared/api"; // Optional: for type safety
+The `/setup` route MUST be reachable for SUPER_ADMIN even when
+`configured=false`; do not put it behind the normal app shell that itself
+requires a configured tenant.
 
-export const handleMyRoute: RequestHandler = (req, res) => {
-  const response: MyRouteResponse = {
-    message: 'Hello from my endpoint!'
-  };
-  res.json(response);
-};
-```
+### Wizard steps
 
-3. Register the route in `server/index.ts`:
-```typescript
-import { handleMyRoute } from "./routes/my-route";
+Each step is its own subroute under `/setup` with Next/Back. State is kept
+in a single React Hook Form / Zustand store; every Next button persists
+that step's settings via `PUT /v1/settings/{key}` so a partial run can be
+resumed (the wizard re-reads `GET /v1/settings` on entry to prefill).
 
-// Add to the createServer function:
-app.get("/api/my-endpoint", handleMyRoute);
-```
+| # | Subroute | Writes to backend |
+|---|---|---|
+| 1 | `/setup/welcome` | (no writes — explainer + admin profile preview) |
+| 2 | `/setup/company` | `company.name`, `company.bin` (validate 12 digits), `company.legal_address`, `company.timezone`, `company.currency`, `company.locale_default`, `company.tax_resident` |
+| 3 | `/setup/work-schedule` | `POST /v1/attendance/schedules` (start/end/late threshold/working days) → take returned `id` and `PUT /v1/settings/attendance.work_schedule_default_id` |
+| 4 | `/setup/holidays` | KZ holidays are pre-seeded — show as a read-only review with "Add custom" + "Remove" buttons calling `POST /v1/attendance/holidays` and `DELETE /v1/attendance/holidays/{id}` |
+| 5 | `/setup/attendance-methods` | `attendance.check_in_methods` (multi-select), `attendance.require_face` (toggle, disabled unless `FACE` is in methods) |
+| 6 | `/setup/department` | First department — `POST /v1/departments` with `name` + optional manager. Skippable. |
+| 7 | `/setup/integrations` (optional) | `integration.1c_base_url`, `integration.1c_username`, `integration.1c_password`, `integration.bank_default_format`. All skippable; "Configure later" button. |
+| 8 | `/setup/review` | Read-only summary of every value set. "Finish setup" button → `POST /v1/settings/complete-setup`. On 409 with `missingRequired[]`, jump back to the relevant step. |
 
-4. Use in React components with type safety:
-```typescript
-import { MyRouteResponse } from '@shared/api'; // Optional: for type safety
+### Required-key validation
 
-const response = await fetch('/api/my-endpoint');
-const data: MyRouteResponse = await response.json();
-```
+The Finish button is disabled until every required key from
+`services/integration-hub/INTEGRATION_HUB.md` is set. The wizard derives this list
+client-side from `GET /v1/settings/setup-status` (re-fetch on entry to
+`/setup/review`) — do not hardcode the list in the frontend.
 
-### New Page Route
-1. Create component in `client/pages/MyPage.tsx`
-2. Add route in `client/App.tsx`:
-```typescript
-<Route path="/my-page" element={<MyPage />} />
-```
+### Locking the wizard
 
-## Production Deployment
+After `setup.completed=true`, navigating to `/setup` shows a "Setup is
+already complete" page with a link back to `/dashboard`. The route is not
+removed — it stays accessible so SUPER_ADMIN can reuse step 7 (integrations)
+later, but step 8 is no-op.
 
-- **Standard**: `pnpm build`
-- **Binary**: Self-contained executables (Linux, macOS, Windows)
-- **Cloud Deployment**: Use either Netlify or Vercel via their MCP integrations for easy deployment. Both providers work well with this starter template.
+### `/awaiting-setup`
 
-## Architecture Notes
-
-- Single-port development with Vite + Express integration
-- TypeScript throughout (client, server, shared)
-- Full hot reload for rapid development
-- Production-ready with multiple deployment options
-- Comprehensive UI component library included
-- Type-safe API communication via shared interfaces
+Plain page for non-admin users when `configured=false`:
+- Localized "Your administrator must complete first-time setup" message.
+- "Sign out" button. Nothing else.
+- Auto-refreshes `setup-status` every 30s; redirects to `/dashboard` once
+  `configured=true`.

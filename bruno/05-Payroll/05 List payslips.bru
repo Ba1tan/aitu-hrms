@@ -20,10 +20,15 @@ auth:bearer {
 }
 
 script:post-response {
-  if (res.status === 200 && Array.isArray(res.body) && res.body.length > 0) {
-    bru.setEnvVar("payslipId", res.body[0].id);
-  } else if (res.status === 200 && res.body && Array.isArray(res.body.content) && res.body.content.length > 0) {
-    bru.setEnvVar("payslipId", res.body.content[0].id);
+  // Responses are wrapped in ApiResponse — list lives at res.body.data
+  // (or res.body.data.content for paginated endpoints).
+  if (res.status === 200 && res.body && res.body.data) {
+    var d = res.body.data;
+    if (Array.isArray(d) && d.length > 0) {
+      bru.setEnvVar("payslipId", d[0].id);
+    } else if (Array.isArray(d.content) && d.content.length > 0) {
+      bru.setEnvVar("payslipId", d.content[0].id);
+    }
   }
 }
 

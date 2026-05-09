@@ -28,8 +28,8 @@ body:json {
 }
 
 script:post-response {
-  if ((res.status === 200 || res.status === 201) && res.body && res.body.id) {
-    bru.setEnvVar("leaveTypeId", res.body.id);
+  if ((res.status === 200 || res.status === 201) && res.body && res.body.data.id) {
+    bru.setEnvVar("leaveTypeId", res.body.data.id);
   }
 }
 

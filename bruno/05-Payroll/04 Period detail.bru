@@ -16,5 +16,5 @@ auth:bearer {
 
 assert {
   res.status: eq 200
-  res.body.id: eq {{periodId}}
+  res.body.data.id: eq {{periodId}}
 }

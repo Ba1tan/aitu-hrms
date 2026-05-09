@@ -38,6 +38,25 @@ reference those vars in their URL or body via `{{varName}}`.
 Run the requests **inside a folder in order** (1, 2, 3, …) — the seq
 numbers in the `meta` block are what Bruno uses to sort.
 
+## Response shape
+
+Every backend response is wrapped in an `ApiResponse<T>` envelope:
+
+```json
+{
+  "success": true,
+  "message": "Success",
+  "data":     { ... },          // or [...] for lists
+  "errors":   null,
+  "timestamp": "2026-05-10T..."
+}
+```
+
+So in scripts and asserts the actual payload lives under `res.body.data`,
+not `res.body`. New requests should follow that — e.g. extracting an id is
+`res.body.data.id`, not `res.body.id`. The Spring Actuator
+`/actuator/health` endpoint is the one exception — it's not wrapped.
+
 ## Seeded credentials
 
 ```

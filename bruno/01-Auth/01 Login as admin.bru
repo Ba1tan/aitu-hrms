@@ -19,14 +19,14 @@ body:json {
 
 script:post-response {
   if (res.status === 200 && res.body) {
-    bru.setEnvVar("accessToken", res.body.accessToken);
-    bru.setEnvVar("refreshToken", res.body.refreshToken);
+    bru.setEnvVar("accessToken", res.body.data.accessToken);
+    bru.setEnvVar("refreshToken", res.body.data.refreshToken);
   }
 }
 
 assert {
   res.status: eq 200
-  res.body.accessToken: isDefined
+  res.body.data.accessToken: isDefined
 }
 
 docs {

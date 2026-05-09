@@ -38,14 +38,14 @@ body:json {
 }
 
 script:post-response {
-  if ((res.status === 200 || res.status === 201) && res.body && res.body.id) {
-    bru.setEnvVar("employeeId", res.body.id);
+  if ((res.status === 200 || res.status === 201) && res.body && res.body.data.id) {
+    bru.setEnvVar("employeeId", res.body.data.id);
   }
 }
 
 assert {
   res.status: lte 201
-  res.body.id: isDefined
+  res.body.data.id: isDefined
 }
 
 docs {

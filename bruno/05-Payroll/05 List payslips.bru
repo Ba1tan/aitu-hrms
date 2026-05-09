@@ -1,0 +1,37 @@
+meta {
+  name: 05 List payslips
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{gateway}}/api/v1/payroll/periods/{{periodId}}/payslips
+  body: none
+  auth: bearer
+}
+
+params:query {
+  status: ~
+  search: ~
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+script:post-response {
+  // Responses are wrapped in ApiResponse — list lives at res.body.data
+  // (or res.body.data.content for paginated endpoints).
+  if (res.status === 200 && res.body && res.body.data) {
+    var d = res.body.data;
+    if (Array.isArray(d) && d.length > 0) {
+      bru.setEnvVar("payslipId", d[0].id);
+    } else if (Array.isArray(d.content) && d.content.length > 0) {
+      bru.setEnvVar("payslipId", d.content[0].id);
+    }
+  }
+}
+
+assert {
+  res.status: eq 200
+}

@@ -1,0 +1,21 @@
+meta {
+  name: 02 User health (via swagger path)
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{gateway}}/user-api/v3/api-docs
+  body: none
+  auth: none
+}
+
+assert {
+  res.status: eq 200
+}
+
+docs {
+  Hitting the OpenAPI doc endpoint is a quick way to verify a service is
+  reachable through the gateway and the regex public-path whitelist works
+  (commit a7d7de3). Returns the OpenAPI 3 JSON for the service.
+}

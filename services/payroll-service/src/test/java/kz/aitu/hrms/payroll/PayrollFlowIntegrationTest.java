@@ -212,7 +212,7 @@ class PayrollFlowIntegrationTest {
     // ── WireMock stubs ────────────────────────────────────────────────────
 
     private void stubEmployeeService() {
-        wireMock.stubFor(WireMock.get(WireMock.urlPathMatching("/v1/employees"))
+        wireMock.stubFor(WireMock.get(WireMock.urlPathMatching("/api/v1/employees"))
                 .willReturn(aResponse()
                         .withStatus(200)
                         .withHeader("Content-Type", "application/json")
@@ -234,7 +234,7 @@ class PayrollFlowIntegrationTest {
                                 }
                                 """.formatted(ALICE_ID, BOB_ID))));
 
-        wireMock.stubFor(WireMock.get(WireMock.urlPathEqualTo("/v1/employees/" + ALICE_ID))
+        wireMock.stubFor(WireMock.get(WireMock.urlPathEqualTo("/api/v1/employees/" + ALICE_ID))
                 .willReturn(aResponse()
                         .withStatus(200)
                         .withHeader("Content-Type", "application/json")
@@ -252,7 +252,7 @@ class PayrollFlowIntegrationTest {
                                 }
                                 """.formatted(ALICE_ID, UUID.randomUUID(), UUID.randomUUID()))));
 
-        wireMock.stubFor(WireMock.get(WireMock.urlPathEqualTo("/v1/employees/" + BOB_ID))
+        wireMock.stubFor(WireMock.get(WireMock.urlPathEqualTo("/api/v1/employees/" + BOB_ID))
                 .willReturn(aResponse()
                         .withStatus(200)
                         .withHeader("Content-Type", "application/json")
@@ -272,7 +272,7 @@ class PayrollFlowIntegrationTest {
     }
 
     private void stubAttendanceService() {
-        wireMock.stubFor(WireMock.get(WireMock.urlMatching("/v1/attendance/summary/employee/.*"))
+        wireMock.stubFor(WireMock.get(WireMock.urlMatching("/api/v1/attendance/summary/employee/.*"))
                 .willReturn(aResponse()
                         .withStatus(200)
                         .withHeader("Content-Type", "application/json")

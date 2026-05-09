@@ -1,0 +1,44 @@
+meta {
+  name: 02 Generate payslips
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{gateway}}/api/v1/payroll/periods/{{periodId}}/generate
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+body:json {
+  {
+    "employeeIds": []
+  }
+}
+
+script:pre-request {
+  // Empty {{periodId}} would produce //generate, which Spring matches
+  // against an unrelated mapping and returns "Method not allowed". Fail
+  // visibly here instead.
+  var pid = bru.getEnvVar("periodId");
+  if (!pid || pid === "") {
+    throw new Error("periodId env var is empty — run 05-Payroll/01 Create period first.");
+  }
+}
+
+assert {
+  res.status: lte 202
+}
+
+docs {
+  Generates payslips for every active employee (or only the listed
+  employeeIds when non-empty). Calls ai-ml-service for anomaly score —
+  if AI is down, payroll catches the exception and proceeds without score.
+
+  Returns immediately for small batches; for >50 employees it may launch
+  Spring Batch and return a jobId — poll GET /v1/payroll/jobs/{jobId}/status.
+}

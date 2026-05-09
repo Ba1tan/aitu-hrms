@@ -1,0 +1,39 @@
+meta {
+  name: 01 Login as employee
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{gateway}}/api/auth/login
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "email": "{{employeeEmail}}",
+    "password": "{{employeePassword}}"
+  }
+}
+
+script:post-response {
+  if (res.status === 200 && res.body) {
+    bru.setEnvVar("employeeToken", res.body.data.accessToken);
+    bru.setEnvVar("accessToken", res.body.data.accessToken);
+  }
+}
+
+assert {
+  res.status: eq 200
+  res.body.data.accessToken: isDefined
+}
+
+docs {
+  Logs in as the employee created in 02-Setup. The temp password is in the
+  user-service logs after EmployeeCreatedEvent is processed — copy it into
+  the env var "employeePassword" first.
+
+  Stores the token in BOTH employeeToken (so you can swap back) and
+  accessToken (so subsequent self-service requests work without edits).
+}

@@ -1,0 +1,27 @@
+meta {
+  name: 03 Refresh token
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{gateway}}/api/auth/refresh
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "refreshToken": "{{refreshToken}}"
+  }
+}
+
+script:post-response {
+  if (res.status === 200 && res.body && res.body.data.accessToken) {
+    bru.setEnvVar("accessToken", res.body.data.accessToken);
+  }
+}
+
+assert {
+  res.status: eq 200
+}

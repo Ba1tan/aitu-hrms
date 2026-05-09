@@ -1,0 +1,27 @@
+meta {
+  name: 06 List employees
+  type: http
+  seq: 6
+}
+
+get {
+  url: {{gateway}}/api/v1/employees?page=0&size=20
+  body: none
+  auth: bearer
+}
+
+params:query {
+  page: 0
+  size: 20
+  search: ~
+  departmentId: ~
+  status: ~
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+assert {
+  res.status: eq 200
+}

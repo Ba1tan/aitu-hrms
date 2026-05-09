@@ -1,0 +1,24 @@
+meta {
+  name: 07 Approve period
+  type: http
+  seq: 7
+}
+
+post {
+  url: {{gateway}}/api/v1/payroll/periods/{{periodId}}/approve
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+assert {
+  res.status: lte 200
+}
+
+docs {
+  Requires PAYROLL_APPROVE. Locks all payslips. Publishes PayrollPeriodApprovedEvent
+  which integration-hub will (once shipped) consume to trigger 1C sync.
+}

@@ -8,6 +8,7 @@ import kz.aitu.hrms.user.service.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.security.SecureRandom;
@@ -28,6 +29,9 @@ public class EmployeeCreatedEventListener {
     private final UserService userService;
     private final UserRepository userRepository;
 
+    @Value("${app.user.log-temp-password-on-auto-provision:false}")
+    private boolean logTempPassword;
+
     @RabbitListener(queues = RabbitConfig.Q_EMPLOYEE_CREATED)
     public void onEmployeeCreated(EmployeeCreatedEvent event) {
         if (event == null || event.getEmail() == null || event.getEmail().isBlank()) {
@@ -40,12 +44,13 @@ public class EmployeeCreatedEventListener {
         }
 
         String[] parts = splitName(event.getFullName());
+        String tempPassword = generateTempPassword();
 
         UserDtos.CreateUserRequest req = new UserDtos.CreateUserRequest();
         req.setEmail(event.getEmail());
         req.setFirstName(parts[0]);
         req.setLastName(parts[1]);
-        req.setPassword(generateTempPassword());
+        req.setPassword(tempPassword);
         req.setRole("EMPLOYEE");
         req.setEmployeeId(event.getEmployeeId());
         req.setRequirePasswordChange(true);
@@ -53,6 +58,10 @@ public class EmployeeCreatedEventListener {
         try {
             userService.create(req);
             log.info("Auto-provisioned EMPLOYEE account for {}", event.getEmail());
+            if (logTempPassword) {
+                log.warn("[DEV] Temp password for {}: {}  (disable app.user.log-temp-password-on-auto-provision once notification-service ships)",
+                        event.getEmail(), tempPassword);
+            }
         } catch (Exception ex) {
             log.error("Failed to auto-provision user for employee {}: {}",
                     event.getEmployeeId(), ex.getMessage());

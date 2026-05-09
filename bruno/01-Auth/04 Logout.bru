@@ -1,0 +1,20 @@
+meta {
+  name: 04 Logout
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{gateway}}/api/auth/logout
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+docs {
+  Adds the JWT to the Redis blacklist. After this request, the token is no longer
+  valid for protected endpoints. Don't run mid-flow — re-login if you do.
+}

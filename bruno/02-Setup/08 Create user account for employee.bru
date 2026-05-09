@@ -1,0 +1,28 @@
+meta {
+  name: 08 Create user account for employee
+  type: http
+  seq: 8
+}
+
+post {
+  url: {{gateway}}/api/v1/employees/{{employeeId}}/create-account
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+assert {
+  res.status: lte 201
+}
+
+docs {
+  Publishes EmployeeCreatedEvent → user-service consumes and provisions
+  a user account with a temporary password. Watch the user-service logs
+  to find the temp password (or check the configured email inbox).
+
+  After this runs, you can log in as the new employee — see
+  06-Self-service/01 Login as employee.bru.
+}

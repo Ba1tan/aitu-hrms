@@ -1,0 +1,28 @@
+meta {
+  name: 04 Daily company
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{gateway}}/api/v1/attendance/records/daily
+  body: none
+  auth: bearer
+}
+
+params:query {
+  date: ~
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+assert {
+  res.status: eq 200
+}
+
+docs {
+  Company-wide attendance for a date (defaults to today). Requires
+  ATTENDANCE_VIEW_ALL — admin/HR only.
+}

@@ -21,12 +21,19 @@ public interface UserRepository extends JpaRepository<User, UUID> {
 
     boolean existsByEmail(String email);
 
+    /**
+     * The CAST(:search AS string) is load-bearing — Postgres can't infer the
+     * type of an untyped null inside CONCAT('%', ?, '%') and falls back to
+     * bytea, which has no LOWER overload (SQLState 42883). Casting forces
+     * Hibernate to emit `cast(? as varchar)`, so the bind is text even when
+     * the value is null.
+     */
     @Query("""
            SELECT u FROM User u
            WHERE u.deleted = false
-             AND (:search IS NULL OR LOWER(u.email) LIKE LOWER(CONCAT('%', :search, '%'))
-                                 OR LOWER(u.firstName) LIKE LOWER(CONCAT('%', :search, '%'))
-                                 OR LOWER(u.lastName)  LIKE LOWER(CONCAT('%', :search, '%')))
+             AND (:search IS NULL OR LOWER(u.email)     LIKE LOWER(CONCAT('%', CAST(:search AS string), '%'))
+                                 OR LOWER(u.firstName) LIKE LOWER(CONCAT('%', CAST(:search AS string), '%'))
+                                 OR LOWER(u.lastName)  LIKE LOWER(CONCAT('%', CAST(:search AS string), '%')))
              AND (:role   IS NULL OR u.role = :role)
            """)
     Page<User> search(@Param("search") String search,

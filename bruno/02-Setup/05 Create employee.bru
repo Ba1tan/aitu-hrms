@@ -1,0 +1,65 @@
+meta {
+  name: 05 Create employee
+  type: http
+  seq: 5
+}
+
+post {
+  url: {{gateway}}/api/v1/employees
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+body:json {
+  {
+    "firstName": "Иван",
+    "lastName": "Иванов",
+    "middleName": "Иванович",
+    "email": "{{employeeEmail}}",
+    "iin": "{{iin}}",
+    "phone": "+77011112233",
+    "hireDate": "2026-04-01",
+    "dateOfBirth": "1991-09-15",
+    "gender": "MALE",
+    "employmentType": "FULL_TIME",
+    "baseSalary": 500000,
+    "departmentId": "{{departmentId}}",
+    "positionId": "{{positionId}}",
+    "disabilityGroup": "NONE",
+    "isResident": true,
+    "isPensioner": false,
+    "address": "Astana, Kazakhstan",
+    "createAccount": false
+  }
+}
+
+script:post-response {
+  if ((res.status === 200 || res.status === 201) && res.body && res.body.data.id) {
+    bru.setEnvVar("employeeId", res.body.data.id);
+  }
+}
+
+assert {
+  res.status: lte 201
+  res.body.data.id: isDefined
+}
+
+docs {
+  Creates an employee row only. To also create the user account, set
+  createAccount: true OR run "08 Create user account for employee" after.
+
+  IIN rules (KZ Individual Identification Number):
+  - 12 digits, last is a mod-11 check digit. Validator at
+    services/employee-service/src/main/java/kz/aitu/hrms/employee/util/IinValidator.java
+  - First 6 = date of birth (YYMMDD); 7th = century+gender
+    (3=male/1900s, 4=female/1900s, 5=male/2000s, 6=female/2000s)
+  - Unique per employee — second create with the same IIN fails on the
+    DB constraint
+  - Default 910915300123 = male born 1991-09-15 (proven valid in
+    IinValidatorTest). Use this OR a real IIN.
+  - To use a different one, change `iin` in environments/*.bru
+}

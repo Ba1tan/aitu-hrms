@@ -16,7 +16,7 @@ import java.util.UUID;
 @FeignClient(
         name = "attendance-service",
         url = "${app.services.attendance-service-uri}",
-        path = "/v1"
+        path = "/api/v1"
 )
 public interface AttendanceClient {
 

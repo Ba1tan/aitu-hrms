@@ -1,0 +1,15 @@
+meta {
+  name: 04 Attendance health
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{gateway}}/attendance-api/v3/api-docs
+  body: none
+  auth: none
+}
+
+assert {
+  res.status: eq 200
+}

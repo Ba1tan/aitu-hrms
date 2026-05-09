@@ -1,0 +1,23 @@
+meta {
+  name: 04 List positions
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{gateway}}/api/v1/positions?departmentId={{departmentId}}
+  body: none
+  auth: bearer
+}
+
+params:query {
+  departmentId: {{departmentId}}
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+assert {
+  res.status: eq 200
+}

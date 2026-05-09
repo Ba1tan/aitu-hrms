@@ -1,0 +1,33 @@
+meta {
+  name: 11 Link user to employee
+  type: http
+  seq: 11
+}
+
+put {
+  url: {{gateway}}/api/v1/users/{{newUserId}}/link-employee
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+body:json {
+  {
+    "employeeId": "{{employeeId}}"
+  }
+}
+
+assert {
+  res.status: eq 200
+}
+
+docs {
+  Idempotent — only needed if you created the user via "10 Manual create user"
+  WITHOUT passing employeeId in the body, or if the user pre-existed before
+  the employee. The employeeId in the JWT comes from this link.
+
+  Skip this if you set employeeId in step 10's body.
+}

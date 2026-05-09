@@ -1,0 +1,23 @@
+meta {
+  name: 05 List holidays
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{gateway}}/api/v1/attendance/holidays?year={{year}}
+  body: none
+  auth: bearer
+}
+
+params:query {
+  year: {{year}}
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+assert {
+  res.status: eq 200
+}

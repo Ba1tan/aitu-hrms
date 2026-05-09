@@ -1,0 +1,23 @@
+meta {
+  name: 10 YTD totals
+  type: http
+  seq: 10
+}
+
+get {
+  url: {{gateway}}/api/v1/payroll/ytd/employee/{{employeeId}}?year={{year}}
+  body: none
+  auth: bearer
+}
+
+params:query {
+  year: {{year}}
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+assert {
+  res.status: eq 200
+}

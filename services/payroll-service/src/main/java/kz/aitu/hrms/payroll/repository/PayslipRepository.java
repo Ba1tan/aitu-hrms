@@ -23,12 +23,20 @@ public interface PayslipRepository extends JpaRepository<Payslip, UUID> {
 
     List<Payslip> findByPeriodIdAndDeletedFalse(UUID periodId);
 
+    /**
+     * The CAST(:search AS string) is load-bearing — Postgres can't infer the
+     * type of an untyped null inside CONCAT('%', ?, '%') and falls back to
+     * bytea, which has no LOWER overload (SQLState 42883). Casting forces
+     * Hibernate to emit `cast(? as varchar)` in the SQL, so the bind is text
+     * even when the value is null. H2's PostgreSQL mode is more forgiving,
+     * which is why the test suite never caught this.
+     */
     @Query("""
         SELECT p FROM Payslip p
         WHERE p.period.id = :periodId AND p.deleted = false
           AND (:status IS NULL OR p.status = :status)
-          AND (:search IS NULL OR LOWER(p.employeeName) LIKE LOWER(CONCAT('%', :search, '%'))
-                              OR LOWER(p.employeeNumber) LIKE LOWER(CONCAT('%', :search, '%')))
+          AND (:search IS NULL OR LOWER(p.employeeName)   LIKE LOWER(CONCAT('%', CAST(:search AS string), '%'))
+                              OR LOWER(p.employeeNumber) LIKE LOWER(CONCAT('%', CAST(:search AS string), '%')))
         """)
     Page<Payslip> search(@Param("periodId") UUID periodId,
                          @Param("status") PayslipStatus status,

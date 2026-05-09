@@ -1,0 +1,32 @@
+meta {
+  name: 01 Check-in (manual)
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{gateway}}/api/v1/attendance/check-in
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+body:json {
+  {
+    "employeeId": "{{employeeId}}",
+    "method": "WEB"
+  }
+}
+
+assert {
+  res.status: lte 201
+}
+
+docs {
+  Manual / web check-in (no face). employeeId is optional — if omitted,
+  uses the JWT's employeeId claim. method values: WEB | MANUAL | MOBILE.
+  Face check-in is /attendance/check-in/face (multipart) and needs ai-ml-service.
+}

@@ -1,0 +1,15 @@
+meta {
+  name: 05 Leave health
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{gateway}}/leave-api/v3/api-docs
+  body: none
+  auth: none
+}
+
+assert {
+  res.status: eq 200
+}

@@ -1,0 +1,27 @@
+meta {
+  name: 01 List leave types
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{gateway}}/api/v1/leave/types
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+script:post-response {
+  // Try to grab the first leaveTypeId so subsequent requests can use it.
+  // Responses are wrapped in ApiResponse — actual list lives at res.body.data.
+  if (res.status === 200 && res.body && Array.isArray(res.body.data) && res.body.data.length > 0) {
+    bru.setEnvVar("leaveTypeId", res.body.data[0].id);
+  }
+}
+
+assert {
+  res.status: eq 200
+}

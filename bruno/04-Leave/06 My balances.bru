@@ -1,0 +1,23 @@
+meta {
+  name: 06 My balances
+  type: http
+  seq: 6
+}
+
+get {
+  url: {{gateway}}/api/v1/leave/balances?year={{year}}
+  body: none
+  auth: bearer
+}
+
+params:query {
+  year: {{year}}
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+assert {
+  res.status: eq 200
+}

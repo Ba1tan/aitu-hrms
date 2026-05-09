@@ -1,0 +1,100 @@
+# integration-hub — application.yml template
+#
+# Copy to src/main/resources/application.yml when scaffolding the service.
+
+server:
+  port: ${SERVER_PORT:8089}
+  servlet:
+    context-path: /api
+  forward-headers-strategy: framework
+
+spring:
+  application:
+    name: integration-hub
+
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/hrms?currentSchema=hrms_integration}
+    username: ${DB_USERNAME:hrms_user}
+    password: ${DB_PASSWORD:hrms_pass}
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        default_schema: hrms_integration
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+
+  flyway:
+    enabled: true
+    default-schema: hrms_integration
+    schemas: hrms_integration
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
+
+  rabbitmq:
+    host: ${RABBITMQ_HOST:localhost}
+    port: ${RABBITMQ_PORT:5672}
+    username: ${RABBITMQ_USER:hrms}
+    password: ${RABBITMQ_PASS:hrms_pass}
+
+  jackson:
+    serialization:
+      write-dates-as-timestamps: false
+    default-property-inclusion: NON_NULL
+    time-zone: Asia/Almaty
+
+app:
+  jwt:
+    secret: ${JWT_SECRET:}
+
+  integration:
+    one-c:
+      base-url:        ${ONE_C_BASE_URL:}
+      username:        ${ONE_C_USERNAME:}
+      password:        ${ONE_C_PASSWORD:}
+      payroll-path:    /hs/hrms/payroll/sync
+      timeout-seconds: 30
+      circuit-breaker:
+        failure-rate-threshold:    50
+        slow-call-duration-seconds: 10
+        wait-duration-seconds:     60
+      retry:
+        max-attempts:    3
+        initial-interval: 2s
+        multiplier:      2.0
+
+    bank:
+      default-format: ${BANK_FILE_FORMAT:KASPI_TSV}   # KASPI_TSV | HALYK_MT940 | JUSAN_CSV
+      output-dir:     ${BANK_FILE_DIR:/data/hrms/bank-files}
+
+  services:
+    user-service-uri:    ${USER_SERVICE_URI:http://localhost:8081}
+    payroll-service-uri: ${PAYROLL_SERVICE_URI:http://localhost:8085}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: when-authorized
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+
+logging:
+  level:
+    kz.aitu.hrms.integration: INFO
+    org.springframework.security: WARN

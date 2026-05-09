@@ -20,6 +20,16 @@ body:json {
   }
 }
 
+script:pre-request {
+  // Empty {{periodId}} would produce //generate, which Spring matches
+  // against an unrelated mapping and returns "Method not allowed". Fail
+  // visibly here instead.
+  var pid = bru.getEnvVar("periodId");
+  if (!pid || pid === "") {
+    throw new Error("periodId env var is empty — run 05-Payroll/01 Create period first.");
+  }
+}
+
 assert {
   res.status: lte 202
 }

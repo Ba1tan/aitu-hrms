@@ -51,5 +51,15 @@ assert {
 docs {
   Creates an employee row only. To also create the user account, set
   createAccount: true OR run "08 Create user account for employee" after.
-  IIN must be 12 digits and unique. Adjust if collision.
+
+  IIN rules (KZ Individual Identification Number):
+  - 12 digits, last is a mod-11 check digit. Validator at
+    services/employee-service/src/main/java/kz/aitu/hrms/employee/util/IinValidator.java
+  - First 6 = date of birth (YYMMDD); 7th = century+gender
+    (3=male/1900s, 4=female/1900s, 5=male/2000s, 6=female/2000s)
+  - Unique per employee — second create with the same IIN fails on the
+    DB constraint
+  - Default 910915300123 = male born 1991-09-15 (proven valid in
+    IinValidatorTest). Use this OR a real IIN.
+  - To use a different one, change `iin` in environments/*.bru
 }

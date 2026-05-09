@@ -23,16 +23,12 @@ spring:
             key-resolver: "#{@userKeyResolver}"
 
       # ---------------------------------------------------------------
-      # MIGRATION PHASE: all routes proxy to the monolith at :8081.
-      # As each service is extracted, replace the uri for that route.
+      # All traffic is routed to per-service hostnames. Routes for services
+      # that are not yet implemented (ai-ml, reporting, notification,
+      # integration-hub) are pre-wired to their planned URIs — they return
+      # 502/connection-refused until the underlying service comes up.
       # ---------------------------------------------------------------
       routes:
-        - id: monolith-swagger
-          uri: ${MONOLITH_URI:http://localhost:8081}
-          predicates:
-            - Path=/api/swagger-ui/**,/api/swagger-ui.html,/api/v3/api-docs/**
-
-
         - id: user-service-swagger
           uri: ${USER_SERVICE_URI:http://localhost:8081}
           predicates:
@@ -93,33 +89,42 @@ spring:
           predicates:
             - Path=/api/v1/leave/**
 
+        - id: payroll-service-swagger
+          uri: ${PAYROLL_SERVICE_URI:http://localhost:8085}
+          predicates:
+            - Path=/payroll-api/swagger-ui/**,/payroll-api/swagger-ui.html,/payroll-api/v3/api-docs/**
+          filters:
+            - RewritePath=/payroll-api/(?<segment>.*), /api/$\{segment}
+            - AddRequestHeader=X-Forwarded-Prefix, /payroll-api
+
         - id: payroll
-          uri: ${MONOLITH_URI:http://localhost:8081}
+          uri: ${PAYROLL_SERVICE_URI:http://localhost:8085}
           predicates:
             - Path=/api/v1/payroll/**
 
         - id: ai
-          uri: ${MONOLITH_URI:http://localhost:8081}
+          uri: ${AI_ML_SERVICE_URI:http://localhost:8086}
           predicates:
             - Path=/api/v1/ai/**
 
         - id: reports
-          uri: ${MONOLITH_URI:http://localhost:8081}
+          uri: ${REPORTING_SERVICE_URI:http://localhost:8087}
           predicates:
             - Path=/api/v1/reports/**
 
         - id: notifications
-          uri: ${MONOLITH_URI:http://localhost:8081}
+          uri: ${NOTIFICATION_SERVICE_URI:http://localhost:8088}
           predicates:
             - Path=/api/v1/notifications/**
 
         - id: integration
-          uri: ${MONOLITH_URI:http://localhost:8081}
+          uri: ${INTEGRATION_HUB_URI:http://localhost:8089}
           predicates:
             - Path=/api/v1/integration/**,/api/v1/settings/**
 
+        # Dashboard is a JSON aggregation served by reporting-service (see services/reporting-service/CLAUDE.md).
         - id: dashboard
-          uri: ${MONOLITH_URI:http://localhost:8081}
+          uri: ${REPORTING_SERVICE_URI:http://localhost:8087}
           predicates:
             - Path=/api/v1/dashboard/**
 

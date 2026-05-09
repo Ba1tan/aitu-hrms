@@ -6,7 +6,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
-import kz.aitu.hrms.employee.entity.DisabilityGroup;
+import kz.aitu.hrms.common.types.DisabilityGroup;
 import kz.aitu.hrms.employee.entity.EmploymentStatus;
 import kz.aitu.hrms.employee.entity.EmploymentType;
 import kz.aitu.hrms.employee.entity.Gender;

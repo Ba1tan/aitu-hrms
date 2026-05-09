@@ -1,0 +1,62 @@
+server:
+  port: 0
+
+spring:
+  main:
+    allow-bean-definition-overriding: true
+
+  datasource:
+    url: jdbc:h2:mem:payroll-test;MODE=PostgreSQL;DB_CLOSE_DELAY=-1;NON_KEYWORDS=MONTH,YEAR,DAY,VALUE
+    username: sa
+    password: ""
+    driver-class-name: org.h2.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.H2Dialect
+
+  flyway:
+    enabled: false
+
+  batch:
+    jdbc:
+      initialize-schema: always
+      table-prefix: BATCH_
+    job:
+      enabled: false
+
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.amqp.RabbitAutoConfiguration
+      - org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration
+      - org.springframework.boot.autoconfigure.data.redis.RedisRepositoriesAutoConfiguration
+
+app:
+  jwt:
+    secret: dGVzdC1zZWNyZXQtMzItYnl0ZXMtbWluaW11bS1saW5lLWxlbmd0aC0xMjM0NTY3ODk=
+  zone: Asia/Almaty
+  payroll:
+    mrp: 4325
+    min-wage: 85000
+    standard-deduction-mrp: 30
+    opv-cap-mzp: 50
+    opv-rate: 0.10
+    vosms-rate: 0.02
+    ipn-rate: 0.10
+    ipn-rate-non-resident: 0.20
+    so-rate: 0.05
+    sn-rate: 0.06
+    opvr-rate: 0.035
+    oopv-rate: 0.0
+    anomaly-flag-threshold: 0.65
+    pdf-storage-path: /tmp/hrms-payslips-test
+    batch-threshold: 50
+  services:
+    user-service-uri: http://localhost:8081
+    employee-service-uri: http://localhost:8082
+    attendance-service-uri: http://localhost:8083
+    leave-service-uri: http://localhost:8084
+    ai-ml-service-uri: http://localhost:8086

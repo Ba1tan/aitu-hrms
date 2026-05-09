@@ -1,7 +1,7 @@
 # docker-compose.microservices.yml — MIGRATION PHASE
 #
 # Topology:
-#   nginx / NPM  →  :${GATEWAY_PORT}  →  api-gateway:8080  →  monolith:8081
+#   nginx / NPM  →  :${GATEWAY_PORT}  →  api-gateway:8080  →  per-service backends
 #
 # Container names and volumes are prefixed by COMPOSE_PROJECT_NAME so prod
 # and staging can coexist on the same host without conflicts:
@@ -65,40 +65,6 @@ services:
       interval: 30s
       timeout: 10s
       retries: 5
-
-  #Monolith (internal only — not exposed on host)
-
-  monolith:
-    image: ${MONOLITH_IMAGE:-hrms-monolith:local}
-    build:
-      context: ./monolith
-      dockerfile: Dockerfile
-    restart: unless-stopped
-    environment:
-      SPRING_PROFILE: ${SPRING_PROFILE:-prod}
-      SERVER_PORT: 8081
-      DB_URL: jdbc:postgresql://postgres:5432/${DB_NAME:-hrms}?currentSchema=public
-      DB_USERNAME: ${DB_USERNAME:-hrms_user}
-      DB_PASSWORD: ${DB_PASSWORD:-hrms_pass}
-      REDIS_HOST: redis
-      REDIS_PORT: 6379
-      REDIS_PASSWORD: ${REDIS_PASSWORD:-hrms_redis_pass}
-      JWT_SECRET: ${JWT_SECRET}
-      CORS_ORIGINS: ${CORS_ORIGINS:-https://hrms.nursnerv.uk}
-      MANAGEMENT_HEALTH_MAIL_ENABLED: ${MAIL_HEALTH_ENABLED:-false}
-    networks:
-      - hrms-network
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-    healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://localhost:8081/api/actuator/health | grep -q UP || exit 1"]
-      interval: 30s
-      timeout: 10s
-      start_period: 60s
-      retries: 3
 
   #User Service
 
@@ -281,6 +247,56 @@ services:
       start_period: 60s
       retries: 3
 
+  #Payroll Service
+
+  payroll-service:
+    image: ${PAYROLL_SERVICE_IMAGE:-hrms-payroll-service:local}
+    build:
+      context: ./services
+      dockerfile: payroll-service/Dockerfile
+      args:
+        GITHUB_ACTOR: ${GITHUB_ACTOR}
+        GITHUB_TOKEN: ${GITHUB_TOKEN}
+    restart: unless-stopped
+    environment:
+      SERVER_PORT: 8085
+      DB_URL: jdbc:postgresql://postgres:5432/${DB_NAME:-hrms}?currentSchema=hrms_payroll
+      DB_USERNAME: ${DB_USERNAME:-hrms_user}
+      DB_PASSWORD: ${DB_PASSWORD:-hrms_pass}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-hrms_redis_pass}
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
+      RABBITMQ_USER: ${RABBITMQ_USER:-hrms}
+      RABBITMQ_PASS: ${RABBITMQ_PASS:-hrms_pass}
+      JWT_SECRET: ${JWT_SECRET}
+      USER_SERVICE_URI: http://user-service:8081
+      EMPLOYEE_SERVICE_URI: http://employee-service:8082
+      ATTENDANCE_SERVICE_URI: http://attendance-service:8083
+      LEAVE_SERVICE_URI: http://leave-service:8084
+      AI_ML_SERVICE_URI: ${AI_ML_SERVICE_URI:-http://ai-ml-service:8086}
+      PAYSLIP_PDF_PATH: /data/hrms/payslips
+    volumes:
+      - payroll_pdfs:/data/hrms/payslips
+    networks:
+      - hrms-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      employee-service:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8085/api/actuator/health | grep -q UP || exit 1"]
+      interval: 30s
+      timeout: 10s
+      start_period: 60s
+      retries: 3
+
   #API Gateway
 
   gateway:
@@ -288,18 +304,21 @@ services:
     build:
       context: ./services
       dockerfile: api-gateway/Dockerfile
-      args:
-        GITHUB_ACTOR: ${GITHUB_ACTOR}
-        GITHUB_TOKEN: ${GITHUB_TOKEN}
     restart: unless-stopped
     ports:
       - "${GATEWAY_PORT:-8090}:8080"
     environment:
-      MONOLITH_URI: http://monolith:8081
       USER_SERVICE_URI: http://user-service:8081
       EMPLOYEE_SERVICE_URI: http://employee-service:8082
       ATTENDANCE_SERVICE_URI: http://attendance-service:8083
       LEAVE_SERVICE_URI: http://leave-service:8084
+      PAYROLL_SERVICE_URI: http://payroll-service:8085
+      # Pre-wired routes for not-yet-built services (return connection-refused
+      # until each comes up — see services/api-gateway/src/main/resources/application.yml).
+      AI_ML_SERVICE_URI: http://ai-ml-service:8086
+      REPORTING_SERVICE_URI: http://reporting-service:8087
+      NOTIFICATION_SERVICE_URI: http://notification-service:8088
+      INTEGRATION_HUB_URI: http://integration-hub:8089
       REDIS_HOST: redis
       REDIS_PORT: 6379
       REDIS_PASSWORD: ${REDIS_PASSWORD:-hrms_redis_pass}
@@ -308,8 +327,6 @@ services:
     networks:
       - hrms-network
     depends_on:
-      monolith:
-        condition: service_healthy
       user-service:
         condition: service_healthy
       employee-service:
@@ -317,6 +334,8 @@ services:
       attendance-service:
         condition: service_healthy
       leave-service:
+        condition: service_healthy
+      payroll-service:
         condition: service_healthy
       redis:
         condition: service_healthy
@@ -382,6 +401,7 @@ volumes:
   redis_data:
   rabbitmq_data:
   employee_uploads:
+  payroll_pdfs:
 
 networks:
   hrms-network:

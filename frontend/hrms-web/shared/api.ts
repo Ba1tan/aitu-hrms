@@ -629,7 +629,11 @@ export interface AdminUser {
   lastName: string;
   role: string;
   enabled: boolean;
-  accountNonLocked: boolean;
+  /**
+   * Backend `UserSummary.locked` — true when admin-locked or auto-locked
+   * after 5 failed logins. Inverse of the JPA entity's `accountNonLocked`.
+   */
+  locked: boolean;
   employeeId?: string | null;
   employee?: { id: string; fullName: string } | null;
   lastLoginAt?: string | null;
@@ -650,7 +654,8 @@ export interface UpdateUserRequest {
   lastName?: string;
   role?: string;
   enabled?: boolean;
-  accountNonLocked?: boolean;
+  /** true = lock the account, false = unlock. Backend expects this field. */
+  locked?: boolean;
 }
 
 export interface AuditLogEntry {

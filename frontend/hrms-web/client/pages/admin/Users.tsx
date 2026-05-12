@@ -208,7 +208,7 @@ export default function AdminUsers() {
                       <Badge variant="outline" className="text-muted-foreground">
                         Отключен
                       </Badge>
-                    ) : !u.accountNonLocked ? (
+                    ) : u.locked ? (
                       <Badge variant="outline" className="text-destructive">
                         Заблокирован
                       </Badge>
@@ -310,9 +310,9 @@ function UserActions({
     try {
       await update.mutateAsync({
         id: user.id,
-        data: { accountNonLocked: !user.accountNonLocked },
+        data: { locked: !user.locked },
       });
-      toast.success(user.accountNonLocked ? "Заблокирован" : "Разблокирован");
+      toast.success(user.locked ? "Разблокирован" : "Заблокирован");
     } catch (e: any) {
       toast.error(e?.response?.data?.message || "Ошибка");
     }
@@ -359,13 +359,13 @@ function UserActions({
         <DropdownMenuContent align="end">
           <DropdownMenuItem onClick={onLink}>Привязать сотрудника</DropdownMenuItem>
           <DropdownMenuItem onClick={toggleLock}>
-            {user.accountNonLocked ? (
+            {user.locked ? (
               <>
-                <Lock className="h-3 w-3 mr-2" /> Заблокировать
+                <Unlock className="h-3 w-3 mr-2" /> Разблокировать
               </>
             ) : (
               <>
-                <Unlock className="h-3 w-3 mr-2" /> Разблокировать
+                <Lock className="h-3 w-3 mr-2" /> Заблокировать
               </>
             )}
           </DropdownMenuItem>

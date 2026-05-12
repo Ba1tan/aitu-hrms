@@ -172,7 +172,7 @@ ACCOUNTANT / HR for narrow slices. Treat them as a subroute family under
   soft-delete.
 - Create form: `POST /v1/users` (already exists in api.ts as `apiClient.post`).
 - Edit role: `PUT /v1/users/{id}` with `{ role }`.
-- Lock / unlock: `PUT /v1/users/{id}` with `{ accountNonLocked }`.
+- Lock / unlock: `PUT /v1/users/{id}` with `{ locked }` (true = lock, false = unlock).
 - Link to employee: `PUT /v1/users/{id}/link-employee` with `{ employeeId }`.
   Combobox over `/v1/employees?search=`.
 - Password reset (admin-triggered): `POST /v1/auth/forgot-password` with

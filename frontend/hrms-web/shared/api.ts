@@ -147,8 +147,105 @@ export interface AuthResponse {
   user: AuthUser;
 }
 
-export interface Department { id: string; name: string; }
-export interface Position   { id: string; title: string; }
+export interface Department {
+  id: string;
+  name: string;
+  code?: string | null;
+  description?: string | null;
+  parentId?: string | null;
+  parent?: { id: string; name: string } | null;
+  managerId?: string | null;
+  manager?: { id: string; fullName: string } | null;
+  employeeCount?: number;
+}
+
+export interface Position {
+  id: string;
+  title: string;
+  departmentId?: string | null;
+  department?: { id: string; name: string } | null;
+  minSalary?: string | number | null;
+  maxSalary?: string | number | null;
+  description?: string | null;
+}
+
+export interface DepartmentRequest {
+  name: string;
+  code?: string;
+  description?: string;
+  parentId?: string | null;
+  managerId?: string | null;
+}
+
+export interface PositionRequest {
+  title: string;
+  departmentId?: string | null;
+  minSalary?: number | null;
+  maxSalary?: number | null;
+  description?: string;
+}
+
+export interface SalaryHistoryEntry {
+  id: string;
+  previousSalary: string;
+  newSalary: string;
+  effectiveDate: string;
+  reason?: string;
+  approver?: { id: string; fullName: string };
+  createdAt: string;
+}
+
+export interface SalaryChangeRequest {
+  newSalary: number;
+  effectiveDate: string;
+  reason?: string;
+}
+
+export interface EmployeeDocument {
+  id: string;
+  fileName: string;
+  documentType: string;
+  expiryDate?: string | null;
+  uploadedAt: string;
+  size?: number;
+}
+
+export interface EmergencyContact {
+  id: string;
+  name: string;
+  relationship: string;
+  phone: string;
+  email?: string;
+  isPrimary?: boolean;
+}
+
+export interface BiometricStatus {
+  enrolled: boolean;
+  method?: string;
+  enrolledAt?: string;
+  photoUrls?: string[];
+}
+
+export interface OrgChartNode {
+  id: string;
+  fullName: string;
+  position?: { id: string; title: string } | null;
+  department?: { id: string; name: string } | null;
+  photoUrl?: string | null;
+  email?: string;
+  children?: OrgChartNode[];
+}
+
+export interface TerminateRequest {
+  terminationDate: string;
+  reason: string;
+}
+
+export interface CreateAccountResponse {
+  accountId: string;
+  email: string;
+  temporaryPassword?: string;
+}
 
 export interface Employee {
   id: string;
@@ -279,12 +376,20 @@ export const logoutApi = ()           => apiClient.post("/auth/logout");
 export const getMeApi  = ()           => apiClient.get<AuthUser>("/auth/me");
 
 export const departmentsApi = {
-  list: () => apiClient.get<Department[]>("/v1/departments"),
+  list:   () => apiClient.get<Department[]>("/v1/departments"),
+  get:    (id: string) => apiClient.get<Department>(`/v1/departments/${id}`),
+  create: (data: DepartmentRequest) => apiClient.post<Department>("/v1/departments", data),
+  update: (id: string, data: DepartmentRequest) => apiClient.put<Department>(`/v1/departments/${id}`, data),
+  remove: (id: string) => apiClient.delete<void>(`/v1/departments/${id}`),
 };
 
 export const positionsApi = {
-  list: (departmentId?: string) =>
+  list:   (departmentId?: string) =>
     apiClient.get<Position[]>("/v1/positions", { params: { departmentId } }),
+  get:    (id: string) => apiClient.get<Position>(`/v1/positions/${id}`),
+  create: (data: PositionRequest) => apiClient.post<Position>("/v1/positions", data),
+  update: (id: string, data: PositionRequest) => apiClient.put<Position>(`/v1/positions/${id}`, data),
+  remove: (id: string) => apiClient.delete<void>(`/v1/positions/${id}`),
 };
 
 export const employeesApi = {
@@ -296,6 +401,112 @@ export const employeesApi = {
     apiClient.post<EmployeeListItem>("/v1/employees", data),
   update: (id: string, data: Partial<CreateEmployeeRequest>) =>
     apiClient.put<EmployeeListItem>(`/v1/employees/${id}`, data),
+  terminate: (id: string, data: TerminateRequest) =>
+    apiClient.post<EmployeeListItem>(`/v1/employees/${id}/terminate`, data),
+  createAccount: (id: string) =>
+    apiClient.post<CreateAccountResponse>(`/v1/employees/${id}/create-account`),
+  salaryHistory: (id: string) =>
+    apiClient.get<SalaryHistoryEntry[]>(`/v1/employees/${id}/salary-history`),
+  salaryChange: (id: string, data: SalaryChangeRequest) =>
+    apiClient.post<SalaryHistoryEntry>(`/v1/employees/${id}/salary-change`, data),
+  listDocuments: (id: string) =>
+    apiClient.get<EmployeeDocument[]>(`/v1/employees/${id}/documents`),
+  uploadDocument: (id: string, formData: FormData) =>
+    apiClient.post<EmployeeDocument>(`/v1/employees/${id}/documents`, formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    }),
+  downloadDocument: (id: string, docId: string) =>
+    apiClient.get(`/v1/employees/${id}/documents/${docId}/download`, { responseType: "blob" }),
+  deleteDocument: (id: string, docId: string) =>
+    apiClient.delete<void>(`/v1/employees/${id}/documents/${docId}`),
+  listEmergencyContacts: (id: string) =>
+    apiClient.get<EmergencyContact[]>(`/v1/employees/${id}/emergency-contacts`),
+  createEmergencyContact: (id: string, data: Omit<EmergencyContact, "id">) =>
+    apiClient.post<EmergencyContact>(`/v1/employees/${id}/emergency-contacts`, data),
+  updateEmergencyContact: (id: string, cId: string, data: Omit<EmergencyContact, "id">) =>
+    apiClient.put<EmergencyContact>(`/v1/employees/${id}/emergency-contacts/${cId}`, data),
+  deleteEmergencyContact: (id: string, cId: string) =>
+    apiClient.delete<void>(`/v1/employees/${id}/emergency-contacts/${cId}`),
+  biometricStatus: (id: string) =>
+    apiClient.get<BiometricStatus>(`/v1/employees/${id}/biometric/status`),
+  enrollBiometric: (id: string, formData: FormData) =>
+    apiClient.post<BiometricStatus>(`/v1/employees/${id}/biometric/enroll`, formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    }),
+  deleteBiometric: (id: string) =>
+    apiClient.delete<void>(`/v1/employees/${id}/biometric`),
+  orgChart: () => apiClient.get<OrgChartNode[]>("/v1/employees/org-chart"),
+};
+
+// ── Users / Admin ────────────────────────────────────────────────────────────
+
+export interface AdminUser {
+  id: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  role: string;
+  enabled: boolean;
+  accountNonLocked: boolean;
+  employeeId?: string | null;
+  employee?: { id: string; fullName: string } | null;
+  lastLoginAt?: string | null;
+  createdAt?: string;
+}
+
+export interface CreateUserRequest {
+  email: string;
+  password?: string;
+  firstName: string;
+  lastName: string;
+  role: string;
+  employeeId?: string | null;
+}
+
+export interface UpdateUserRequest {
+  firstName?: string;
+  lastName?: string;
+  role?: string;
+  enabled?: boolean;
+  accountNonLocked?: boolean;
+}
+
+export interface AuditLogEntry {
+  id: string;
+  timestamp: string;
+  actorId?: string;
+  actorEmail: string;
+  action: string;
+  entityType: string;
+  entityId: string;
+  ipAddress?: string;
+  oldValue?: Record<string, unknown> | null;
+  newValue?: Record<string, unknown> | null;
+}
+
+export interface RolePermissionMatrix {
+  roles: string[];
+  permissions: { code: string; module: string; description?: string }[];
+  matrix: Record<string, string[]>;
+}
+
+export const usersApi = {
+  list: (params: Record<string, unknown> = {}) =>
+    apiClient.get<PageResponse<AdminUser> | AdminUser[]>("/v1/users", { params }),
+  get: (id: string) => apiClient.get<AdminUser>(`/v1/users/${id}`),
+  create: (data: CreateUserRequest) => apiClient.post<AdminUser>("/v1/users", data),
+  update: (id: string, data: UpdateUserRequest) =>
+    apiClient.put<AdminUser>(`/v1/users/${id}`, data),
+  remove: (id: string) => apiClient.delete<void>(`/v1/users/${id}`),
+  linkEmployee: (id: string, employeeId: string) =>
+    apiClient.put<AdminUser>(`/v1/users/${id}/link-employee`, { employeeId }),
+  forgotPassword: (email: string) =>
+    apiClient.post<void>("/auth/forgot-password", { email }),
+  audit: (params: Record<string, unknown> = {}) =>
+    apiClient.get<PageResponse<AuditLogEntry> | AuditLogEntry[]>("/v1/users/audit", { params }),
+  rolesMatrix: () => apiClient.get<RolePermissionMatrix>("/v1/users/roles"),
+  updateRolePermissions: (role: string, data: { add: string[]; remove: string[] }) =>
+    apiClient.post<void>(`/v1/users/roles/${role}/permissions`, data),
 };
 
 export const dashboardApi = {

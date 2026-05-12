@@ -13,6 +13,10 @@ import { ProtectedRoute } from "./providers/ProtectedRoute";
 import Dashboard from "./pages/Dashboard";
 import EmployeesList from "./pages/EmployeesList";
 import EmployeeForm from "./pages/EmployeeForm";
+import EmployeeDetail from "./pages/EmployeeDetail";
+import Departments from "./pages/Departments";
+import Positions from "./pages/Positions";
+import OrgChart from "./pages/OrgChart";
 import Payroll from "./pages/Payroll";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
@@ -21,6 +25,9 @@ import NotFound from "./pages/NotFound";
 import Leave from "./pages/Leave";
 import Attendance from "./pages/Attendance";
 import Reports from "./pages/Reports";
+import AdminUsers from "./pages/admin/Users";
+import AdminAuditLog from "./pages/admin/AuditLog";
+import AdminRoles from "./pages/admin/Roles";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -55,11 +62,18 @@ const App = () => (
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/employees" element={<EmployeesList />} />
               <Route path="/employees/new" element={<EmployeeForm />} />
-              <Route path="/employees/:id" element={<EmployeeForm />} />
+              <Route path="/employees/:id" element={<EmployeeDetail />} />
+              <Route path="/employees/:id/edit" element={<EmployeeForm />} />
+              <Route path="/org-chart" element={<OrgChart />} />
+              <Route path="/departments" element={<Departments />} />
+              <Route path="/positions" element={<Positions />} />
               <Route path="/payroll" element={<Payroll />} />
               <Route path="/leave" element={<Leave />} />
               <Route path="/attendance" element={<Attendance />} />
               <Route path="/reports" element={<Reports />} />
+              <Route path="/admin/users" element={<AdminUsers />} />
+              <Route path="/admin/audit" element={<AdminAuditLog />} />
+              <Route path="/admin/roles" element={<AdminRoles />} />
             </Route>
 
             <Route path="*" element={<NotFound />} />

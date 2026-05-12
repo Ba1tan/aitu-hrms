@@ -1,11 +1,14 @@
 import "./global.css";
 
-import { Toaster } from "./components/ui/toaster";
 import { createRoot } from "react-dom/client";
+import { Toaster } from "./components/ui/toaster";
 import { Toaster as Sonner } from "./components/ui/sonner";
 import { TooltipProvider } from "./components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+
+import { AuthProvider } from "./providers/AuthProvider";
+import { ProtectedRoute } from "./providers/ProtectedRoute";
 
 import Dashboard from "./pages/Dashboard";
 import EmployeesList from "./pages/EmployeesList";
@@ -19,24 +22,19 @@ import Leave from "./pages/Leave";
 import Attendance from "./pages/Attendance";
 import Reports from "./pages/Reports";
 
-const queryClient = new QueryClient();
-
-function PlaceholderPage({ title }: { title: string }) {
-  return (
-    <div
-      style={{
-        minHeight: "100vh",
-        background: "#060E14",
-        color: "#F1F5F9",
-        fontFamily: "Inter, system-ui, sans-serif",
-        padding: 32,
-      }}
-    >
-      <h1 style={{ fontSize: 28, fontWeight: 700, marginBottom: 12 }}>{title}</h1>
-      <p style={{ color: "#94A3B8" }}>Эта страница пока заглушка, но роут уже работает.</p>
-    </div>
-  );
-}
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 30_000,
+      retry: (failureCount, error: any) => {
+        // Don't retry on auth failures — the axios interceptor already tries
+        // a refresh once; if that failed, retrying won't help.
+        if (error?.response?.status === 401 || error?.response?.status === 403) return false;
+        return failureCount < 2;
+      },
+    },
+  },
+});
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -44,25 +42,29 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Navigate to="/dashboard" replace />} />
+        <AuthProvider>
+          <Routes>
+            {/* Public */}
+            <Route path="/index" element={<Index />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/signup" element={<Signup />} />
 
-          <Route path="/index" element={<Index />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/signup" element={<Signup />} />
+            {/* Protected — everything beyond this point requires a valid JWT */}
+            <Route element={<ProtectedRoute />}>
+              <Route path="/" element={<Navigate to="/dashboard" replace />} />
+              <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/employees" element={<EmployeesList />} />
+              <Route path="/employees/new" element={<EmployeeForm />} />
+              <Route path="/employees/:id" element={<EmployeeForm />} />
+              <Route path="/payroll" element={<Payroll />} />
+              <Route path="/leave" element={<Leave />} />
+              <Route path="/attendance" element={<Attendance />} />
+              <Route path="/reports" element={<Reports />} />
+            </Route>
 
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/employees" element={<EmployeesList />} />
-          <Route path="/employees/new" element={<EmployeeForm />} />
-          <Route path="/employees/:id" element={<EmployeeForm />} />
-          <Route path="/payroll" element={<Payroll />} />
-
-          <Route path="/leave" element={<Leave />} />
-          <Route path="/attendance" element={<Attendance />} />
-          <Route path="/reports" element={<Reports />} />
-
-          <Route path="*" element={<NotFound />} />
-        </Routes>
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>

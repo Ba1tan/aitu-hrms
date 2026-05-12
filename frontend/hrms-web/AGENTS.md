@@ -17,6 +17,23 @@ through the API gateway at `${VITE_API_BASE}/api/...` (default
 If the contract and a backend `services/{name}/{SERVICE}.md` disagree, the
 backend service spec is authoritative — let Nursultan/Askar know.
 
+## Phase pipeline
+
+Implementation is staged across six phases under `frontend/hrms-web/docs/`:
+
+| Phase | Status | Doc |
+|-------|--------|-----|
+| 0 — Foundation (auth, refresh, permission gates) | ✅ done | `docs/PHASE_0_FOUNDATION.md` |
+| 1 — Core HR (depts, positions, employee detail) | ☐ | `docs/PHASE_1_CORE_HR.md` |
+| 2 — Attendance & Leave | ☐ | `docs/PHASE_2_ATTENDANCE_LEAVE.md` |
+| 3 — Payroll | ☐ | `docs/PHASE_3_PAYROLL.md` |
+| 4 — Self-service + Setup wizard | ☐ | `docs/PHASE_4_SELF_SERVICE.md` |
+| 5 — Reports & integrations | ☐ | `docs/PHASE_5_REPORTS.md` |
+
+Each phase doc is self-contained (goal → required reading → tasks →
+definition of done). Brief a Claude session with "implement Phase N per
+`frontend/hrms-web/docs/PHASE_N_*.md`" and it should be able to run cold.
+
 ## Project structure
 
 ```

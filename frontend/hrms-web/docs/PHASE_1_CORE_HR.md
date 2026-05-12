@@ -152,3 +152,70 @@ none are stub-only by reading the file size.
 
 4–6 days for one developer comfortable with React Query + shadcn. Bulk of
 the work is the EmployeeDetail tabs.
+
+---
+
+## Phase 1B — Admin section (extension)
+
+These pages are user-service-backed and only relevant to SUPER_ADMIN +
+ACCOUNTANT / HR for narrow slices. Treat them as a subroute family under
+`/admin/*` so the sidebar can hide the whole group in one place.
+
+### 10. User management (`client/pages/admin/Users.tsx`)
+
+`SYSTEM_USERS` permission.
+
+- Table: email, name, role pill, status (enabled / locked), employee link
+  (employeeId or "—"), lastLoginAt, actions.
+- Toolbar: search, role filter, status filter, "Create user" button.
+- Row actions: edit role, lock / unlock, link to employee, reset password,
+  soft-delete.
+- Create form: `POST /v1/users` (already exists in api.ts as `apiClient.post`).
+- Edit role: `PUT /v1/users/{id}` with `{ role }`.
+- Lock / unlock: `PUT /v1/users/{id}` with `{ accountNonLocked }`.
+- Link to employee: `PUT /v1/users/{id}/link-employee` with `{ employeeId }`.
+  Combobox over `/v1/employees?search=`.
+- Password reset (admin-triggered): `POST /v1/auth/forgot-password` with
+  the user's email; backend emails the reset link.
+
+### 11. Audit log viewer (`client/pages/admin/AuditLog.tsx`)
+
+`SYSTEM_AUDIT`. Backend table: `hrms_user.audit_logs`. Endpoint
+`GET /v1/users/audit` (needs adding on the backend if missing — flag in
+PR description; UI can use placeholder data until then).
+
+- Table: timestamp, actor (email), action (CREATE / UPDATE / DELETE / APPROVE),
+  entityType, entityId, IP.
+- Row click → side-panel with full JSONB old/new diff. Use `react-diff-viewer`
+  or build a simple two-column key-value highlight.
+- Filters: actor combobox, entityType select, action select, date range picker.
+- Export to CSV button.
+
+### 12. Role editor (`client/pages/admin/Roles.tsx`)
+
+`SYSTEM_ROLES`. Read-only matrix for v1: rows = roles, columns =
+permissions grouped by module. Checkmarks where granted.
+
+- Data source: `/v1/users/roles` and `/v1/users/permissions` (backend
+  endpoints to add if missing — flag in PR).
+- Edit mode: SUPER_ADMIN only. Toggling a checkbox calls
+  `POST /v1/users/roles/{role}/permissions` with `{ add: [...], remove: [...] }`
+  (backend contract TBD).
+- Important: changes are reflected in newly-issued JWTs only. Existing
+  sessions keep their old permission list until token refresh. Show a
+  banner on save: "Affected users must log out and back in."
+
+### Admin sidebar
+
+Add a collapsible "Admin" group at the bottom of the sidebar containing
+the three pages above. Wrap the whole group in
+`<RequirePermission anyOf={["SYSTEM_USERS", "SYSTEM_AUDIT", "SYSTEM_ROLES"]}>`.
+
+### Definition of done (Phase 1B)
+
+- [ ] SUPER_ADMIN can create + edit + lock + delete a user
+- [ ] SUPER_ADMIN can link a user to an employee
+- [ ] Audit log viewer renders with timestamps + actor (placeholder rows OK if
+  backend endpoint doesn't exist yet)
+- [ ] Role matrix renders read-only
+- [ ] All three pages are hidden for non-admin roles

@@ -85,3 +85,63 @@ range picker), `data-table` pattern (TanStack Table).
 ## Estimated effort
 
 5–7 days. Leave approval queue and team calendar are the time sinks.
+
+---
+
+## Phase 2B — Kiosk + fraud review (extension)
+
+### Face check-in kiosk (`client/pages/Kiosk.tsx`)
+
+A different UX paradigm. Full-screen, no chrome, runs on a tablet at the
+office entrance. Anonymous access — no login required, but the route
+should be reachable only from a kiosk device (IP allowlist or a kiosk
+PIN at startup).
+
+Route: `<Route path="/kiosk" element={<Kiosk />} />` — **outside** the
+ProtectedRoute group (it's the only authenticated-via-face flow).
+
+Layout:
+- Full viewport, brand colors, clock + date prominent.
+- Big circular video preview from the device camera.
+- Bottom: "Check-in" / "Check-out" toggle.
+
+Capture flow:
+1. Press button → 3-second countdown.
+2. Capture frame → POST `/v1/attendance/check-in/face` (multipart, single image).
+3. Show result for 5s: ✅ "Welcome, Иванов И.И. — 9:02 (on time)" or
+   ❌ "Face not recognized — see HR" with the reason from the AI response.
+4. Auto-return to idle screen.
+
+Camera access: `navigator.mediaDevices.getUserMedia({ video: true })`.
+Frame capture: draw video to a canvas, then `canvas.toBlob()`.
+
+Important:
+- **No login.** The endpoint is intentionally public per attendance-service
+  spec. Backend trusts the kiosk's IP at the gateway.
+- **No PII on screen.** Show first name + last-initial only, never IIN.
+- **Fail closed:** if AI service is unavailable, show "Manual check-in
+  unavailable — see HR." Do not fall back to anonymous record.
+
+Until ai-ml-service ships, the page can render a "Coming soon — face
+recognition pending AI service" placeholder.
+
+### Fraud-attempts review queue (`client/pages/AttendanceFraud.tsx`)
+
+`ATTENDANCE_MANAGE`. Table of recent `biometric_attempts` rows where
+result = FAILED | BLOCKED | LIVENESS_FAILED.
+
+Columns: timestamp, employeeId (if known) → employee name, method,
+deviceId, result, fraudScore, "Investigate" button → side-panel with
+device history + recent successful attempts.
+
+Endpoint TBD on the backend — placeholder UI until exposed.
+
+Consumes `FraudAttemptDetectedEvent` for live updates once
+notification-service ships (WebSocket push). For now: refetch on focus.
+
+### Definition of done (Phase 2B)
+
+- [ ] /kiosk renders a working camera preview
+- [ ] Camera frames POST as multipart to the face-verify endpoint
+- [ ] Fraud queue renders with placeholder data
+- [ ] /kiosk is NOT behind ProtectedRoute (verified by hitting it logged-out)

@@ -52,16 +52,61 @@ limited to:
 Photo upload: `POST /v1/employees/{id}/photo` if/when that endpoint exists.
 Defer if not.
 
-### Notifications inbox shell
+### Notifications module (full)
 
-`client/components/NotificationsBell.tsx` — bell icon in the
-DashboardLayout topbar. Shows unread count badge. Click opens a popover
-with a list.
+Build the entire UI now; it tolerates an absent notification-service by
+catching 502 and rendering empty states.
 
-Notification endpoints (per `services/notification-service/NOTIFICATION_SERVICE.md`)
-don't exist yet. Build the **UI shell** now — `useQuery` returning `[]` from
-a function that catches 502 and resolves empty. When notification-service
-ships, the shell is already there.
+**1. Bell + popover (`client/components/NotificationsBell.tsx`)**
+
+In the DashboardLayout topbar. Unread count badge. Click → popover with
+the latest 5 notifications + a "See all" link to `/notifications`.
+
+**2. Inbox page (`client/pages/Notifications.tsx`)**
+
+- Table: timestamp, type icon (leave / payroll / employee / fraud /
+  payslip-ready / etc.), title, channel pill (IN_APP/EMAIL/PUSH/SMS),
+  read/unread indicator, actions.
+- Toolbar: search, type filter, channel filter, "Unread only" toggle,
+  "Mark all read" button.
+- Row click → side-panel with full message + deep link to the referenced
+  entity (e.g. "Payslip approved" → `/payroll/payslips/{id}`).
+- Endpoints (per `services/notification-service/NOTIFICATION_SERVICE.md`):
+  - `GET /v1/notifications?unread=true|false&type=&page=&size=`
+  - `PUT /v1/notifications/{id}/read`
+  - `PUT /v1/notifications/read-all`
+  - `DELETE /v1/notifications/{id}` (soft delete)
+
+**3. Preferences page (`client/pages/NotificationsPreferences.tsx`)**
+
+Per-event-type × per-channel matrix:
+
+|                          | In-app | Email | Push | SMS |
+|--------------------------|--------|-------|------|-----|
+| Leave request submitted  | ☑      | ☐     | ☐    | ☐   |
+| Leave approved/rejected  | ☑      | ☑     | ☐    | ☐   |
+| Payslip ready            | ☑      | ☑     | ☐    | ☐   |
+| Payroll anomaly (HR)     | ☑      | ☑     | ☐    | ☐   |
+| Account / password event | ☑      | ☑     | ☐    | ☐   |
+
+Backend contract is in `NOTIFICATION_SERVICE.md`. Endpoint `GET/PUT
+/v1/notifications/preferences`. SMS column is disabled if backend reports
+SMS provider is `none` (read from `/v1/settings/notification.sms_provider`).
+
+**4. Real-time push (deferred)**
+
+Once notification-service exposes a WebSocket / SSE endpoint
+(`/v1/notifications/stream`), wire a hook that opens the connection on
+auth + closes on logout, dispatches into the query cache. Until then:
+poll inbox on window focus.
+
+### Definition-of-done addition (notifications)
+
+- [ ] Bell renders + popover shows latest 5 (or empty state when 502)
+- [ ] `/notifications` lists rows + filters work
+- [ ] Mark-read flips read indicator optimistically
+- [ ] Preferences matrix saves + persists across reload
+- [ ] SMS column disabled when settings say `sms_provider=none`
 
 ### `/setup` wizard
 

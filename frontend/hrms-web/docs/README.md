@@ -7,11 +7,16 @@ Claude session with it, and the session should be self-contained.
 | Phase | Status | Doc | Outcome |
 |-------|--------|-----|---------|
 | 0 — Foundation | ✅ done | [PHASE_0_FOUNDATION.md](PHASE_0_FOUNDATION.md) | Real auth + permission gates + refresh-retry |
-| 1 — Core HR | ☐ | [PHASE_1_CORE_HR.md](PHASE_1_CORE_HR.md) | Depts/positions/employees CRUD + detail page |
-| 2 — Attendance & Leave | ☐ | [PHASE_2_ATTENDANCE_LEAVE.md](PHASE_2_ATTENDANCE_LEAVE.md) | Check-in widgets, approvals, calendars |
+| 1 — Core HR | ☐ | [PHASE_1_CORE_HR.md](PHASE_1_CORE_HR.md) | Depts/positions/employees CRUD + detail page; **1B: admin (users, audit, roles)** |
+| 2 — Attendance & Leave | ☐ | [PHASE_2_ATTENDANCE_LEAVE.md](PHASE_2_ATTENDANCE_LEAVE.md) | Check-in, approvals, calendars; **2B: face-kiosk + fraud queue** |
 | 3 — Payroll | ☐ | [PHASE_3_PAYROLL.md](PHASE_3_PAYROLL.md) | Periods, payslips, adjustments, AI flags |
-| 4 — Self-service & Setup wizard | ☐ | [PHASE_4_SELF_SERVICE.md](PHASE_4_SELF_SERVICE.md) | Personal dashboard, /setup, profile |
-| 5 — Reports & integrations | ☐ | [PHASE_5_REPORTS.md](PHASE_5_REPORTS.md) | Report picker, charts, 1C history |
+| 4 — Self-service & Setup wizard | ☐ | [PHASE_4_SELF_SERVICE.md](PHASE_4_SELF_SERVICE.md) | Personal dashboard, /setup, profile, **full notifications inbox + preferences** |
+| 5 — Reports & integrations | ☐ | [PHASE_5_REPORTS.md](PHASE_5_REPORTS.md) | Report picker, charts, 1C history; **5B: AI insights, attrition, forecast** |
+| 6 — Polish & cross-cutting | ☐ | [PHASE_6_POLISH.md](PHASE_6_POLISH.md) | i18n (ru/kk/en), theme, tests, a11y, mobile, perf |
+
+Phases marked **B** are extensions of the main phase doc — same file,
+later sections. They're cleanly separable so you can ship the main phase
+first and circle back, or do both together if a doc lines up nicely.
 
 ## How each phase doc is structured
 

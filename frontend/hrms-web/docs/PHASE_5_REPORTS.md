@@ -118,3 +118,61 @@ Phase 1's set + `chart` (Recharts is already in deps), `date-range-picker`
 
 4–5 days once reporting-service and integration-hub exist. Faster if some
 shells are built ahead of those services as placeholders.
+
+---
+
+## Phase 5B — AI features (extension)
+
+Until ai-ml-service ships these endpoints return 502; build the shells
+now with empty/placeholder states.
+
+### AI insights landing (`client/pages/ai/Insights.tsx`)
+
+`AI_DASHBOARD` permission. Single page that surfaces the four AI signals:
+
+1. **Recent anomalies** (last 30 days)
+   - Source: `/v1/ai/payroll/recent-anomalies` (TBD; or cross-reference
+     PayrollAnomalyDetectedEvent rows from a future reporting endpoint)
+   - Card list: payslip, employee, anomalyScore, flags, "Review" → opens
+     PayrollPeriodDetail with that payslip pre-selected.
+
+2. **Attrition risk top-N** (link to drill-down)
+   - Source: `/v1/ai/attrition/risk`
+   - Sparkline + top-5 employees by risk score with action: "View profile"
+
+3. **Payroll cost forecast** (next 3 months)
+   - Source: `/v1/ai/payroll/forecast?months=3`
+   - Bar chart, predicted gross/net per month with 80% confidence interval
+
+4. **Recent fraud attempts** (last 7 days)
+   - Source: derive from biometric_attempts (Phase 2B)
+   - Map view by deviceId if location columns are populated
+
+### Attrition risk page (`client/pages/ai/Attrition.tsx`)
+
+- Table of all employees with risk score, level (LOW / MEDIUM / HIGH),
+  top 3 contributing factors (tenure, salary ratio, overtime, leave usage…).
+- Filters: department, risk level, role.
+- Row click → detail panel with: full feature breakdown (radar chart),
+  retention recommendations from the AI service.
+- Endpoint: `GET /v1/ai/attrition/risk?departmentId=`.
+
+### Payroll forecast viewer (`client/pages/ai/Forecast.tsx`)
+
+- Chart: predicted payroll cost per month, next 12 months.
+- Controls: months horizon (3/6/12), confidence interval toggle.
+- Below chart: assumption table (current headcount, avg salary, growth
+  rate from past quarters).
+- Endpoint: `GET /v1/ai/payroll/forecast?months=`.
+
+### Sidebar nav
+
+Add "AI Insights" group with the three pages above. Wrap in
+`<RequirePermission code="AI_DASHBOARD">`.
+
+### Definition of done (Phase 5B)
+
+- [ ] All three AI pages render with empty states when service is 502
+- [ ] Each page is permission-gated (only DIRECTOR / SUPER_ADMIN / HR_MANAGER see them)
+- [ ] Charts use Recharts (already in deps); no new chart lib pulled in
+- [ ] Forecast chart with horizon controls works without backend (mock data)

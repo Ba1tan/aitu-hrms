@@ -31,6 +31,7 @@ export const employeeSchema = z.object({
   resident: z.boolean().default(true),
   hasDisability: z.boolean().default(false),
   pensioner: z.boolean().default(false),
+  createAccount: z.boolean().default(false),
 });
 
 export type EmployeeFormValues = z.infer<typeof employeeSchema>;

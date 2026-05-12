@@ -311,6 +311,12 @@ export interface CreateEmployeeRequest {
   hasDisability: boolean;
   pensioner: boolean;
   status: string;
+  /**
+   * When true, employee-service publishes EmployeeCreatedEvent immediately
+   * after save and user-service auto-provisions an EMPLOYEE login account
+   * (random password + requirePasswordChange=true). Requires `email`.
+   */
+  createAccount?: boolean;
 }
 
 export interface DashboardStats {

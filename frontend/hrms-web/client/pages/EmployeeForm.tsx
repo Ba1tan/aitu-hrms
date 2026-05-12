@@ -29,7 +29,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
-import { CreateEmployeeRequest, employeesApi } from "../../shared/api";
+import { CreateEmployeeRequest } from "../../shared/api";
 import {
   useCreateEmployee,
   useEmployee,
@@ -77,6 +77,7 @@ export default function EmployeeForm() {
       resident: true,
       hasDisability: false,
       pensioner: false,
+      createAccount: false,
     },
   });
 
@@ -127,6 +128,7 @@ export default function EmployeeForm() {
       hasDisability: data.hasDisability,
       pensioner: data.pensioner,
       status: isEdit ? employeeQuery.data?.status || "ACTIVE" : "ACTIVE",
+      ...(isEdit ? {} : { createAccount: data.createAccount }),
     };
 
     try {
@@ -136,26 +138,13 @@ export default function EmployeeForm() {
         navigate(`/employees/${id}`);
       } else {
         const created = await createMutation.mutateAsync(payload);
-        toast.success("Сотрудник создан");
+        toast.success(
+          data.createAccount
+            ? "Сотрудник создан, учётная запись отправлена на email"
+            : "Сотрудник создан",
+        );
         const newId = (created as any)?.id;
-        if (newId) {
-          const wantsAccount = window.confirm(
-            "Создать учётную запись пользователя для этого сотрудника?",
-          );
-          if (wantsAccount) {
-            try {
-              await employeesApi.createAccount(newId);
-              toast.success("Учётная запись создана и отправлена на email");
-            } catch (e: any) {
-              toast.error(
-                e?.response?.data?.message || "Не удалось создать учётную запись",
-              );
-            }
-          }
-          navigate(`/employees/${newId}`);
-        } else {
-          navigate("/employees");
-        }
+        navigate(newId ? `/employees/${newId}` : "/employees");
       }
     } catch (e: any) {
       toast.error(e?.response?.data?.message || "Ошибка при сохранении");
@@ -218,6 +207,26 @@ export default function EmployeeForm() {
                         <FormControl>
                           <Input type="email" placeholder="email@example.com" {...field} />
                         </FormControl>
+                        {!isEdit && (
+                          <FormField
+                            control={form.control}
+                            name="createAccount"
+                            render={({ field: caField }) => (
+                              <FormItem className="flex flex-row items-start space-x-2 space-y-0 pt-2">
+                                <FormControl>
+                                  <Checkbox
+                                    checked={caField.value}
+                                    onCheckedChange={caField.onChange}
+                                    disabled={!field.value}
+                                  />
+                                </FormControl>
+                                <FormLabel className="text-xs font-normal text-muted-foreground leading-snug">
+                                  Создать учётную запись (роль EMPLOYEE, временный пароль на email)
+                                </FormLabel>
+                              </FormItem>
+                            )}
+                          />
+                        )}
                         <FormMessage />
                       </FormItem>
                     )}

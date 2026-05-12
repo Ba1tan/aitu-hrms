@@ -771,7 +771,7 @@ CREATE TABLE hrms_integration.company_settings (
 
 All client requests go through the gateway. Base path: `/api`.
 
-### 4.2 User Service — 14 endpoints
+### 4.2 User Service — 18 endpoints (14 done + 4 pending 🟡)
 
 ```
 # Authentication (Public — no JWT required)
@@ -793,7 +793,16 @@ POST   /v1/users                                       # Create user {email, rol
 PUT    /v1/users/{id}                                  # Update {role, enabled, locked}
 DELETE /v1/users/{id}                                  # Soft delete
 PUT    /v1/users/{id}/link-employee                    # Link to employee {employeeId}
+
+# Admin — pending 🟡 (frontend Phase 1B already wired with graceful fallback)
+GET    /v1/users/audit                                 # SYSTEM_AUDIT — paginated audit log
+GET    /v1/users/roles                                 # SYSTEM_ROLES — role↔permission matrix
+GET    /v1/users/permissions                           # SYSTEM_ROLES — flat permission catalog
+POST   /v1/users/roles/{role}/permissions              # SYSTEM_ROLES — { add: [], remove: [] }
 ```
+
+Payload shapes for the four pending endpoints: see `docs/API_CONTRACT.md`
+§"Admin — pending endpoints". JWT propagation rule: `docs/PERMISSIONS.md` §6.
 
 ### 4.3 Employee Service — 38 endpoints (see services/employee-service/EMPLOYEE_SERVICE.md for full list)
 
@@ -1048,7 +1057,7 @@ GET    /v1/dashboard/stats                             # Role-aware dashboard da
 
 | Service | Endpoints |
 |---------|-----------|
-| User Service | 14 |
+| User Service | 18 (14 done + 4 pending 🟡) |
 | Employee Service | 25 (+10 dept/position) = 35 |
 | Attendance Service | 18 |
 | Leave Service | 19 |
@@ -1058,7 +1067,7 @@ GET    /v1/dashboard/stats                             # Role-aware dashboard da
 | Notification Service | 5 |
 | Integration Hub | 7 |
 | Dashboard | 1 |
-| **Total** | **142** |
+| **Total** | **146** (142 done + 4 pending) |
 
 ---
 

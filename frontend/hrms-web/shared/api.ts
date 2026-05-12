@@ -355,6 +355,188 @@ export interface LeaveItem {
   status: "PENDING" | "APPROVED" | "REJECTED";
 }
 
+// ── Attendance (Phase 2) ─────────────────────────────────────────────────────
+
+export type AttendanceStatus =
+  | "PRESENT"
+  | "LATE"
+  | "ABSENT"
+  | "HALF_DAY"
+  | "ON_LEAVE"
+  | "HOLIDAY"
+  | "WEEKEND";
+
+export interface AttendanceRecord {
+  id: string;
+  employeeId: string;
+  employeeName?: string;
+  workDate: string;
+  checkIn: string | null;
+  checkOut: string | null;
+  status: AttendanceStatus;
+  checkInMethod?: string | null;
+  workedHours?: string | null;
+  overtimeHours?: string | null;
+  fraudScore?: string | null;
+  fraudFlags?: string | null;
+  notes?: string | null;
+}
+
+export interface AttendanceTodayStatus {
+  checkedIn: boolean;
+  checkInTime?: string | null;
+  checkedOut?: boolean;
+  checkOutTime?: string | null;
+  status?: AttendanceStatus | null;
+  method?: string | null;
+  workedHours?: string | null;
+}
+
+export interface AttendanceSummary {
+  employeeId?: string;
+  departmentId?: string;
+  year: number;
+  month: number;
+  presentDays: number;
+  lateDays: number;
+  absentDays: number;
+  halfDays: number;
+  holidayDays: number;
+  totalWorkedHours: string;
+  overtimeHours: string;
+}
+
+export interface Holiday {
+  id: string;
+  name: string;
+  date: string;
+  isAnnual?: boolean;
+  description?: string | null;
+}
+
+export interface HolidayRequest {
+  name: string;
+  date: string;
+  isAnnual?: boolean;
+  description?: string;
+}
+
+export interface WorkSchedule {
+  id: string;
+  name: string;
+  workStartTime: string;
+  workEndTime: string;
+  lateThresholdMin: number;
+  workingDays?: string[] | string;
+  isDefault?: boolean;
+  description?: string | null;
+}
+
+export interface WorkScheduleRequest {
+  name: string;
+  workStartTime: string;
+  workEndTime: string;
+  lateThresholdMin: number;
+  workingDays?: string[];
+  isDefault?: boolean;
+  description?: string;
+}
+
+export interface ManualAttendanceRequest {
+  employeeId: string;
+  workDate: string;
+  checkIn?: string | null;
+  checkOut?: string | null;
+  status: AttendanceStatus;
+  notes?: string;
+}
+
+export interface BulkAbsentRequest {
+  date: string;
+}
+
+export interface BulkAbsentResponse {
+  markedCount?: number;
+  date?: string;
+  [key: string]: unknown;
+}
+
+// ── Leave (Phase 2) ──────────────────────────────────────────────────────────
+
+export type LeaveStatus = "PENDING" | "APPROVED" | "REJECTED" | "CANCELLED";
+
+export interface LeaveType {
+  id: string;
+  name: string;
+  code?: string | null;
+  daysAllowed: number;
+  isPaid: boolean;
+  requiresApproval: boolean;
+  carryoverAllowed: boolean;
+  carryoverMaxDays?: number | null;
+  description?: string | null;
+}
+
+export interface LeaveTypeRequest {
+  name: string;
+  code?: string;
+  daysAllowed: number;
+  isPaid: boolean;
+  requiresApproval: boolean;
+  carryoverAllowed: boolean;
+  carryoverMaxDays?: number | null;
+  description?: string;
+}
+
+export interface LeaveRequest {
+  id: string;
+  employee: { id: string; fullName: string };
+  leaveType: { id: string; name: string; isPaid?: boolean };
+  startDate: string;
+  endDate: string;
+  daysRequested: number;
+  reason?: string | null;
+  status: LeaveStatus;
+  reviewerComment?: string | null;
+  reviewedAt?: string | null;
+  reviewedBy?: { id: string; fullName: string } | null;
+  createdAt: string;
+}
+
+export interface CreateLeaveRequest {
+  leaveTypeId: string;
+  startDate: string;
+  endDate: string;
+  reason?: string;
+}
+
+export interface LeaveBalance {
+  id: string;
+  leaveType: { id: string; name: string };
+  year: number;
+  entitledDays: number;
+  carriedOver: number;
+  usedDays: number;
+  adjustedDays: number;
+  remainingDays: number;
+}
+
+export interface LeaveCalendarEntry {
+  employeeId: string;
+  employeeName: string;
+  leaveType: string;
+  startDate: string;
+  endDate: string;
+  status: LeaveStatus;
+}
+
+export interface SettingValue {
+  key: string;
+  value: string;
+  type?: string;
+  description?: string;
+}
+
 export interface ReportItem {
   id: string;
   title: string;
@@ -516,15 +698,141 @@ export const dashboardApi = {
 };
 
 export const leaveApi = {
+  // legacy — kept so the dashboard widget keeps compiling. New consumers
+  // should use leaveRequestsApi.myList(...) below.
   list: () => apiClient.get<LeaveItem[]>("/v1/leave/requests/my"),
 };
 
+export const leaveTypesApi = {
+  list:   () => apiClient.get<LeaveType[]>("/v1/leave/types"),
+  create: (data: LeaveTypeRequest) =>
+    apiClient.post<LeaveType>("/v1/leave/types", data),
+  update: (id: string, data: LeaveTypeRequest) =>
+    apiClient.put<LeaveType>(`/v1/leave/types/${id}`, data),
+  remove: (id: string) => apiClient.delete<void>(`/v1/leave/types/${id}`),
+};
+
+export const leaveRequestsApi = {
+  myList: (params: Record<string, unknown> = {}) =>
+    apiClient.get<PageResponse<LeaveRequest> | LeaveRequest[]>(
+      "/v1/leave/requests",
+      { params },
+    ),
+  get: (id: string) =>
+    apiClient.get<LeaveRequest>(`/v1/leave/requests/${id}`),
+  create: (data: CreateLeaveRequest) =>
+    apiClient.post<LeaveRequest>("/v1/leave/requests", data),
+  approve: (id: string) =>
+    apiClient.put<LeaveRequest>(`/v1/leave/requests/${id}/approve`),
+  reject: (id: string, comment: string) =>
+    apiClient.put<LeaveRequest>(`/v1/leave/requests/${id}/reject`, { comment }),
+  cancel: (id: string) =>
+    apiClient.put<LeaveRequest>(`/v1/leave/requests/${id}/cancel`),
+  pending: (params: Record<string, unknown> = {}) =>
+    apiClient.get<PageResponse<LeaveRequest> | LeaveRequest[]>(
+      "/v1/leave/requests/pending",
+      { params },
+    ),
+  team: (params: Record<string, unknown> = {}) =>
+    apiClient.get<PageResponse<LeaveRequest> | LeaveRequest[]>(
+      "/v1/leave/requests/team",
+      { params },
+    ),
+  all: (params: Record<string, unknown> = {}) =>
+    apiClient.get<PageResponse<LeaveRequest> | LeaveRequest[]>(
+      "/v1/leave/requests/all",
+      { params },
+    ),
+};
+
+export const leaveBalancesApi = {
+  mine: (params: Record<string, unknown> = {}) =>
+    apiClient.get<LeaveBalance[]>("/v1/leave/balances", { params }),
+  employee: (employeeId: string, params: Record<string, unknown> = {}) =>
+    apiClient.get<LeaveBalance[]>(`/v1/leave/balances/employee/${employeeId}`, { params }),
+};
+
+export const leaveCalendarApi = {
+  get: (params: Record<string, unknown> = {}) =>
+    apiClient.get<LeaveCalendarEntry[]>("/v1/leave/calendar", { params }),
+};
+
 export const attendanceApi = {
-  today:      () => apiClient.get<AttendanceItem>("/v1/attendance/today"),
-  checkIn:    () => apiClient.post<AttendanceItem>("/v1/attendance/check-in"),
-  checkOut:   () => apiClient.post<AttendanceItem>("/v1/attendance/check-out"),
-  getHistory: (year: number, month: number) =>
-    apiClient.get<AttendanceItem[]>("/v1/attendance/my", { params: { year, month } }),
+  today:      () => apiClient.get<AttendanceTodayStatus>("/v1/attendance/today"),
+  checkIn:    (data: { method?: string } = {}) =>
+    apiClient.post<AttendanceRecord>("/v1/attendance/check-in", data),
+  checkOut:   () =>
+    apiClient.post<AttendanceRecord>("/v1/attendance/check-out"),
+  myRecords:  (params: { from?: string; to?: string } = {}) =>
+    apiClient.get<AttendanceRecord[] | PageResponse<AttendanceRecord>>(
+      "/v1/attendance/records",
+      { params },
+    ),
+  employeeRecords: (employeeId: string, params: Record<string, unknown> = {}) =>
+    apiClient.get<AttendanceRecord[]>(
+      `/v1/attendance/records/employee/${employeeId}`,
+      { params },
+    ),
+  departmentRecords: (departmentId: string, params: Record<string, unknown> = {}) =>
+    apiClient.get<AttendanceRecord[]>(
+      `/v1/attendance/records/department/${departmentId}`,
+      { params },
+    ),
+  dailyRecords: (params: { date?: string } = {}) =>
+    apiClient.get<AttendanceRecord[]>("/v1/attendance/records/daily", { params }),
+  createRecord: (data: ManualAttendanceRequest) =>
+    apiClient.post<AttendanceRecord>("/v1/attendance/records", data),
+  updateRecord: (id: string, data: Partial<ManualAttendanceRequest>) =>
+    apiClient.put<AttendanceRecord>(`/v1/attendance/records/${id}`, data),
+  bulkAbsent: (data: BulkAbsentRequest) =>
+    apiClient.post<BulkAbsentResponse>("/v1/attendance/records/bulk-absent", data),
+  summaryEmployee: (employeeId: string, params: { year: number; month: number }) =>
+    apiClient.get<AttendanceSummary>(
+      `/v1/attendance/summary/employee/${employeeId}`,
+      { params },
+    ),
+  summaryDepartment: (departmentId: string, params: { year: number; month: number }) =>
+    apiClient.get<AttendanceSummary>(
+      `/v1/attendance/summary/department/${departmentId}`,
+      { params },
+    ),
+  summaryCompany: (params: { year: number; month: number }) =>
+    apiClient.get<AttendanceSummary>("/v1/attendance/summary/company", { params }),
+  // Legacy alias used by the existing dashboard tile + Attendance.tsx placeholder.
+  getHistory: (year: number, month: number) => {
+    const pad = (n: number) => String(n).padStart(2, "0");
+    const from = `${year}-${pad(month)}-01`;
+    const lastDay = new Date(year, month, 0).getDate();
+    const to = `${year}-${pad(month)}-${pad(lastDay)}`;
+    return apiClient.get<AttendanceRecord[]>("/v1/attendance/records", {
+      params: { from, to },
+    });
+  },
+};
+
+export const holidaysApi = {
+  list:   (params: { year?: number } = {}) =>
+    apiClient.get<Holiday[]>("/v1/attendance/holidays", { params }),
+  create: (data: HolidayRequest) =>
+    apiClient.post<Holiday>("/v1/attendance/holidays", data),
+  update: (id: string, data: HolidayRequest) =>
+    apiClient.put<Holiday>(`/v1/attendance/holidays/${id}`, data),
+  remove: (id: string) =>
+    apiClient.delete<void>(`/v1/attendance/holidays/${id}`),
+};
+
+export const schedulesApi = {
+  list:   () => apiClient.get<WorkSchedule[]>("/v1/attendance/schedules"),
+  create: (data: WorkScheduleRequest) =>
+    apiClient.post<WorkSchedule>("/v1/attendance/schedules", data),
+  update: (id: string, data: WorkScheduleRequest) =>
+    apiClient.put<WorkSchedule>(`/v1/attendance/schedules/${id}`, data),
+};
+
+export const settingsApi = {
+  get: () => apiClient.get<Record<string, string>>("/v1/settings"),
+  put: (key: string, value: string) =>
+    apiClient.put<SettingValue>(`/v1/settings/${key}`, { value }),
 };
 
 export const payrollApi = {

@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Users, DollarSign, Palmtree, Clock } from "lucide-react";
 import DashboardLayout from "./DashboardLayout";
 import { dashboardApi, type DashboardStats, type RecentLeave } from "../../shared/api";
+import AttendanceWidget from "../components/AttendanceWidget";
 
 export default function Dashboard() {
   const [stats, setStats] = useState<DashboardStats | null>(null);
@@ -37,9 +38,10 @@ export default function Dashboard() {
         <StatCard label="Today Attendance" val={`${stats?.todayAttendance}%`} icon={Clock} color="#8B5CF6" />
       </div>
 
-      <div style={{ background: "rgba(255,255,255,0.5)", padding: 24, borderRadius: 24, border: "1px solid rgba(255,255,255,0.3)" }}>
-        <h3 style={{ marginBottom: 20 }}>Recent Leave Requests</h3>
-        {recentLeaves.map(leave => (
+      <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr) 320px", gap: 24, marginBottom: 24 }}>
+        <div style={{ background: "rgba(255,255,255,0.5)", padding: 24, borderRadius: 24, border: "1px solid rgba(255,255,255,0.3)" }}>
+          <h3 style={{ marginBottom: 20 }}>Recent Leave Requests</h3>
+          {recentLeaves.map(leave => (
           <div key={leave.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '12px 0', borderBottom: '1px solid rgba(0,0,0,0.05)' }}>
             <div>
               <div style={{ fontWeight: 600, fontSize: 14 }}>{leave.employee}</div>
@@ -52,6 +54,8 @@ export default function Dashboard() {
             }}>{leave.status}</span>
           </div>
         ))}
+        </div>
+        <AttendanceWidget />
       </div>
     </DashboardLayout>
   );

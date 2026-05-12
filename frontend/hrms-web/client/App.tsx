@@ -24,6 +24,8 @@ import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import Leave from "./pages/Leave";
 import Attendance from "./pages/Attendance";
+import AttendanceHolidays from "./pages/AttendanceHolidays";
+import AttendanceSchedules from "./pages/AttendanceSchedules";
 import Reports from "./pages/Reports";
 import AdminUsers from "./pages/admin/Users";
 import AdminAuditLog from "./pages/admin/AuditLog";
@@ -70,6 +72,8 @@ const App = () => (
               <Route path="/payroll" element={<Payroll />} />
               <Route path="/leave" element={<Leave />} />
               <Route path="/attendance" element={<Attendance />} />
+              <Route path="/attendance/holidays" element={<AttendanceHolidays />} />
+              <Route path="/attendance/schedules" element={<AttendanceSchedules />} />
               <Route path="/reports" element={<Reports />} />
               <Route path="/admin/users" element={<AdminUsers />} />
               <Route path="/admin/audit" element={<AdminAuditLog />} />

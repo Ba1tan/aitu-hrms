@@ -18,6 +18,8 @@ import {
   ScrollText,
   ChevronDown,
   ChevronRight,
+  CalendarClock,
+  CalendarDays,
 } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { useState } from "react";
@@ -48,6 +50,8 @@ const navItems: NavItem[] = [
   { label: "Payroll", icon: Wallet, path: "/payroll", anyOf: ["PAYROLL_VIEW", "PAYSLIP_VIEW_OWN"] },
   { label: "Leaves", icon: Palmtree, path: "/leave" },
   { label: "Attendance", icon: ClipboardCheck, path: "/attendance" },
+  { label: "Праздники", icon: CalendarDays, path: "/attendance/holidays", anyOf: ["ATTENDANCE_MANAGE"] },
+  { label: "Графики работы", icon: CalendarClock, path: "/attendance/schedules", anyOf: ["ATTENDANCE_MANAGE"] },
   { label: "Reports", icon: FileBarChart, path: "/reports", anyOf: ["REPORT_PAYROLL", "REPORT_HR", "REPORT_EXECUTIVE", "REPORT_ATTENDANCE", "REPORT_LEAVE"] },
 ];
 
@@ -163,7 +167,13 @@ export default function DashboardLayout({
 
         <nav style={{ flex: 1, padding: "0 12px", overflowY: "auto" }}>
           {navItems.filter(canSee).map(({ label, icon: Icon, path }) => {
-            const active = pathname === path || pathname.startsWith(path + "/");
+            // Longest visible path wins so /leave doesn't also light up on
+            // /leave/approvals when both are nav items.
+            const visiblePaths = navItems.filter(canSee).map((n) => n.path);
+            const bestMatch = visiblePaths
+              .filter((p) => pathname === p || pathname.startsWith(p + "/"))
+              .sort((a, b) => b.length - a.length)[0];
+            const active = path === bestMatch;
             return (
               <Link key={path} to={path} style={{ textDecoration: "none" }}>
                 <div

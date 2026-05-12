@@ -23,6 +23,8 @@ import Signup from "./pages/Signup";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import Leave from "./pages/Leave";
+import LeaveApprovalQueue from "./pages/LeaveApprovalQueue";
+import LeaveTypes from "./pages/LeaveTypes";
 import Attendance from "./pages/Attendance";
 import AttendanceHolidays from "./pages/AttendanceHolidays";
 import AttendanceSchedules from "./pages/AttendanceSchedules";
@@ -71,6 +73,8 @@ const App = () => (
               <Route path="/positions" element={<Positions />} />
               <Route path="/payroll" element={<Payroll />} />
               <Route path="/leave" element={<Leave />} />
+              <Route path="/leave/approvals" element={<LeaveApprovalQueue />} />
+              <Route path="/leave/types" element={<LeaveTypes />} />
               <Route path="/attendance" element={<Attendance />} />
               <Route path="/attendance/holidays" element={<AttendanceHolidays />} />
               <Route path="/attendance/schedules" element={<AttendanceSchedules />} />

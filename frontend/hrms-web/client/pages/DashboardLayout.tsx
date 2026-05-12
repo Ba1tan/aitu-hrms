@@ -20,6 +20,8 @@ import {
   ChevronRight,
   CalendarClock,
   CalendarDays,
+  CheckSquare,
+  Tags,
 } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { useState } from "react";
@@ -49,6 +51,8 @@ const navItems: NavItem[] = [
   { label: "Positions", icon: Briefcase, path: "/positions", anyOf: ["DEPT_MANAGE"] },
   { label: "Payroll", icon: Wallet, path: "/payroll", anyOf: ["PAYROLL_VIEW", "PAYSLIP_VIEW_OWN"] },
   { label: "Leaves", icon: Palmtree, path: "/leave" },
+  { label: "Заявки на отпуск", icon: CheckSquare, path: "/leave/approvals", anyOf: ["LEAVE_APPROVE_TEAM", "LEAVE_APPROVE_ALL"] },
+  { label: "Типы отпусков", icon: Tags, path: "/leave/types", anyOf: ["LEAVE_BALANCE_MANAGE"] },
   { label: "Attendance", icon: ClipboardCheck, path: "/attendance" },
   { label: "Праздники", icon: CalendarDays, path: "/attendance/holidays", anyOf: ["ATTENDANCE_MANAGE"] },
   { label: "Графики работы", icon: CalendarClock, path: "/attendance/schedules", anyOf: ["ATTENDANCE_MANAGE"] },

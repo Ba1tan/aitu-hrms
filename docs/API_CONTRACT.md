@@ -9,9 +9,9 @@ All IDs: UUID strings. All money: decimal strings (`"250575.00"`). All dates: `"
 
 ---
 
-## Quick Reference — All 142 Endpoints
+## Quick Reference — All 146 Endpoints
 
-### Auth & Users (14)
+### Auth & Users (18 — 4 marked 🟡 pending, see below)
 | Method | Path | Auth | Permission |
 |--------|------|------|------------|
 | POST | `/v1/auth/login` | Public | — |
@@ -28,6 +28,14 @@ All IDs: UUID strings. All money: decimal strings (`"250575.00"`). All dates: `"
 | PUT | `/v1/users/{id}` | Bearer | SYSTEM_USERS |
 | DELETE | `/v1/users/{id}` | Bearer | SYSTEM_USERS |
 | PUT | `/v1/users/{id}/link-employee` | Bearer | SYSTEM_USERS |
+| GET | `/v1/users/audit` 🟡 | Bearer | SYSTEM_AUDIT |
+| GET | `/v1/users/roles` 🟡 | Bearer | SYSTEM_ROLES |
+| GET | `/v1/users/permissions` 🟡 | Bearer | SYSTEM_ROLES |
+| POST | `/v1/users/roles/{role}/permissions` 🟡 | Bearer | SYSTEM_ROLES |
+
+🟡 = endpoint not yet implemented; frontend Phase 1B admin UI calls it
+with a graceful fallback. Schemas in `services/user-service/CLAUDE.md`
+under "Pending endpoints — payload shapes".
 
 ### Employees (25)
 | Method | Path | Permission |
@@ -251,6 +259,98 @@ All IDs: UUID strings. All money: decimal strings (`"250575.00"`). All dates: `"
   }
 }
 ```
+
+### Admin — pending endpoints (🟡)
+
+These are wired in the Phase 1B admin UI (`client/pages/admin/AuditLog.tsx`,
+`admin/Roles.tsx`, `admin/Users.tsx`) with graceful fallback. Backend implementation
+pending. TypeScript reference shapes: `AuditLogEntry`, `RolePermissionMatrix`
+in `frontend/hrms-web/shared/api.ts`. See `docs/PERMISSIONS.md` §6 for the
+JWT propagation rule.
+
+**GET `/v1/users/audit`** — SYSTEM_AUDIT
+
+Query params (all optional):
+- `actor` — email contains
+- `entityType` — `USER` | `EMPLOYEE` | `DEPARTMENT` | `POSITION` | `PAYROLL_PERIOD` | `PAYSLIP` | `LEAVE_REQUEST` | `SETTING` | `ROLE_PERMISSION`
+- `action` — `CREATE` | `UPDATE` | `DELETE` | `APPROVE` | `LOGIN` | `LOGOUT`
+- `from`, `to` — ISO date (`YYYY-MM-DD`)
+- `page`, `size`
+
+Response 200 — `Page<AuditLogEntry>`:
+```json
+{
+  "content": [{
+    "id": "uuid",
+    "timestamp": "2026-05-13T09:00:00",
+    "actorId": "uuid",
+    "actorEmail": "admin@hrms.kz",
+    "action": "UPDATE",
+    "entityType": "EMPLOYEE",
+    "entityId": "uuid",
+    "ipAddress": "10.0.0.1",
+    "oldValue": { /* JSONB snapshot */ },
+    "newValue": { /* JSONB snapshot */ }
+  }],
+  "totalElements": 123, "totalPages": 7, "page": 0, "size": 20
+}
+```
+
+Data already exists: `hrms_user.audit_logs` populated by `AuditService.log(...)`
+from every sensitive write path. Endpoint just needs the controller method
+gated by `@PreAuthorize("hasAuthority('SYSTEM_AUDIT')")` and JPA `Specification`
+predicates for the five filters.
+
+**GET `/v1/users/roles`** — SYSTEM_ROLES
+
+Response 200 — `RolePermissionMatrix`:
+```json
+{
+  "roles": ["SUPER_ADMIN", "DIRECTOR", "HR_MANAGER", "HR_SPECIALIST",
+            "ACCOUNTANT", "MANAGER", "TEAM_LEAD", "EMPLOYEE"],
+  "permissions": [
+    { "code": "EMPLOYEE_CREATE", "module": "Employees",
+      "description": "Create new employee records" }
+    /* … 35 codes; module groups match docs/PERMISSIONS.md §2.x … */
+  ],
+  "matrix": {
+    "SUPER_ADMIN": ["EMPLOYEE_CREATE", "EMPLOYEE_READ", "..."],
+    "HR_MANAGER":  ["EMPLOYEE_CREATE", "EMPLOYEE_READ", "..."]
+  }
+}
+```
+
+Source: `JOIN hrms_user.roles × role_permissions × permissions`, grouped by
+role. Cache 5 min in Redis under `roles:matrix`.
+
+**GET `/v1/users/permissions`** — SYSTEM_ROLES
+
+Flat catalog only (same shape as `RolePermissionMatrix.permissions[]`).
+Optional convenience endpoint — the matrix response already includes this
+list. Use when the frontend wants only the column header list.
+
+**POST `/v1/users/roles/{role}/permissions`** — SYSTEM_ROLES
+
+```json
+// Request
+{ "add": ["EMPLOYEE_DELETE"], "remove": ["EMPLOYEE_BIOMETRIC"] }
+```
+
+Behaviour:
+- `add` → `INSERT … ON CONFLICT DO NOTHING` into `role_permissions`.
+- `remove` → `DELETE FROM role_permissions WHERE role_id=? AND permission_id=?`.
+- One audit row per role mutation (`entityType=ROLE_PERMISSION`, `oldValue` =
+  prior set, `newValue` = new set).
+- Invalidate Redis keys: every `user:permissions:*` for users with that role,
+  plus `roles:matrix`.
+- `SUPER_ADMIN` row is read-only — return `409 Conflict` if `add`/`remove`
+  target it. That role gets every new permission automatically per
+  `docs/PERMISSIONS.md` §3.
+
+Response 200: empty (or echo the new matrix row).
+
+**Important:** changes only take effect on the *next* JWT — see
+`docs/PERMISSIONS.md` §6 for the propagation semantics.
 
 ### Employee
 

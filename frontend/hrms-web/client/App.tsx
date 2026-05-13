@@ -1,42 +1,51 @@
 import "./global.css";
 
-import { Toaster } from "@/components/ui/toaster";
 import { createRoot } from "react-dom/client";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
+import { Toaster } from "./components/ui/toaster";
+import { Toaster as Sonner } from "./components/ui/sonner";
+import { TooltipProvider } from "./components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+
+import { AuthProvider } from "./providers/AuthProvider";
+import { ProtectedRoute } from "./providers/ProtectedRoute";
 
 import Dashboard from "./pages/Dashboard";
 import EmployeesList from "./pages/EmployeesList";
 import EmployeeForm from "./pages/EmployeeForm";
+import EmployeeDetail from "./pages/EmployeeDetail";
+import Departments from "./pages/Departments";
+import Positions from "./pages/Positions";
+import OrgChart from "./pages/OrgChart";
 import Payroll from "./pages/Payroll";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import Leave from "./pages/Leave";
+import LeaveApprovalQueue from "./pages/LeaveApprovalQueue";
+import LeaveTypes from "./pages/LeaveTypes";
 import Attendance from "./pages/Attendance";
+import AttendanceHolidays from "./pages/AttendanceHolidays";
+import AttendanceSchedules from "./pages/AttendanceSchedules";
 import Reports from "./pages/Reports";
+import AdminUsers from "./pages/admin/Users";
+import AdminAuditLog from "./pages/admin/AuditLog";
+import AdminRoles from "./pages/admin/Roles";
 
-const queryClient = new QueryClient();
-
-function PlaceholderPage({ title }: { title: string }) {
-  return (
-    <div
-      style={{
-        minHeight: "100vh",
-        background: "#060E14",
-        color: "#F1F5F9",
-        fontFamily: "Inter, system-ui, sans-serif",
-        padding: 32,
-      }}
-    >
-      <h1 style={{ fontSize: 28, fontWeight: 700, marginBottom: 12 }}>{title}</h1>
-      <p style={{ color: "#94A3B8" }}>Эта страница пока заглушка, но роут уже работает.</p>
-    </div>
-  );
-}
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 30_000,
+      retry: (failureCount, error: any) => {
+        // Don't retry on auth failures — the axios interceptor already tries
+        // a refresh once; if that failed, retrying won't help.
+        if (error?.response?.status === 401 || error?.response?.status === 403) return false;
+        return failureCount < 2;
+      },
+    },
+  },
+});
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -44,25 +53,40 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Navigate to="/dashboard" replace />} />
+        <AuthProvider>
+          <Routes>
+            {/* Public */}
+            <Route path="/index" element={<Index />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/signup" element={<Signup />} />
 
-          <Route path="/index" element={<Index />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/signup" element={<Signup />} />
+            {/* Protected — everything beyond this point requires a valid JWT */}
+            <Route element={<ProtectedRoute />}>
+              <Route path="/" element={<Navigate to="/dashboard" replace />} />
+              <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/employees" element={<EmployeesList />} />
+              <Route path="/employees/new" element={<EmployeeForm />} />
+              <Route path="/employees/:id" element={<EmployeeDetail />} />
+              <Route path="/employees/:id/edit" element={<EmployeeForm />} />
+              <Route path="/org-chart" element={<OrgChart />} />
+              <Route path="/departments" element={<Departments />} />
+              <Route path="/positions" element={<Positions />} />
+              <Route path="/payroll" element={<Payroll />} />
+              <Route path="/leave" element={<Leave />} />
+              <Route path="/leave/approvals" element={<LeaveApprovalQueue />} />
+              <Route path="/leave/types" element={<LeaveTypes />} />
+              <Route path="/attendance" element={<Attendance />} />
+              <Route path="/attendance/holidays" element={<AttendanceHolidays />} />
+              <Route path="/attendance/schedules" element={<AttendanceSchedules />} />
+              <Route path="/reports" element={<Reports />} />
+              <Route path="/admin/users" element={<AdminUsers />} />
+              <Route path="/admin/audit" element={<AdminAuditLog />} />
+              <Route path="/admin/roles" element={<AdminRoles />} />
+            </Route>
 
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/employees" element={<EmployeesList />} />
-          <Route path="/employees/new" element={<EmployeeForm />} />
-          <Route path="/employees/:id" element={<EmployeeForm />} />
-          <Route path="/payroll" element={<Payroll />} />
-
-          <Route path="/leave" element={<Leave />} />
-          <Route path="/attendance" element={<Attendance />} />
-          <Route path="/reports" element={<Reports />} />
-
-          <Route path="*" element={<NotFound />} />
-        </Routes>
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>

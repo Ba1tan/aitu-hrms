@@ -37,3 +37,9 @@ docker/backups/
 docs/dev-phases/
 .claude/
 CLAUDE.md
+
+### Node / frontend
+node_modules/
+dist/
+.vite/
+*.tsbuildinfo

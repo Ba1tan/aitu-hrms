@@ -131,8 +131,8 @@ sending is reserved under `SYSTEM_SETTINGS`.
 |------|--------|---------------|---------|
 | `SYSTEM_USERS` | ✅ | SUPER_ADMIN | User CRUD, link/unlink user↔employee, password reset by admin |
 | `SYSTEM_SETTINGS` | ✅ | SUPER_ADMIN | Company-wide settings (`/v1/settings/**`) |
-| `SYSTEM_ROLES` | 🟡 | SUPER_ADMIN | Role↔permission edit (currently bundled under `SYSTEM_USERS`) |
-| `SYSTEM_AUDIT` | 🟡 | SUPER_ADMIN, DIRECTOR | View `hrms_user.audit_logs` |
+| `SYSTEM_ROLES` | 🟡 | SUPER_ADMIN | `GET /v1/users/roles`, `GET /v1/users/permissions`, `POST /v1/users/roles/{role}/permissions` (endpoints not yet built — Phase 1B admin UI already calls them with graceful fallback; payload shapes in `services/user-service/CLAUDE.md`) |
+| `SYSTEM_AUDIT` | 🟡 | SUPER_ADMIN, DIRECTOR | `GET /v1/users/audit` (read `hrms_user.audit_logs`; endpoint not yet built — Phase 1B admin UI already calls it with graceful fallback) |
 
 ---
 
@@ -202,3 +202,22 @@ The access token carries:
 Downstream services trust the gateway's signature and read `authorities`
 directly into Spring Security `GrantedAuthority`. Re-checking against the
 database is **only** done in user-service on login/refresh.
+
+---
+
+## 6. Permission changes and JWT propagation
+
+Editing `role_permissions` (via the pending `POST /v1/users/roles/{role}/permissions`
+endpoint) does **not** revoke existing JWTs. The new authorities only land
+in tokens issued *after* the change. Implications:
+
+- An active session keeps its old permission set until the user logs out,
+  the access token expires (15 min default), or `/v1/auth/refresh` is called.
+- The frontend admin UI (`client/pages/admin/Roles.tsx`) shows a banner
+  reminding admins of this whenever they enter edit mode.
+- If you need an immediate revoke, blacklist the user's current access
+  token in Redis (the same path `POST /v1/auth/logout` uses) — there is
+  no per-user "force refresh" endpoint today.
+
+This is documented here so future implementers of the role editor know
+not to over-engineer real-time propagation.

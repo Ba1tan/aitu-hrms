@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { ArrowRight } from "lucide-react";
 
-import "./index-redesign.css";
+import "./css/index.css";
 
 export default function Index() {
   return (

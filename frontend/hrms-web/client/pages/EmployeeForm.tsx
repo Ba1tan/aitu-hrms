@@ -34,6 +34,7 @@ import { CreateEmployeeRequest } from "../../shared/api";
 import {
   useCreateEmployee,
   useEmployee,
+  useEmployees,
   useUpdateEmployee,
 } from "../hooks/api/useEmployees";
 import { useDepartments } from "../hooks/api/useDepartments";
@@ -52,6 +53,15 @@ export default function EmployeeForm() {
 
   const { data: departments = [] } = useDepartments();
   const { data: positions = [] } = usePositions();
+  // Candidate managers list — small companies first; replace with a debounced
+  // search combobox when we have employee counts that justify it.
+  const { data: managerCandidatesPage } = useEmployees({
+    size: 200,
+    status: "ACTIVE",
+  });
+  const managerCandidates = (managerCandidatesPage?.content ?? []).filter(
+    (e) => e.id !== id,
+  );
   const employeeQuery = useEmployee(id);
 
   const createMutation = useCreateEmployee();
@@ -418,6 +428,44 @@ export default function EmployeeForm() {
                               ))}
                             </SelectContent>
                           </Select>
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="managerId"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Прямой руководитель</FormLabel>
+                          <Select
+                            onValueChange={(v) => field.onChange(v === NONE ? "" : v)}
+                            value={field.value || NONE}
+                          >
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Выберите руководителя" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value={NONE}>— Не указан</SelectItem>
+                              {managerCandidates.map((m) => (
+                                <SelectItem key={m.id} value={m.id}>
+                                  {m.fullName}
+                                  {m.position
+                                    ? ` · ${
+                                        typeof m.position === "string"
+                                          ? m.position
+                                          : m.position.title
+                                      }`
+                                    : ""}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <FormDescription>
+                            Используется для согласования отпусков и видимости в
+                            команде. Не путать с руководителем отдела.
+                          </FormDescription>
                         </FormItem>
                       )}
                     />

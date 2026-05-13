@@ -13,12 +13,6 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableRow,
-} from "@/components/ui/table";
-import {
   useApproveFlaggedPayslip,
   usePayslip,
   useRecalculatePayslip,
@@ -38,26 +32,58 @@ interface Props {
 
 const ANOMALY_THRESHOLD = 0.65;
 
-function MoneyRow({
+const parseAmount = (v: string | number | null | undefined): number => {
+  if (v === null || v === undefined || v === "") return 0;
+  const n = typeof v === "string" ? parseFloat(v) : v;
+  return Number.isFinite(n) ? n : 0;
+};
+
+type RowKind = "neutral" | "deduction" | "addition" | "total" | "muted";
+
+function Row({
   label,
   value,
-  highlight = false,
+  kind = "neutral",
 }: {
   label: string;
-  value: string | null | undefined;
-  highlight?: boolean;
+  value: string | number | null | undefined;
+  kind?: RowKind;
 }) {
+  const amount = parseAmount(value);
+  const labelClass =
+    kind === "muted"
+      ? "text-muted-foreground"
+      : kind === "total"
+        ? "font-semibold"
+        : "text-muted-foreground";
+  const valueClass =
+    kind === "deduction"
+      ? "text-red-600 font-medium"
+      : kind === "addition"
+        ? "text-emerald-600 font-medium"
+        : kind === "total"
+          ? "text-emerald-600 font-bold text-base"
+          : kind === "muted"
+            ? "text-muted-foreground"
+            : "font-medium";
+
+  const prefix = kind === "deduction" ? "− " : kind === "addition" ? "+ " : "";
   return (
-    <TableRow>
-      <TableCell className="text-muted-foreground">{label}</TableCell>
-      <TableCell
-        className={
-          highlight ? "text-right font-bold text-emerald-600" : "text-right"
-        }
-      >
-        {formatKZT(value)}
-      </TableCell>
-    </TableRow>
+    <div className="flex items-center justify-between py-1.5 text-sm">
+      <span className={labelClass}>{label}</span>
+      <span className={valueClass}>
+        {prefix}
+        {formatKZT(Math.abs(amount))}
+      </span>
+    </div>
+  );
+}
+
+function SectionLabel({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="text-[11px] uppercase tracking-wide text-muted-foreground mt-3 mb-1">
+      {children}
+    </div>
   );
 }
 
@@ -213,85 +239,104 @@ export default function PayslipDetailPanel({
             )}
 
             <div>
-              <div className="text-sm font-semibold mb-2">Расчёт</div>
-              <Table>
-                <TableBody>
-                  <TableRow>
-                    <TableCell className="text-muted-foreground">
-                      Отработано / всего дней
-                    </TableCell>
-                    <TableCell className="text-right">
-                      {payslip.workedDays} / {payslip.totalWorkingDays}
-                    </TableCell>
-                  </TableRow>
-                  <MoneyRow label="Оклад (брутто)" value={payslip.grossSalary} />
-                  <MoneyRow
-                    label="Заработано за период"
-                    value={payslip.earnedSalary}
-                  />
-                  <MoneyRow label="Надбавки" value={payslip.allowances} />
-                  <MoneyRow
-                    label="Прочие удержания"
-                    value={payslip.otherDeductions}
-                  />
-                </TableBody>
-              </Table>
+              <div className="flex items-center justify-between text-sm py-1.5">
+                <span className="text-muted-foreground">
+                  Отработано / всего дней
+                </span>
+                <span className="font-medium">
+                  {payslip.workedDays} / {payslip.totalWorkingDays}
+                </span>
+              </div>
+              <Row label="Оклад (брутто)" value={payslip.grossSalary} />
+              <Row
+                label="Заработано за период"
+                value={payslip.earnedSalary}
+              />
+              {parseAmount(payslip.allowances) > 0 && (
+                <Row
+                  label="Надбавки / премии"
+                  value={payslip.allowances}
+                  kind="addition"
+                />
+              )}
             </div>
 
             <Separator />
 
             <div>
-              <div className="text-sm font-semibold mb-2">Налоги работника</div>
-              <Table>
-                <TableBody>
-                  <MoneyRow label="ОПВ (10%)" value={payslip.opvAmount} />
-                  <MoneyRow label="ВОСМС (2%)" value={payslip.vosmsAmount} />
-                  {payslip.oopvAmount && (
-                    <MoneyRow label="ОПВ доп." value={payslip.oopvAmount} />
-                  )}
-                  <TableRow>
-                    <TableCell className="text-muted-foreground">
-                      Налоговый вычет ({payslip.mrpUsed * 30} ₸ {`= 30 × МРП`})
-                    </TableCell>
-                    <TableCell className="text-right text-muted-foreground">
-                      —
-                    </TableCell>
-                  </TableRow>
-                  <MoneyRow
-                    label="Облагаемый доход"
-                    value={payslip.taxableIncome}
-                  />
-                  <MoneyRow
-                    label={`ИПН (${payslip.isResident ? "10%" : "20%"})`}
-                    value={payslip.ipnAmount}
-                  />
-                  <MoneyRow
-                    label="Всего удержаний"
-                    value={payslip.totalDeductions}
-                  />
-                  <MoneyRow
-                    label="К выплате (нетто)"
-                    value={payslip.netSalary}
-                    highlight
-                  />
-                </TableBody>
-              </Table>
+              <SectionLabel>Вычеты (удержания из зарплаты)</SectionLabel>
+              <Row
+                label="ОПВ (10%)"
+                value={payslip.opvAmount}
+                kind="deduction"
+              />
+              <Row
+                label="ВОСМС (2%)"
+                value={payslip.vosmsAmount}
+                kind="deduction"
+              />
+              {parseAmount(payslip.oopvAmount) > 0 && (
+                <Row
+                  label="ОПВ доп."
+                  value={payslip.oopvAmount}
+                  kind="deduction"
+                />
+              )}
+              <Row
+                label="Облагаемый доход"
+                value={payslip.taxableIncome}
+              />
+              <Row
+                label={`ИПН (${payslip.isResident ? "10%" : "20%"})`}
+                value={payslip.ipnAmount}
+                kind="deduction"
+              />
+              {parseAmount(payslip.otherDeductions) > 0 && (
+                <Row
+                  label="Прочие удержания"
+                  value={payslip.otherDeductions}
+                  kind="deduction"
+                />
+              )}
+              <Row
+                label="Всего удержаний"
+                value={payslip.totalDeductions}
+                kind="deduction"
+              />
+            </div>
+
+            <Separator />
+
+            <div className="pt-1">
+              <Row
+                label="К ВЫПЛАТЕ (нетто)"
+                value={payslip.netSalary}
+                kind="total"
+              />
             </div>
 
             {isAdmin && (
               <>
                 <Separator />
                 <div>
-                  <div className="text-sm font-semibold mb-2">
-                    Налоги работодателя
-                  </div>
-                  <Table>
-                    <TableBody>
-                      <MoneyRow label="СО (5%)" value={payslip.soAmount} />
-                      <MoneyRow label="СН (6%)" value={payslip.snAmount} />
-                      <MoneyRow label="ОПВР (3,5%)" value={payslip.opvrAmount} />
-                    </TableBody>
-                  </Table>
+                  <SectionLabel>
+                    Обязательства работодателя (не вычитаются)
+                  </SectionLabel>
+                  <Row
+                    label="СО (5%)"
+                    value={payslip.soAmount}
+                    kind="muted"
+                  />
+                  <Row
+                    label="СН (6%)"
+                    value={payslip.snAmount}
+                    kind="muted"
+                  />
+                  <Row
+                    label="ОПВР (3,5%)"
+                    value={payslip.opvrAmount}
+                    kind="muted"
+                  />
                 </div>
               </>
             )}

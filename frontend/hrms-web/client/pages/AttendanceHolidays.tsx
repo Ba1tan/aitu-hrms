@@ -58,7 +58,7 @@ import {
   useUpdateHoliday,
 } from "../hooks/api/useAttendance";
 import { type Holiday } from "../../shared/api";
-import { formatDate } from "../lib/format";
+import { formatDate, todayIso } from "../lib/format";
 import {
   holidaySchema,
   type HolidayFormValues,
@@ -242,7 +242,7 @@ function HolidayDialog({
     resolver: zodResolver(holidaySchema),
     values: {
       name: holiday?.name ?? "",
-      date: holiday?.date ?? new Date().toISOString().slice(0, 10),
+      date: holiday?.date ?? todayIso(),
       isAnnual: holiday?.isAnnual ?? false,
       description: holiday?.description ?? "",
     },

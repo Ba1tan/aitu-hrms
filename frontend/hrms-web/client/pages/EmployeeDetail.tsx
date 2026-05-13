@@ -77,8 +77,8 @@ import {
   useTerminateEmployee,
   useUploadDocument,
 } from "../hooks/api/useEmployees";
-import { employeesApi } from "../../shared/api";
-import { formatDate, formatDateTime, formatKZT, maskIin, statusColor, statusLabel } from "../lib/format";
+import { employeeRefLabel, employeesApi } from "../../shared/api";
+import { formatDate, formatDateTime, formatKZT, maskIin, statusColor, statusLabel, todayIso } from "../lib/format";
 
 export default function EmployeeDetail() {
   const { id } = useParams<{ id: string }>();
@@ -143,7 +143,7 @@ export default function EmployeeDetail() {
           <div className="flex-1 min-w-[240px]">
             <h2 className="text-2xl font-bold">{employee.fullName}</h2>
             <p className="text-muted-foreground">
-              {employee.position?.title ?? "—"} · {employee.department?.name ?? "—"}
+              {employeeRefLabel(employee.position)} · {employeeRefLabel(employee.department)}
             </p>
             <p className="text-sm text-muted-foreground mt-1">{employee.email}</p>
           </div>
@@ -201,11 +201,20 @@ export default function EmployeeDetail() {
   );
 }
 
-function Field({ label, value }: { label: string; value: React.ReactNode }) {
+function Field({
+  label,
+  value,
+  hint,
+}: {
+  label: string;
+  value: React.ReactNode;
+  hint?: string;
+}) {
   return (
     <div>
       <p className="text-xs text-muted-foreground mb-1">{label}</p>
       <p className="text-sm font-medium">{value ?? "—"}</p>
+      {hint && <p className="text-[10px] text-muted-foreground mt-1">{hint}</p>}
     </div>
   );
 }
@@ -225,9 +234,13 @@ function ProfileTab({ employee }: { employee: any }) {
         <Field label="Дата найма" value={formatDate(employee.hireDate)} />
         <Field label="Тип занятости" value={employee.employmentType} />
         <Field label="Оклад" value={formatKZT(employee.baseSalary)} />
-        <Field label="Отдел" value={employee.department?.name} />
-        <Field label="Должность" value={employee.position?.title} />
-        <Field label="Руководитель" value={employee.manager?.fullName} />
+        <Field label="Отдел" value={employeeRefLabel(employee.department)} />
+        <Field label="Должность" value={employeeRefLabel(employee.position)} />
+        <Field
+          label="Прямой руководитель"
+          value={employee.manager?.fullName}
+          hint="Назначается отдельно от руководителя отдела"
+        />
         <Field label="Банк" value={employee.bankName} />
         <Field label="Счёт" value={employee.bankAccount} />
         <Field label="Резидент РК" value={employee.resident ? "Да" : "Нет"} />
@@ -284,7 +297,7 @@ function SalaryChangeDialog({
     resolver: zodResolver(salaryChangeSchema),
     defaultValues: {
       newSalary: currentSalary,
-      effectiveDate: new Date().toISOString().slice(0, 10),
+      effectiveDate: todayIso(),
       reason: "",
     },
   });
@@ -742,7 +755,7 @@ function TerminateDialog({
   const form = useForm<TerminateFormValues>({
     resolver: zodResolver(terminateSchema),
     defaultValues: {
-      terminationDate: new Date().toISOString().slice(0, 10),
+      terminationDate: todayIso(),
       reason: "",
     },
   });

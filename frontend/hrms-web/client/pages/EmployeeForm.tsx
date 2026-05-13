@@ -29,6 +29,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
+import { parseLocalDate, toLocalIsoDate } from "../lib/format";
 import { CreateEmployeeRequest } from "../../shared/api";
 import {
   useCreateEmployee,
@@ -95,8 +96,17 @@ export default function EmployeeForm() {
         dateOfBirth: emp.dateOfBirth || "",
         employmentType: (emp.employmentType as any) || "FULL_TIME",
         baseSalary: String(emp.baseSalary || ""),
-        departmentId: emp.department?.id || "",
-        positionId: emp.position?.id || "",
+        // Detail endpoint returns objects; list endpoint returns strings.
+        // The edit form is loaded from the detail endpoint, so the object
+        // shape is what we get — but TS sees the union, so narrow defensively.
+        departmentId:
+          typeof emp.department === "object" && emp.department
+            ? emp.department.id
+            : "",
+        positionId:
+          typeof emp.position === "object" && emp.position
+            ? emp.position.id
+            : "",
         managerId: emp.manager?.id || "",
         bankAccount: emp.bankAccount || "",
         bankName: emp.bankName || "",
@@ -282,7 +292,7 @@ export default function EmployeeForm() {
                                 )}
                               >
                                 {field.value
-                                  ? format(new Date(field.value), "dd.MM.yyyy")
+                                  ? format(parseLocalDate(field.value)!, "dd.MM.yyyy")
                                   : "Выберите дату"}
                                 <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                               </Button>
@@ -291,9 +301,9 @@ export default function EmployeeForm() {
                           <PopoverContent className="w-auto p-0" align="start">
                             <Calendar
                               mode="single"
-                              selected={field.value ? new Date(field.value) : undefined}
+                              selected={parseLocalDate(field.value)}
                               onSelect={(date) =>
-                                field.onChange(date ? date.toISOString().slice(0, 10) : "")
+                                field.onChange(date ? toLocalIsoDate(date) : "")
                               }
                               disabled={(date) =>
                                 date > new Date() || date < new Date("1900-01-01")

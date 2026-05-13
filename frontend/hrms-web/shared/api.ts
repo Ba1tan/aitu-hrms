@@ -268,19 +268,38 @@ export interface EmployeeListItem {
   email: string;
   phone?: string;
   iin?: string;
+  employeeNumber?: string;
   hireDate: string;
   dateOfBirth?: string;
   employmentType: "FULL_TIME" | "PART_TIME" | "CONTRACT" | "INTERN";
   baseSalary: number;
-  department?: { id: string; name: string };
-  position?: { id: string; title: string };
-  manager?: { id: string; fullName: string };
+  /**
+   * The list endpoint (`GET /v1/employees`) serializes `EmployeeSummary`
+   * with flat strings, while the detail endpoint (`GET /v1/employees/{id}`)
+   * serializes `EmployeeResponse` with full objects. Accept both shapes so
+   * the same TS type backs both queries.
+   */
+  department?: string | { id: string; name: string } | null;
+  position?: string | { id: string; title: string } | null;
+  manager?: { id: string; fullName: string } | null;
   bankAccount?: string;
   bankName?: string;
   resident: boolean;
   hasDisability: boolean;
   pensioner: boolean;
   status: string;
+}
+
+/**
+ * Render-time normalizer for the dual-shape department/position fields.
+ * `key` is the label property — "name" for departments, "title" for positions.
+ */
+export function employeeRefLabel(
+  ref: string | { name?: string; title?: string } | null | undefined,
+): string {
+  if (!ref) return "—";
+  if (typeof ref === "string") return ref || "—";
+  return ref.name ?? ref.title ?? "—";
 }
 
 export interface PageResponse<T> {

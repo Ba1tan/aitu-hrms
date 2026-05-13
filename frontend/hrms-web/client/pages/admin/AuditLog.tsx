@@ -28,7 +28,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuditLog } from "../../hooks/api/useUsers";
 import { AuditLogEntry, PageResponse } from "../../../shared/api";
-import { formatDateTime } from "../../lib/format";
+import { formatDateTime, todayIso } from "../../lib/format";
 
 const ANY = "__any__";
 
@@ -85,7 +85,7 @@ export default function AdminAuditLog() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `audit_${new Date().toISOString().slice(0, 10)}.csv`;
+    a.download = `audit_${todayIso()}.csv`;
     a.click();
     URL.revokeObjectURL(url);
   };

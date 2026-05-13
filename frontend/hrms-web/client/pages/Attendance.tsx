@@ -59,7 +59,7 @@ import {
   useDepartmentAttendanceRecords,
   useMyAttendanceRecords,
 } from "../hooks/api/useAttendance";
-import { formatDate } from "../lib/format";
+import { formatDate, todayIso } from "../lib/format";
 import {
   bulkAbsentSchema,
   manualRecordSchema,
@@ -288,7 +288,7 @@ function MyMonthGrid() {
 
 function TeamView({ canManage }: { canManage: boolean }) {
   const [departmentId, setDepartmentId] = useState<string>("");
-  const [date, setDate] = useState(() => new Date().toISOString().slice(0, 10));
+  const [date, setDate] = useState(() => todayIso());
   const { data: departments = [] } = useDepartments();
 
   const { data: records = [], isLoading, refetch } =
@@ -344,7 +344,7 @@ function TeamView({ canManage }: { canManage: boolean }) {
 
 function CompanyView({ canManage }: { canManage: boolean }) {
   const today = new Date();
-  const [date, setDate] = useState(today.toISOString().slice(0, 10));
+  const [date, setDate] = useState(() => todayIso());
   const [summaryMonth, setSummaryMonth] = useState(() => ({
     year: today.getFullYear(),
     month: today.getMonth() + 1,
@@ -542,7 +542,7 @@ function ManualEntryDialog({
   });
   const employees = employeesPage?.content ?? [];
 
-  const today = new Date().toISOString().slice(0, 10);
+  const today = todayIso();
   const form = useForm<ManualRecordFormValues>({
     resolver: zodResolver(manualRecordSchema),
     defaultValues: {
@@ -750,7 +750,7 @@ function BulkAbsentDialog({
 }) {
   const form = useForm<BulkAbsentFormValues>({
     resolver: zodResolver(bulkAbsentSchema),
-    defaultValues: { date: new Date().toISOString().slice(0, 10) },
+    defaultValues: { date: todayIso() },
   });
 
   const bulkAbsent = useBulkAbsent();

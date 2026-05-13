@@ -38,6 +38,7 @@ import {
 import { RequirePermission } from "../providers/RequirePermission";
 import { useDepartments } from "../hooks/api/useDepartments";
 import { useEmployees } from "../hooks/api/useEmployees";
+import { employeeRefLabel } from "../../shared/api";
 import { formatDate, statusColor, statusLabel } from "../lib/format";
 
 const ANY = "__any__";
@@ -227,10 +228,10 @@ export default function EmployeesList() {
                     </div>
                   </TableCell>
                   <TableCell className="text-muted-foreground">
-                    {(emp as any).employeeNumber ?? "—"}
+                    {emp.employeeNumber ?? "—"}
                   </TableCell>
-                  <TableCell>{emp.department?.name ?? "—"}</TableCell>
-                  <TableCell>{emp.position?.title ?? "—"}</TableCell>
+                  <TableCell>{employeeRefLabel(emp.department)}</TableCell>
+                  <TableCell>{employeeRefLabel(emp.position)}</TableCell>
                   <TableCell>
                     <Badge
                       variant="outline"

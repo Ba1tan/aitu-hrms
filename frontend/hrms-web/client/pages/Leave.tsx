@@ -56,7 +56,7 @@ import {
   useMyLeaveRequests,
 } from "../hooks/api/useLeave";
 import { type LeaveRequest } from "../../shared/api";
-import { formatDate } from "../lib/format";
+import { formatDate, toLocalIsoDate, todayIso } from "../lib/format";
 import {
   leaveRequestSchema,
   type LeaveRequestFormValues,
@@ -240,8 +240,8 @@ function NewLeaveDialog({
     resolver: zodResolver(leaveRequestSchema),
     defaultValues: {
       leaveTypeId: "",
-      startDate: new Date().toISOString().slice(0, 10),
-      endDate: new Date().toISOString().slice(0, 10),
+      startDate: todayIso(),
+      endDate: todayIso(),
       reason: "",
     },
   });
@@ -274,8 +274,8 @@ function NewLeaveDialog({
       onClose();
       form.reset({
         leaveTypeId: "",
-        startDate: new Date().toISOString().slice(0, 10),
-        endDate: new Date().toISOString().slice(0, 10),
+        startDate: todayIso(),
+        endDate: todayIso(),
         reason: "",
       });
     } catch (e: any) {
@@ -464,8 +464,8 @@ function TeamCalendarTab() {
   const today = new Date();
   const inSixty = new Date();
   inSixty.setDate(inSixty.getDate() + 60);
-  const from = today.toISOString().slice(0, 10);
-  const to = inSixty.toISOString().slice(0, 10);
+  const from = toLocalIsoDate(today);
+  const to = toLocalIsoDate(inSixty);
   const { data: entries = [], isLoading } = useLeaveCalendar({ from, to });
 
   return (

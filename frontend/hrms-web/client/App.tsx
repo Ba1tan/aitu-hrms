@@ -7,7 +7,7 @@ import { TooltipProvider } from "./components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 
-import { AuthProvider } from "./providers/AuthProvider";
+import { AuthProvider, useAuthContext } from "./providers/AuthProvider";
 import { ProtectedRoute } from "./providers/ProtectedRoute";
 
 import Dashboard from "./pages/Dashboard";
@@ -17,7 +17,10 @@ import EmployeeDetail from "./pages/EmployeeDetail";
 import Departments from "./pages/Departments";
 import Positions from "./pages/Positions";
 import OrgChart from "./pages/OrgChart";
-import Payroll from "./pages/Payroll";
+import PayrollPeriods from "./pages/PayrollPeriods";
+import PayrollPeriodDetail from "./pages/PayrollPeriodDetail";
+import MyPayslips from "./pages/MyPayslips";
+import PayrollYtd from "./pages/PayrollYtd";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import Index from "./pages/Index";
@@ -71,7 +74,11 @@ const App = () => (
               <Route path="/org-chart" element={<OrgChart />} />
               <Route path="/departments" element={<Departments />} />
               <Route path="/positions" element={<Positions />} />
-              <Route path="/payroll" element={<Payroll />} />
+              <Route path="/payroll" element={<PayrollRoute />} />
+              <Route path="/payroll/periods/:id" element={<PayrollPeriodDetail />} />
+              <Route path="/payroll/ytd" element={<PayrollYtd />} />
+              <Route path="/payroll/ytd/:id" element={<PayrollYtd />} />
+              <Route path="/my-payslips" element={<MyPayslips />} />
               <Route path="/leave" element={<Leave />} />
               <Route path="/leave/approvals" element={<LeaveApprovalQueue />} />
               <Route path="/leave/types" element={<LeaveTypes />} />
@@ -91,5 +98,16 @@ const App = () => (
     </TooltipProvider>
   </QueryClientProvider>
 );
+
+/**
+ * `/payroll` branches by role: EMPLOYEE-only users see their own payslips,
+ * everyone else (HR / ACCOUNTANT / SUPER_ADMIN / …) gets the periods list.
+ */
+function PayrollRoute() {
+  const { user, hasPermission } = useAuthContext();
+  const canManagePayroll =
+    user?.role === "SUPER_ADMIN" || hasPermission("PAYROLL_VIEW");
+  return canManagePayroll ? <PayrollPeriods /> : <MyPayslips />;
+}
 
 createRoot(document.getElementById("root")!).render(<App />);

@@ -74,6 +74,39 @@ export const statusColor: Record<string, string> = {
   PAID: "#3B82F6",
   DRAFT: "#94A3B8",
   LOCKED: "#8B5CF6",
+  PROCESSING: "#F59E0B",
+  COMPLETED: "#10B981",
+  FLAGGED: "#EF4444",
+};
+
+export const payrollStatusLabel: Record<string, string> = {
+  DRAFT: "Черновик",
+  PROCESSING: "Обработка",
+  COMPLETED: "Готов",
+  APPROVED: "Утверждён",
+  PAID: "Выплачен",
+  LOCKED: "Заблокирован",
+  FLAGGED: "Помечен AI",
+};
+
+const MONTHS_RU = [
+  "Январь",
+  "Февраль",
+  "Март",
+  "Апрель",
+  "Май",
+  "Июнь",
+  "Июль",
+  "Август",
+  "Сентябрь",
+  "Октябрь",
+  "Ноябрь",
+  "Декабрь",
+];
+
+export const formatPeriodName = (year: number, month: number): string => {
+  if (!month || month < 1 || month > 12) return `${year}`;
+  return `${MONTHS_RU[month - 1]} ${year}`;
 };
 
 export const statusLabel: Record<string, string> = {

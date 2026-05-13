@@ -50,6 +50,7 @@ const navItems: NavItem[] = [
   { label: "Departments", icon: Building2, path: "/departments" },
   { label: "Positions", icon: Briefcase, path: "/positions", anyOf: ["DEPT_MANAGE"] },
   { label: "Payroll", icon: Wallet, path: "/payroll", anyOf: ["PAYROLL_VIEW", "PAYSLIP_VIEW_OWN"] },
+  { label: "Налоговый отчёт (YTD)", icon: FileBarChart, path: "/payroll/ytd", anyOf: ["PAYSLIP_VIEW_OWN", "PAYROLL_VIEW"] },
   { label: "Leaves", icon: Palmtree, path: "/leave" },
   { label: "Заявки на отпуск", icon: CheckSquare, path: "/leave/approvals", anyOf: ["LEAVE_APPROVE_TEAM", "LEAVE_APPROVE_ALL"] },
   { label: "Типы отпусков", icon: Tags, path: "/leave/types", anyOf: ["LEAVE_BALANCE_MANAGE"] },

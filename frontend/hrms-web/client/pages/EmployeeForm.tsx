@@ -278,6 +278,51 @@ export default function EmployeeForm() {
                       </FormItem>
                     )}
                   />
+                  <FormField
+                    control={form.control}
+                    name="dateOfBirth"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-col">
+                        <FormLabel>Дата рождения</FormLabel>
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <FormControl>
+                              <Button
+                                variant="outline"
+                                className={cn(
+                                  "w-full pl-3 text-left font-normal",
+                                  !field.value && "text-muted-foreground",
+                                )}
+                              >
+                                {field.value
+                                  ? format(parseLocalDate(field.value)!, "dd.MM.yyyy")
+                                  : "Выберите дату"}
+                                <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                              </Button>
+                            </FormControl>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-auto p-0" align="start">
+                            <Calendar
+                              mode="single"
+                              selected={parseLocalDate(field.value)}
+                              onSelect={(date) =>
+                                field.onChange(date ? toLocalIsoDate(date) : "")
+                              }
+                              disabled={(date) =>
+                                date > new Date() || date < new Date("1940-01-01")
+                              }
+                              defaultMonth={
+                                parseLocalDate(field.value) ??
+                                new Date(1995, 0, 1)
+                              }
+                              initialFocus
+                            />
+                          </PopoverContent>
+                        </Popover>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
                 </div>
               </CardContent>
             </Card>
@@ -519,6 +564,50 @@ export default function EmployeeForm() {
                       )}
                     />
                   </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardContent className="pt-6">
+                <h3 className="text-sm font-medium mb-4">
+                  Зарплатная карта (для выплат)
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <FormField
+                    control={form.control}
+                    name="bankName"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Банк</FormLabel>
+                        <FormControl>
+                          <Input
+                            placeholder="Halyk Bank"
+                            {...field}
+                            value={field.value ?? ""}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="bankAccount"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Номер счёта (IBAN)</FormLabel>
+                        <FormControl>
+                          <Input
+                            placeholder="KZ..."
+                            {...field}
+                            value={field.value ?? ""}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
                 </div>
               </CardContent>
             </Card>

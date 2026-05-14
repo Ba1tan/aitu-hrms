@@ -80,6 +80,24 @@ public class AuthDtos {
     }
 
     @Data
+    public static class BootstrapStatusResponse {
+        /** True once the tenant has at least one SUPER_ADMIN — bootstrap is closed. */
+        private boolean initialized;
+    }
+
+    @Data
+    public static class BootstrapRequest {
+        @Email @NotBlank
+        private String email;
+        @NotBlank @Size(min = 8, message = "Password must be at least 8 characters")
+        private String password;
+        @NotBlank @Size(max = 100)
+        private String firstName;
+        @NotBlank @Size(max = 100)
+        private String lastName;
+    }
+
+    @Data
     public static class ProfileResponse {
         private UUID id;
         private String email;

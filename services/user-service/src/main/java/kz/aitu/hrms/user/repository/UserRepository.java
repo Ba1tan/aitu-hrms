@@ -22,6 +22,14 @@ public interface UserRepository extends JpaRepository<User, UUID> {
     boolean existsByEmail(String email);
 
     /**
+     * Used by the one-time bootstrap flow to detect whether the tenant
+     * still needs its first admin. We count both deleted and non-deleted
+     * rows so a soft-deleted admin can't be used as a backdoor to re-open
+     * registration.
+     */
+    long countByRole(Role role);
+
+    /**
      * The CAST(:search AS string) is load-bearing — Postgres can't infer the
      * type of an untyped null inside CONCAT('%', ?, '%') and falls back to
      * bytea, which has no LOWER overload (SQLState 42883). Casting forces

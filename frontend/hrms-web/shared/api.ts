@@ -580,7 +580,158 @@ export interface RegisterRequest {
 
 export const loginApi  = (data: any) => apiClient.post<AuthResponse>("/auth/login", data);
 export const logoutApi = ()           => apiClient.post("/auth/logout");
-export const getMeApi  = ()           => apiClient.get<AuthUser>("/auth/me");
+export const getMeApi  = ()           => apiClient.get<MeResponse>("/auth/me");
+
+export interface BootstrapStatus {
+  initialized: boolean;
+}
+
+export interface BootstrapRequest {
+  email: string;
+  password: string;
+  firstName: string;
+  lastName: string;
+}
+
+export const bootstrapApi = {
+  status: () => apiClient.get<BootstrapStatus>("/auth/bootstrap-status"),
+  register: (data: BootstrapRequest) =>
+    apiClient.post<AuthResponse>("/auth/bootstrap", data),
+};
+
+export interface MeEmployee {
+  id: string;
+  employeeNumber?: string | null;
+  fullName: string;
+  department?: { id: string; name: string } | null;
+  position?: { id: string; title: string } | null;
+  baseSalary?: string | null;
+  hireDate?: string | null;
+  status?: string | null;
+  iin?: string | null;
+  phone?: string | null;
+  email?: string | null;
+  photoUrl?: string | null;
+}
+
+export interface MeResponse {
+  id: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  middleName?: string | null;
+  phone?: string | null;
+  role: string;
+  permissions?: string[];
+  employee?: MeEmployee | null;
+}
+
+export interface UpdateProfileRequest {
+  firstName?: string;
+  lastName?: string;
+  middleName?: string;
+  phone?: string;
+}
+
+export interface ChangePasswordRequest {
+  currentPassword: string;
+  newPassword: string;
+}
+
+export const profileApi = {
+  me: () => apiClient.get<MeResponse>("/auth/me"),
+  update: (data: UpdateProfileRequest) =>
+    apiClient.put<MeResponse>("/auth/me", data),
+  changePassword: (data: ChangePasswordRequest) =>
+    apiClient.post<void>("/auth/change-password", data),
+  uploadPhoto: (employeeId: string, formData: FormData) =>
+    apiClient.post<{ photoUrl?: string }>(
+      `/v1/employees/${employeeId}/photo`,
+      formData,
+      { headers: { "Content-Type": "multipart/form-data" } },
+    ),
+};
+
+// ── Notifications (Phase 4) ─────────────────────────────────────────────────
+
+export type NotificationChannel = "IN_APP" | "EMAIL" | "PUSH" | "SMS";
+
+export type NotificationType =
+  | "LEAVE_REQUEST_CREATED"
+  | "LEAVE_APPROVED"
+  | "LEAVE_REJECTED"
+  | "PAYSLIP_READY"
+  | "PAYROLL_JOB_STARTED"
+  | "PAYROLL_JOB_COMPLETED"
+  | "PAYROLL_ANOMALY"
+  | "EMPLOYEE_CREATED"
+  | "EMPLOYEE_TERMINATED"
+  | "FRAUD_ALERT"
+  | "ACCOUNT_CREATED"
+  | "PASSWORD_RESET"
+  | "INTEGRATION_SYNC_FAILED"
+  | "SYSTEM"
+  | string;
+
+export interface NotificationItem {
+  id: string;
+  title: string;
+  message: string;
+  type: NotificationType;
+  channel?: NotificationChannel;
+  isRead: boolean;
+  referenceType?: string | null;
+  referenceId?: string | null;
+  createdAt: string;
+  readAt?: string | null;
+}
+
+export interface NotificationPreferenceCell {
+  inApp: boolean;
+  email: boolean;
+  push: boolean;
+  sms: boolean;
+}
+
+export interface NotificationPreferences {
+  [eventType: string]: NotificationPreferenceCell;
+}
+
+export const notificationsApi = {
+  list: (params: { unread?: boolean; type?: string; page?: number; size?: number } = {}) =>
+    apiClient.get<PageResponse<NotificationItem> | NotificationItem[]>(
+      "/v1/notifications",
+      { params },
+    ),
+  unreadCount: () =>
+    apiClient.get<{ count: number }>("/v1/notifications/unread-count"),
+  markRead: (id: string) =>
+    apiClient.put<void>(`/v1/notifications/${id}/read`),
+  markAllRead: () =>
+    apiClient.put<void>("/v1/notifications/read-all"),
+  remove: (id: string) =>
+    apiClient.delete<void>(`/v1/notifications/${id}`),
+  getPreferences: () =>
+    apiClient.get<NotificationPreferences>("/v1/notifications/preferences"),
+  updatePreferences: (data: NotificationPreferences) =>
+    apiClient.put<NotificationPreferences>("/v1/notifications/preferences", data),
+};
+
+// ── Setup wizard / settings (Phase 4) ───────────────────────────────────────
+
+export interface SetupStatus {
+  configured: boolean;
+  totalRequired: number;
+  missingRequired: string[];
+  explicitlyCompleted?: boolean;
+}
+
+export const setupApi = {
+  status: () =>
+    apiClient.get<SetupStatus>("/v1/settings/setup-status"),
+  complete: () =>
+    apiClient.post<void>("/v1/settings/complete-setup"),
+};
 
 export const departmentsApi = {
   list:   () => apiClient.get<Department[]>("/v1/departments"),
@@ -865,9 +1016,271 @@ export const settingsApi = {
     apiClient.put<SettingValue>(`/v1/settings/${key}`, { value }),
 };
 
+// ── Payroll (Phase 3) ────────────────────────────────────────────────────────
+
+export type PayrollPeriodStatus =
+  | "DRAFT"
+  | "PROCESSING"
+  | "COMPLETED"
+  | "APPROVED"
+  | "PAID"
+  | "LOCKED";
+
+export type PayslipStatus = "DRAFT" | "FLAGGED" | "APPROVED" | "PAID";
+
+export type AdditionType = "BONUS" | "DEDUCTION";
+
+export type AdditionCategory =
+  | "MEAL_ALLOWANCE"
+  | "TRANSPORT"
+  | "OVERTIME"
+  | "BONUS_PERFORMANCE"
+  | "BONUS_HOLIDAY"
+  | "FINE"
+  | "ADVANCE_REPAYMENT"
+  | "TAX_ADJUSTMENT"
+  | "INSURANCE"
+  | "OTHER";
+
+export interface PayrollPeriodSummary {
+  payslipCount: number;
+  approvedCount: number;
+  flaggedCount: number;
+  totalGrossSalary: string;
+  totalNetSalary: string;
+  totalIpn: string;
+  totalOpv: string;
+  totalVosms: string;
+  totalSo: string;
+  totalSn: string;
+  totalOpvr: string;
+}
+
+export interface PayrollPeriod {
+  id: string;
+  year: number;
+  month: number;
+  name: string;
+  startDate: string;
+  endDate: string;
+  workingDays: number;
+  status: PayrollPeriodStatus;
+  processedBy?: string | null;
+  processedAt?: string | null;
+  approvedBy?: string | null;
+  approvedAt?: string | null;
+  batchJobId?: number | null;
+  createdAt?: string;
+  updatedAt?: string;
+  summary?: PayrollPeriodSummary | null;
+}
+
+export interface CreatePayrollPeriodRequest {
+  year: number;
+  month: number;
+  workingDays: number;
+}
+
+export interface GeneratePayslipsRequest {
+  employeeIds?: string[];
+  async?: boolean;
+}
+
+export interface GeneratePayslipsResponse {
+  async: boolean;
+  jobId?: number | null;
+  generated?: number | null;
+  skipped?: number | null;
+  errors?: number | null;
+  flagged?: number | null;
+  totalGrossPayout?: string | null;
+  totalNetPayout?: string | null;
+  errorDetails?: string[] | null;
+}
+
+export interface PayrollJobStatus {
+  jobId: number;
+  periodId: string;
+  status: "STARTING" | "STARTED" | "COMPLETED" | "FAILED" | string;
+  startedAt?: string | null;
+  endedAt?: string | null;
+  totalEmployees?: number | null;
+  processed?: number | null;
+}
+
+export interface PayslipPeriodInfo {
+  id: string;
+  year: number;
+  month: number;
+  name: string;
+}
+
+export interface PayslipEmployeeInfo {
+  id: string;
+  employeeNumber?: string | null;
+  fullName: string;
+  iin?: string | null;
+  department?: string | null;
+  position?: string | null;
+}
+
+export interface Payslip {
+  id: string;
+  period: PayslipPeriodInfo;
+  employee: PayslipEmployeeInfo;
+  workedDays: number;
+  totalWorkingDays: number;
+  grossSalary: string;
+  earnedSalary: string;
+  allowances: string;
+  otherDeductions: string;
+  opvAmount: string;
+  vosmsAmount: string;
+  oopvAmount?: string | null;
+  taxableIncome: string;
+  ipnAmount: string;
+  totalDeductions: string;
+  netSalary: string;
+  soAmount: string;
+  snAmount: string;
+  opvrAmount: string;
+  mrpUsed: number;
+  isResident: boolean;
+  hasDisability: boolean;
+  status: PayslipStatus;
+  anomalyScore?: string | null;
+  anomalyFlags?: string[] | null;
+  aiReviewed: boolean;
+  aiReviewedBy?: string | null;
+  aiReviewedAt?: string | null;
+  pdfUrl?: string | null;
+  createdAt?: string | null;
+}
+
+export interface PayslipAdjustRequest {
+  allowances?: number;
+  otherDeductions?: number;
+  workedDays?: number;
+}
+
+export interface PayrollAddition {
+  id: string;
+  employeeId: string;
+  periodId: string;
+  type: AdditionType;
+  category: AdditionCategory;
+  description?: string | null;
+  amount: string;
+  isTaxable: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface CreateAdditionRequest {
+  employeeId: string;
+  periodId: string;
+  type: AdditionType;
+  category: AdditionCategory;
+  description?: string;
+  amount: number;
+  isTaxable?: boolean;
+}
+
+export interface UpdateAdditionRequest {
+  type?: AdditionType;
+  category?: AdditionCategory;
+  description?: string;
+  amount?: number;
+  isTaxable?: boolean;
+}
+
+export interface PayrollYtd {
+  employeeId: string;
+  year: number;
+  payslipsCount: number;
+  totalGross: string;
+  totalEarned: string;
+  totalNet: string;
+  totalOpv: string;
+  totalVosms: string;
+  totalIpn: string;
+  totalSo: string;
+  totalSn: string;
+  totalOpvr: string;
+}
+
 export const payrollApi = {
-  periods:    (page = 0) => apiClient.get("/v1/payroll/periods", { params: { page } }),
-  myPayslips: (page = 0) => apiClient.get("/v1/payroll/my-payslips", { params: { page } }),
+  // Periods
+  listPeriods: (params: Record<string, unknown> = {}) =>
+    apiClient.get<PageResponse<PayrollPeriod> | PayrollPeriod[]>(
+      "/v1/payroll/periods",
+      { params },
+    ),
+  getPeriod: (id: string) =>
+    apiClient.get<PayrollPeriod>(`/v1/payroll/periods/${id}`),
+  createPeriod: (data: CreatePayrollPeriodRequest) =>
+    apiClient.post<PayrollPeriod>("/v1/payroll/periods", data),
+  generate: (id: string, data: GeneratePayslipsRequest = {}) =>
+    apiClient.post<GeneratePayslipsResponse>(
+      `/v1/payroll/periods/${id}/generate`,
+      data,
+    ),
+  approvePeriod: (id: string) =>
+    apiClient.post<PayrollPeriod>(`/v1/payroll/periods/${id}/approve`),
+  markPaid: (id: string) =>
+    apiClient.post<PayrollPeriod>(`/v1/payroll/periods/${id}/mark-paid`),
+  lockPeriod: (id: string) =>
+    apiClient.post<PayrollPeriod>(`/v1/payroll/periods/${id}/lock`),
+
+  // Jobs
+  jobStatus: (jobId: number | string) =>
+    apiClient.get<PayrollJobStatus>(`/v1/payroll/jobs/${jobId}/status`),
+
+  // Payslips (admin)
+  listPayslips: (
+    periodId: string,
+    params: { status?: string; search?: string } = {},
+  ) =>
+    apiClient.get<Payslip[] | PageResponse<Payslip>>(
+      `/v1/payroll/periods/${periodId}/payslips`,
+      { params },
+    ),
+  getPayslip: (id: string) =>
+    apiClient.get<Payslip>(`/v1/payroll/payslips/${id}`),
+  adjustPayslip: (id: string, data: PayslipAdjustRequest) =>
+    apiClient.patch<Payslip>(`/v1/payroll/payslips/${id}/adjust`, data),
+  recalculatePayslip: (id: string) =>
+    apiClient.post<Payslip>(`/v1/payroll/payslips/${id}/recalculate`),
+  payslipPdf: (id: string) =>
+    apiClient.get(`/v1/payroll/payslips/${id}/pdf`, { responseType: "blob" }),
+  approveFlagged: (id: string) =>
+    apiClient.post<Payslip>(`/v1/payroll/payslips/${id}/approve-flagged`),
+
+  // Self-service
+  myPayslips: (params: Record<string, unknown> = {}) =>
+    apiClient.get<Payslip[] | PageResponse<Payslip>>("/v1/payroll/my-payslips", {
+      params,
+    }),
+  myPayslipForPeriod: (periodId: string) =>
+    apiClient.get<Payslip>(`/v1/payroll/my-payslips/period/${periodId}`),
+  myPayslipPdf: (id: string) =>
+    apiClient.get(`/v1/payroll/my-payslips/${id}/pdf`, { responseType: "blob" }),
+
+  // Year-to-date
+  ytdEmployee: (employeeId: string, year: number) =>
+    apiClient.get<PayrollYtd>(`/v1/payroll/ytd/employee/${employeeId}`, {
+      params: { year },
+    }),
+
+  // Additions
+  listAdditions: (params: { periodId?: string; employeeId?: string } = {}) =>
+    apiClient.get<PayrollAddition[]>("/v1/payroll/additions", { params }),
+  createAddition: (data: CreateAdditionRequest) =>
+    apiClient.post<PayrollAddition>("/v1/payroll/additions", data),
+  updateAddition: (id: string, data: UpdateAdditionRequest) =>
+    apiClient.put<PayrollAddition>(`/v1/payroll/additions/${id}`, data),
+  deleteAddition: (id: string) =>
+    apiClient.delete<void>(`/v1/payroll/additions/${id}`),
 };
 
 export const reportsApi = {

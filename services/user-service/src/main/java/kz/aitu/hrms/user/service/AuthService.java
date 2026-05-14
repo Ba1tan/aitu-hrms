@@ -4,6 +4,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import kz.aitu.hrms.common.exception.BusinessException;
 import kz.aitu.hrms.common.exception.ResourceNotFoundException;
 import kz.aitu.hrms.user.dto.AuthDtos;
+import kz.aitu.hrms.user.entity.Role;
 import kz.aitu.hrms.user.entity.User;
 import kz.aitu.hrms.user.event.PasswordResetRequestedEvent;
 import kz.aitu.hrms.user.repository.RolePermissionRepository;
@@ -71,6 +72,53 @@ public class AuthService {
 
         log.info("User logged in: {}", user.getEmail());
         return buildAuthResponse(user);
+    }
+
+    @Transactional(readOnly = true)
+    public AuthDtos.BootstrapStatusResponse bootstrapStatus() {
+        AuthDtos.BootstrapStatusResponse resp = new AuthDtos.BootstrapStatusResponse();
+        resp.setInitialized(userRepository.countByRole(Role.SUPER_ADMIN) > 0);
+        return resp;
+    }
+
+    /**
+     * One-time tenant bootstrap. Creates the very first SUPER_ADMIN account
+     * on a fresh deployment when no admin exists yet. Re-runs are refused
+     * with 409 so this endpoint can't be used to inject a second admin
+     * later.
+     *
+     * Concurrent requests rely on the `users.email` unique constraint plus
+     * the count check inside the transaction — at most one will commit,
+     * the other gets BusinessException.
+     */
+    @Transactional
+    public AuthDtos.AuthResponse bootstrap(AuthDtos.BootstrapRequest request, HttpServletRequest http) {
+        if (userRepository.countByRole(Role.SUPER_ADMIN) > 0) {
+            throw new BusinessException("Bootstrap is no longer available — an administrator already exists");
+        }
+        if (userRepository.existsByEmail(request.getEmail())) {
+            throw new BusinessException("That email is already registered");
+        }
+
+        User admin = User.builder()
+                .firstName(request.getFirstName())
+                .lastName(request.getLastName())
+                .email(request.getEmail())
+                .password(passwordEncoder.encode(request.getPassword()))
+                .role(Role.SUPER_ADMIN)
+                .enabled(true)
+                .accountNonLocked(true)
+                .requirePasswordChange(false)
+                .failedLoginCount(0)
+                .lastLoginAt(LocalDateTime.now())
+                .lastLoginIp(clientIp(http))
+                .build();
+        userRepository.save(admin);
+
+        auditService.log(admin.getId(), admin.getEmail(), "BOOTSTRAP_ADMIN",
+                "USER", admin.getId(), null, null);
+        log.info("Tenant bootstrapped: first SUPER_ADMIN created — {}", admin.getEmail());
+        return buildAuthResponse(admin);
     }
 
     @Transactional

@@ -185,6 +185,22 @@ export const useMyPayslips = (params: Record<string, unknown> = {}) =>
         .then((r) => unwrapArray<Payslip>(r.data)),
   });
 
+/**
+ * Self-service payslip detail. There is no `GET /v1/payroll/my-payslips/{id}`
+ * on the backend — only the list endpoint is gated by `PAYSLIP_VIEW_OWN`.
+ * We fetch the list (cached) and find the row by id.
+ */
+export const useMyPayslip = (id: string | undefined) =>
+  useQuery({
+    queryKey: [...MY_PAYSLIPS_KEY, "detail", id],
+    queryFn: () =>
+      payrollApi
+        .myPayslips({ size: 200 })
+        .then((r) => unwrapArray<Payslip>(r.data))
+        .then((rows) => rows.find((p) => p.id === id) ?? null),
+    enabled: !!id,
+  });
+
 // ── YTD ──────────────────────────────────────────────────────────────────────
 
 export const useEmployeeYtd = (

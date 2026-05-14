@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/sheet";
 import {
   useApproveFlaggedPayslip,
+  useMyPayslip,
   usePayslip,
   useRecalculatePayslip,
 } from "../../hooks/api/usePayroll";
@@ -94,12 +95,16 @@ export default function PayslipDetailPanel({
   variant = "admin",
 }: Props) {
   const { hasPermission } = useAuthContext();
-  const { data: payslip, isLoading } = usePayslip(payslipId ?? undefined);
+  const isAdmin = variant === "admin";
+  const adminQuery = usePayslip(isAdmin ? (payslipId ?? undefined) : undefined);
+  const selfQuery = useMyPayslip(!isAdmin ? (payslipId ?? undefined) : undefined);
+  const payslip = isAdmin ? adminQuery.data : selfQuery.data;
+  const isLoading = isAdmin ? adminQuery.isLoading : selfQuery.isLoading;
   const recalc = useRecalculatePayslip(payslipId ?? "");
   const approveFlagged = useApproveFlaggedPayslip(payslipId ?? "");
   const [downloading, setDownloading] = useState(false);
 
-  const isAdmin = variant === "admin";
+
   const canAdjust = isAdmin && hasPermission("PAYSLIP_ADJUST");
   const canApproveFlagged = isAdmin && hasPermission("PAYROLL_APPROVE");
 

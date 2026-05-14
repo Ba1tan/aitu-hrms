@@ -25,6 +25,8 @@ public final class JwtAuthFilter implements GlobalFilter, Ordered {
             "/api/auth/refresh",
             "/api/auth/forgot-password",
             "/api/auth/reset-password",
+            "/api/auth/bootstrap-status",
+            "/api/auth/bootstrap",
             "/actuator/health"
     );
 

@@ -582,6 +582,23 @@ export const loginApi  = (data: any) => apiClient.post<AuthResponse>("/auth/logi
 export const logoutApi = ()           => apiClient.post("/auth/logout");
 export const getMeApi  = ()           => apiClient.get<MeResponse>("/auth/me");
 
+export interface BootstrapStatus {
+  initialized: boolean;
+}
+
+export interface BootstrapRequest {
+  email: string;
+  password: string;
+  firstName: string;
+  lastName: string;
+}
+
+export const bootstrapApi = {
+  status: () => apiClient.get<BootstrapStatus>("/auth/bootstrap-status"),
+  register: (data: BootstrapRequest) =>
+    apiClient.post<AuthResponse>("/auth/bootstrap", data),
+};
+
 export interface MeEmployee {
   id: string;
   employeeNumber?: string | null;

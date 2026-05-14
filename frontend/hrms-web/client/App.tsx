@@ -23,7 +23,6 @@ import PayrollPeriodDetail from "./pages/PayrollPeriodDetail";
 import MyPayslips from "./pages/MyPayslips";
 import PayrollYtd from "./pages/PayrollYtd";
 import Login from "./pages/Login";
-import Signup from "./pages/Signup";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import Leave from "./pages/Leave";
@@ -75,7 +74,9 @@ const App = () => (
             {/* Public */}
             <Route path="/index" element={<Index />} />
             <Route path="/login" element={<Login />} />
-            <Route path="/signup" element={<Signup />} />
+            {/* /signup is intentionally absent — employees are created by HR
+                in /admin/users; the first admin is bootstrapped from /index. */}
+            <Route path="/signup" element={<Navigate to="/index" replace />} />
 
             {/* Protected — everything beyond this point requires a valid JWT */}
             <Route element={<ProtectedRoute />}>

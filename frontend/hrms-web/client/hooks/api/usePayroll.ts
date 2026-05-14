@@ -213,6 +213,47 @@ export const useEmployeeYtd = (
     enabled: !!employeeId,
   });
 
+const sum = (rows: Payslip[], key: keyof Payslip): string => {
+  let total = 0;
+  for (const row of rows) {
+    const v = row[key];
+    const n = typeof v === "string" ? parseFloat(v) : 0;
+    if (Number.isFinite(n)) total += n;
+  }
+  return total.toFixed(2);
+};
+
+/**
+ * Self-service YTD — backend's `/v1/payroll/ytd/employee/{id}` is gated by
+ * `PAYROLL_VIEW`, so EMPLOYEE-role users get 403. We aggregate from their
+ * own `/v1/payroll/my-payslips` list instead. The result shape mirrors
+ * `PayrollYtd` so the page renders identically.
+ */
+export const useMyYtd = (year: number) =>
+  useQuery({
+    queryKey: [...MY_PAYSLIPS_KEY, "ytd", year],
+    queryFn: async () => {
+      const res = await payrollApi.myPayslips({ size: 200 });
+      const rows = unwrapArray<Payslip>(res.data).filter(
+        (p) => p.period?.year === year,
+      );
+      return {
+        employeeId: rows[0]?.employee?.id ?? "",
+        year,
+        payslipsCount: rows.length,
+        totalGross: sum(rows, "grossSalary"),
+        totalEarned: sum(rows, "earnedSalary"),
+        totalNet: sum(rows, "netSalary"),
+        totalOpv: sum(rows, "opvAmount"),
+        totalVosms: sum(rows, "vosmsAmount"),
+        totalIpn: sum(rows, "ipnAmount"),
+        totalSo: sum(rows, "soAmount"),
+        totalSn: sum(rows, "snAmount"),
+        totalOpvr: sum(rows, "opvrAmount"),
+      };
+    },
+  });
+
 // ── Additions ────────────────────────────────────────────────────────────────
 
 export const useAdditions = (params: {

@@ -22,13 +22,13 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useAuthContext } from "../providers/AuthProvider";
-import { useEmployeeYtd } from "../hooks/api/usePayroll";
+import { useEmployeeYtd, useMyYtd } from "../hooks/api/usePayroll";
 import { formatKZT } from "../lib/format";
 
 const CHART_COLORS = ["#3B82F6", "#10B981", "#F59E0B", "#8B5CF6", "#EF4444"];
 
 export default function PayrollYtd() {
-  const { user } = useAuthContext();
+  const { user, hasPermission } = useAuthContext();
   const navigate = useNavigate();
   const { id } = useParams<{ id?: string }>();
   const [params] = useSearchParams();
@@ -37,10 +37,18 @@ export default function PayrollYtd() {
   const [year, setYear] = useState<number>(
     Number(params.get("year")) || now.getFullYear(),
   );
-  const { data: ytd, isLoading } = useEmployeeYtd(
-    employeeId || undefined,
-    year,
-  );
+
+  // Backend's `/v1/payroll/ytd/employee/{id}` requires PAYROLL_VIEW. For
+  // self-service viewers we aggregate from /v1/payroll/my-payslips instead.
+  const canUseAdminYtd =
+    user?.role === "SUPER_ADMIN" || hasPermission("PAYROLL_VIEW");
+  const viewingSelf = !!user?.employeeId && employeeId === user.employeeId;
+  const useAdmin = canUseAdminYtd && (!viewingSelf || !!id);
+
+  const adminYtd = useEmployeeYtd(useAdmin ? (employeeId || undefined) : undefined, year);
+  const selfYtd = useMyYtd(year);
+  const ytd = useAdmin ? adminYtd.data : selfYtd.data;
+  const isLoading = useAdmin ? adminYtd.isLoading : selfYtd.isLoading;
 
   const chartData = useMemo(() => {
     if (!ytd) return [];

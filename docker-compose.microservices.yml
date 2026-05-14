@@ -66,6 +66,14 @@ services:
       timeout: 10s
       retries: 5
 
+#  mailhog:
+#    image: mailhog/mailhog:latest
+#    restart: unless-stopped
+#    ports:
+#      - "8025:8025"
+#    networks:
+#      - hrms-network
+
   #User Service
 
   user-service:
@@ -292,6 +300,56 @@ services:
         condition: service_healthy
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://localhost:8085/api/actuator/health | grep -q UP || exit 1"]
+      interval: 30s
+      timeout: 10s
+      start_period: 60s
+      retries: 3
+
+  #Notification Service
+
+  notification-service:
+    image: ${NOTIFICATION_SERVICE_IMAGE:-hrms-notification-service:local}
+    build:
+      context: ./services
+      dockerfile: notification-service/Dockerfile
+    restart: unless-stopped
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: ${DB_NAME:-hrms}
+      DB_USER: ${DB_USERNAME:-hrms_user}
+      DB_PASS: ${DB_PASSWORD:-hrms_pass}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-hrms_redis_pass}
+      RABBIT_HOST: rabbitmq
+      RABBIT_PORT: 5672
+      RABBIT_USER: ${RABBITMQ_USER:-hrms}
+      RABBIT_PASS: ${RABBITMQ_PASS:-hrms_pass}
+      JWT_SECRET: ${JWT_SECRET}
+      EMPLOYEE_SERVICE_URL: http://employee-service:8082
+      USER_SERVICE_URL: http://user-service:8081
+      PAYROLL_SERVICE_URL: http://payroll-service:8085
+      NOTIFICATION_SERVICE_TOKEN: ${NOTIFICATION_SERVICE_TOKEN:-dev-secret-change-me}
+      MAIL_ENABLED: ${MAIL_ENABLED:-true}
+      MAIL_HEALTH_ENABLED: ${MAIL_HEALTH_ENABLED:-false}
+      SMTP_HOST: ${MAIL_HOST:-mailhog}
+      SMTP_PORT: ${MAIL_PORT:-1025}
+      SMTP_USER: ${MAIL_USERNAME:-}
+      SMTP_PASS: ${MAIL_PASSWORD:-}
+      SMTP_AUTH: ${SMTP_AUTH:-false}
+      SMTP_STARTTLS: ${SMTP_STARTTLS:-false}
+    networks:
+      - hrms-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8088/api/actuator/health | grep -q UP || exit 1"]
       interval: 30s
       timeout: 10s
       start_period: 60s

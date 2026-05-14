@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="ru">
+<head>
+  <meta charset="UTF-8"/>
+  <title>Отпуск одобрен</title>
+</head>
+<body style="font-family:Arial,sans-serif;background:#f4f5f7;margin:0;padding:0;">
+  <div style="max-width:600px;margin:0 auto;background:#ffffff;border-radius:8px;overflow:hidden;">
+    <div style="background:#34a853;color:#fff;padding:20px;font-size:22px;">
+      HRMS — Отпуск одобрен
+    </div>
+    <div style="padding:24px;color:#222;line-height:1.6;font-size:15px;">
+      <p>Ваш запрос на отпуск одобрен.</p>
+      <table style="margin:16px 0;border-collapse:collapse;">
+        <tr>
+          <td style="padding:8px 12px;background:#f0f1f3;">Дата начала</td>
+          <td style="padding:8px 12px;" th:text="${startDate}">01.07.2025</td>
+        </tr>
+        <tr>
+          <td style="padding:8px 12px;background:#f0f1f3;">Дата окончания</td>
+          <td style="padding:8px 12px;" th:text="${endDate}">14.07.2025</td>
+        </tr>
+      </table>
+      <p>Желаем хорошего отдыха!</p>
+    </div>
+    <div style="padding:16px;background:#f4f5f7;color:#999;font-size:12px;text-align:center;">
+      Это автоматическое сообщение, не отвечайте на него.
+    </div>
+  </div>
+</body>
+</html>

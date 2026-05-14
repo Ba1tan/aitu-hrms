@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="ru">
+<head>
+  <meta charset="UTF-8"/>
+  <title>Расчёт зарплаты завершён</title>
+</head>
+<body style="font-family:Arial,sans-serif;background:#f4f5f7;margin:0;padding:0;">
+  <div style="max-width:600px;margin:0 auto;background:#ffffff;border-radius:8px;overflow:hidden;">
+    <div style="background:#34a853;color:#fff;padding:20px;font-size:22px;">
+      HRMS — Расчёт зарплаты завершён
+    </div>
+    <div style="padding:24px;color:#222;line-height:1.6;font-size:15px;">
+      <p>Расчёт заработной платы успешно завершён.</p>
+      <table style="margin:16px 0;border-collapse:collapse;">
+        <tr>
+          <td style="padding:8px 12px;background:#f0f1f3;">Сотрудников обработано</td>
+          <td style="padding:8px 12px;" th:text="${employeeCount}">0</td>
+        </tr>
+        <tr>
+          <td style="padding:8px 12px;background:#f0f1f3;">Итого к выплате</td>
+          <td style="padding:8px 12px;">₸ <span th:text="${totalNet}">0.00</span></td>
+        </tr>
+      </table>
+      <p>Проверьте расчётные листы и подтвердите период в системе HRMS.</p>
+    </div>
+    <div style="padding:16px;background:#f4f5f7;color:#999;font-size:12px;text-align:center;">
+      Это автоматическое сообщение, не отвечайте на него.
+    </div>
+  </div>
+</body>
+</html>

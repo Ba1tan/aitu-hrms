@@ -1,0 +1,106 @@
+server:
+  port: 8088
+  servlet:
+    context-path: /api
+
+spring:
+  application:
+    name: notification-service
+  datasource:
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:hrms}
+    username: ${DB_USER:hrms}
+    password: ${DB_PASS:hrms}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 2
+      connection-timeout: 30000
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        default_schema: hrms_notification
+        jdbc.time_zone: Asia/Almaty
+    show-sql: false
+  flyway:
+    enabled: true
+    default-schema: hrms_notification
+    schemas: hrms_notification
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+  rabbitmq:
+    host: ${RABBIT_HOST:localhost}
+    port: ${RABBIT_PORT:5672}
+    username: ${RABBIT_USER:guest}
+    password: ${RABBIT_PASS:guest}
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
+  mail:
+    host: ${SMTP_HOST:smtp.gmail.com}
+    port: ${SMTP_PORT:587}
+    username: ${SMTP_USER:}
+    password: ${SMTP_PASS:}
+    properties:
+      mail.smtp.auth: ${SMTP_AUTH:true}
+      mail.smtp.starttls.enable: ${SMTP_STARTTLS:true}
+  thymeleaf:
+    prefix: classpath:/templates/
+    suffix: .html
+    mode: HTML
+    cache: true
+    enabled: true
+  jackson:
+    serialization:
+      write-dates-as-timestamps: false
+    default-property-inclusion: NON_NULL
+    time-zone: Asia/Almaty
+
+app:
+  jwt:
+    secret: ${JWT_SECRET:}
+
+employee-service:
+  url: ${EMPLOYEE_SERVICE_URL:http://localhost:8082}
+user-service:
+  url: ${USER_SERVICE_URL:http://localhost:8081}
+payroll-service:
+  url: ${PAYROLL_SERVICE_URL:http://localhost:8085}
+
+notification:
+  service-token: ${NOTIFICATION_SERVICE_TOKEN:dev-secret-change-me}
+  mail:
+    enabled: ${MAIL_ENABLED:false}
+    from: ${MAIL_FROM:no-reply@hrms.kz}
+    base-url: ${APP_BASE_URL:https://hrms.nursnerv.uk}
+  push:
+    enabled: ${PUSH_ENABLED:false}
+  idempotency:
+    ttl-hours: 24
+
+feign:
+  client:
+    config:
+      default:
+        connect-timeout: 3000
+        read-timeout: 5000
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: when-authorized
+  health:
+    mail:
+      enabled: ${MAIL_HEALTH_ENABLED:false}
+
+logging:
+  level:
+    kz.aitu.hrms.notification: INFO
+    org.springframework.amqp: WARN

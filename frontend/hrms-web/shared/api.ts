@@ -580,7 +580,141 @@ export interface RegisterRequest {
 
 export const loginApi  = (data: any) => apiClient.post<AuthResponse>("/auth/login", data);
 export const logoutApi = ()           => apiClient.post("/auth/logout");
-export const getMeApi  = ()           => apiClient.get<AuthUser>("/auth/me");
+export const getMeApi  = ()           => apiClient.get<MeResponse>("/auth/me");
+
+export interface MeEmployee {
+  id: string;
+  employeeNumber?: string | null;
+  fullName: string;
+  department?: { id: string; name: string } | null;
+  position?: { id: string; title: string } | null;
+  baseSalary?: string | null;
+  hireDate?: string | null;
+  status?: string | null;
+  iin?: string | null;
+  phone?: string | null;
+  email?: string | null;
+  photoUrl?: string | null;
+}
+
+export interface MeResponse {
+  id: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  middleName?: string | null;
+  phone?: string | null;
+  role: string;
+  permissions?: string[];
+  employee?: MeEmployee | null;
+}
+
+export interface UpdateProfileRequest {
+  firstName?: string;
+  lastName?: string;
+  middleName?: string;
+  phone?: string;
+}
+
+export interface ChangePasswordRequest {
+  currentPassword: string;
+  newPassword: string;
+}
+
+export const profileApi = {
+  me: () => apiClient.get<MeResponse>("/auth/me"),
+  update: (data: UpdateProfileRequest) =>
+    apiClient.put<MeResponse>("/auth/me", data),
+  changePassword: (data: ChangePasswordRequest) =>
+    apiClient.post<void>("/auth/change-password", data),
+  uploadPhoto: (employeeId: string, formData: FormData) =>
+    apiClient.post<{ photoUrl?: string }>(
+      `/v1/employees/${employeeId}/photo`,
+      formData,
+      { headers: { "Content-Type": "multipart/form-data" } },
+    ),
+};
+
+// ── Notifications (Phase 4) ─────────────────────────────────────────────────
+
+export type NotificationChannel = "IN_APP" | "EMAIL" | "PUSH" | "SMS";
+
+export type NotificationType =
+  | "LEAVE_REQUEST_CREATED"
+  | "LEAVE_APPROVED"
+  | "LEAVE_REJECTED"
+  | "PAYSLIP_READY"
+  | "PAYROLL_JOB_STARTED"
+  | "PAYROLL_JOB_COMPLETED"
+  | "PAYROLL_ANOMALY"
+  | "EMPLOYEE_CREATED"
+  | "EMPLOYEE_TERMINATED"
+  | "FRAUD_ALERT"
+  | "ACCOUNT_CREATED"
+  | "PASSWORD_RESET"
+  | "INTEGRATION_SYNC_FAILED"
+  | "SYSTEM"
+  | string;
+
+export interface NotificationItem {
+  id: string;
+  title: string;
+  message: string;
+  type: NotificationType;
+  channel?: NotificationChannel;
+  isRead: boolean;
+  referenceType?: string | null;
+  referenceId?: string | null;
+  createdAt: string;
+  readAt?: string | null;
+}
+
+export interface NotificationPreferenceCell {
+  inApp: boolean;
+  email: boolean;
+  push: boolean;
+  sms: boolean;
+}
+
+export interface NotificationPreferences {
+  [eventType: string]: NotificationPreferenceCell;
+}
+
+export const notificationsApi = {
+  list: (params: { unread?: boolean; type?: string; page?: number; size?: number } = {}) =>
+    apiClient.get<PageResponse<NotificationItem> | NotificationItem[]>(
+      "/v1/notifications",
+      { params },
+    ),
+  unreadCount: () =>
+    apiClient.get<{ count: number }>("/v1/notifications/unread-count"),
+  markRead: (id: string) =>
+    apiClient.put<void>(`/v1/notifications/${id}/read`),
+  markAllRead: () =>
+    apiClient.put<void>("/v1/notifications/read-all"),
+  remove: (id: string) =>
+    apiClient.delete<void>(`/v1/notifications/${id}`),
+  getPreferences: () =>
+    apiClient.get<NotificationPreferences>("/v1/notifications/preferences"),
+  updatePreferences: (data: NotificationPreferences) =>
+    apiClient.put<NotificationPreferences>("/v1/notifications/preferences", data),
+};
+
+// ── Setup wizard / settings (Phase 4) ───────────────────────────────────────
+
+export interface SetupStatus {
+  configured: boolean;
+  totalRequired: number;
+  missingRequired: string[];
+  explicitlyCompleted?: boolean;
+}
+
+export const setupApi = {
+  status: () =>
+    apiClient.get<SetupStatus>("/v1/settings/setup-status"),
+  complete: () =>
+    apiClient.post<void>("/v1/settings/complete-setup"),
+};
 
 export const departmentsApi = {
   list:   () => apiClient.get<Department[]>("/v1/departments"),

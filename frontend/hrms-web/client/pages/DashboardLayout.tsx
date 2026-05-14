@@ -5,7 +5,6 @@ import {
   Palmtree,
   ClipboardCheck,
   FileBarChart,
-  Bell,
   Search,
   Menu,
   X,
@@ -22,10 +21,21 @@ import {
   CalendarDays,
   CheckSquare,
   Tags,
+  LogOut,
 } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { useState } from "react";
 import { useAuthContext } from "../providers/AuthProvider";
+import NotificationsBell from "../components/NotificationsBell";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { useAuth } from "../hooks/useAuth";
 
 const colors = {
   primary: "#3B82F6",
@@ -77,8 +87,10 @@ export default function DashboardLayout({
 }) {
   const { pathname } = useLocation();
   const { user, hasPermission } = useAuthContext();
+  const { logout } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [adminOpen, setAdminOpen] = useState(pathname.startsWith("/admin"));
+  const initials = `${user?.firstName?.[0] ?? ""}${user?.lastName?.[0] ?? ""}`.toUpperCase();
 
   const canSee = (item: NavItem) => {
     if (!item.anyOf || item.anyOf.length === 0) return true;
@@ -331,16 +343,57 @@ export default function DashboardLayout({
                 }}
               />
             </div>
-            <Bell size={20} color={colors.muted} />
-            <div
-              style={{
-                width: 36,
-                height: 36,
-                borderRadius: "50%",
-                background: "linear-gradient(45deg, #3B82F6, #00C896)",
-                border: "2px solid #fff",
-              }}
-            />
+            <NotificationsBell />
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button
+                  type="button"
+                  aria-label="Профиль"
+                  style={{
+                    width: 36,
+                    height: 36,
+                    borderRadius: "50%",
+                    background: "linear-gradient(45deg, #3B82F6, #00C896)",
+                    border: "2px solid #fff",
+                    color: "#fff",
+                    fontWeight: 700,
+                    fontSize: 13,
+                    cursor: "pointer",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  {initials || "U"}
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuLabel>
+                  <div style={{ fontSize: 13, fontWeight: 700 }}>
+                    {user?.firstName} {user?.lastName}
+                  </div>
+                  <div style={{ fontSize: 11, color: "#64748B" }}>{user?.email}</div>
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <Link to="/profile" style={{ textDecoration: "none", color: "inherit" }}>
+                  <DropdownMenuItem>
+                    <UserSquare2 className="h-4 w-4 mr-2" /> Профиль
+                  </DropdownMenuItem>
+                </Link>
+                <Link to="/notifications/preferences" style={{ textDecoration: "none", color: "inherit" }}>
+                  <DropdownMenuItem>
+                    <Settings className="h-4 w-4 mr-2" /> Уведомления
+                  </DropdownMenuItem>
+                </Link>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  onClick={() => logout.mutate()}
+                  disabled={logout.isPending}
+                >
+                  <LogOut className="h-4 w-4 mr-2" /> Выйти
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </header>
         <main style={{ padding: "32px 40px" }}>{children}</main>

@@ -23,6 +23,11 @@ import {
   CheckSquare,
   Tags,
   LogOut,
+  Gauge,
+  Plug,
+  Sparkles,
+  TrendingUp,
+  BarChart3,
 } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { useState } from "react";
@@ -70,7 +75,18 @@ const navItems: NavItem[] = [
   { label: "Праздники", icon: CalendarDays, path: "/attendance/holidays", anyOf: ["ATTENDANCE_MANAGE"] },
   { label: "Графики работы", icon: CalendarClock, path: "/attendance/schedules", anyOf: ["ATTENDANCE_MANAGE"] },
   { label: "Reports", icon: FileBarChart, path: "/reports", anyOf: ["REPORT_PAYROLL", "REPORT_HR", "REPORT_EXECUTIVE", "REPORT_ATTENDANCE", "REPORT_LEAVE"] },
+  { label: "Дашборд руководителя", icon: Gauge, path: "/executive", anyOf: ["REPORT_EXECUTIVE"] },
+  { label: "Интеграция 1С", icon: Plug, path: "/integration", anyOf: ["INTEGRATION_MANAGE"] },
+  { label: "Настройки", icon: Settings, path: "/settings", anyOf: ["SYSTEM_SETTINGS"] },
 ];
+
+const aiItems: NavItem[] = [
+  { label: "Обзор", icon: Sparkles, path: "/ai/insights", anyOf: ["AI_DASHBOARD"] },
+  { label: "Риск оттока", icon: TrendingUp, path: "/ai/attrition", anyOf: ["AI_DASHBOARD"] },
+  { label: "Прогноз ФОТ", icon: BarChart3, path: "/ai/forecast", anyOf: ["AI_DASHBOARD"] },
+];
+
+const AI_ANY = ["AI_DASHBOARD"];
 
 const adminItems: NavItem[] = [
   { label: "Users", icon: Users, path: "/admin/users", anyOf: ["SYSTEM_USERS"] },
@@ -92,6 +108,7 @@ export default function DashboardLayout({
   const { logout } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [adminOpen, setAdminOpen] = useState(pathname.startsWith("/admin"));
+  const [aiOpen, setAiOpen] = useState(pathname.startsWith("/ai"));
   const initials = `${user?.firstName?.[0] ?? ""}${user?.lastName?.[0] ?? ""}`.toUpperCase();
 
   const canSee = (item: NavItem) => {
@@ -102,6 +119,9 @@ export default function DashboardLayout({
 
   const canSeeAdmin =
     user?.role === "SUPER_ADMIN" || ADMIN_ANY.some(hasPermission);
+
+  const canSeeAI =
+    user?.role === "SUPER_ADMIN" || AI_ANY.some(hasPermission);
 
   return (
     <div
@@ -218,6 +238,69 @@ export default function DashboardLayout({
               </Link>
             );
           })}
+
+          {canSeeAI && (
+            <div style={{ marginTop: 12 }}>
+              <button
+                onClick={() => setAiOpen((o) => !o)}
+                style={{
+                  width: "100%",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 12,
+                  padding: "12px 16px",
+                  margin: "4px 0",
+                  borderRadius: 12,
+                  color: colors.muted,
+                  background: "transparent",
+                  border: "none",
+                  cursor: "pointer",
+                  fontFamily: "inherit",
+                }}
+              >
+                <Sparkles size={18} />
+                {sidebarOpen && (
+                  <>
+                    <span style={{ fontSize: 14, flex: 1, textAlign: "left" }}>
+                      AI-аналитика
+                    </span>
+                    {aiOpen ? (
+                      <ChevronDown size={14} />
+                    ) : (
+                      <ChevronRight size={14} />
+                    )}
+                  </>
+                )}
+              </button>
+              {aiOpen && sidebarOpen && (
+                <div style={{ paddingLeft: 12 }}>
+                  {aiItems.filter(canSee).map(({ label, icon: Icon, path }) => {
+                    const active = pathname === path;
+                    return (
+                      <Link key={path} to={path} style={{ textDecoration: "none" }}>
+                        <div
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 12,
+                            padding: "10px 16px",
+                            margin: "2px 0",
+                            borderRadius: 12,
+                            color: active ? colors.primary : colors.muted,
+                            background: active ? "rgba(59,130,246,0.1)" : "transparent",
+                            fontSize: 13,
+                          }}
+                        >
+                          <Icon size={16} />
+                          <span style={{ fontWeight: active ? 600 : 400 }}>{label}</span>
+                        </div>
+                      </Link>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          )}
 
           {canSeeAdmin && (
             <div style={{ marginTop: 12 }}>

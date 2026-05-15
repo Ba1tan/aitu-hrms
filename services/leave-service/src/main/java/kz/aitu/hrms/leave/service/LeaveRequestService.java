@@ -115,7 +115,8 @@ public class LeaveRequestService {
                 .daysRequested(days)
                 .build());
 
-        return mapper.toRequest(request, employeeLookup.fullName(employeeId));
+        return mapper.toRequest(request, employeeLookup.fullName(employeeId),
+                approverRef(employeeId));
     }
 
     @Transactional(readOnly = true)
@@ -125,8 +126,11 @@ public class LeaveRequestService {
             throw new BusinessException("Caller has no associated employee profile");
         }
         String name = employeeLookup.fullName(employeeId);
+        // Own requests all belong to the caller, so the approver (their manager)
+        // is the same for every row — resolve it once.
+        LeaveRequestDtos.EmployeeRef approver = approverRef(employeeId);
         return requestRepo.findOwn(employeeId, status, pageable)
-                .map(r -> mapper.toRequest(r, name));
+                .map(r -> mapper.toRequest(r, name, approver));
     }
 
     @Transactional(readOnly = true)
@@ -140,7 +144,8 @@ public class LeaveRequestService {
         if (!isOwner && !canApproveAll && !canApproveTeam) {
             throw new AccessDeniedException("Not allowed to view this leave request");
         }
-        return mapper.toRequest(req, employeeLookup.fullName(req.getEmployeeId()));
+        return mapper.toRequest(req, employeeLookup.fullName(req.getEmployeeId()),
+                approverRef(req.getEmployeeId()));
     }
 
     @Transactional
@@ -181,7 +186,8 @@ public class LeaveRequestService {
                 .leaveType(type.getName())
                 .build());
 
-        return mapper.toRequest(req, employeeLookup.fullName(req.getEmployeeId()));
+        return mapper.toRequest(req, employeeLookup.fullName(req.getEmployeeId()),
+                approverRef(req.getEmployeeId()));
     }
 
     @Transactional
@@ -205,7 +211,8 @@ public class LeaveRequestService {
                 .comment(req.getReviewComment())
                 .build());
 
-        return mapper.toRequest(req, employeeLookup.fullName(req.getEmployeeId()));
+        return mapper.toRequest(req, employeeLookup.fullName(req.getEmployeeId()),
+                approverRef(req.getEmployeeId()));
     }
 
     /**
@@ -248,7 +255,8 @@ public class LeaveRequestService {
         req.setReviewedBy(CurrentUser.userId());
         req.setReviewedAt(LocalDateTime.now(ZoneId.of(zoneId)));
         req = requestRepo.save(req);
-        return mapper.toRequest(req, employeeLookup.fullName(req.getEmployeeId()));
+        return mapper.toRequest(req, employeeLookup.fullName(req.getEmployeeId()),
+                approverRef(req.getEmployeeId()));
     }
 
     @Transactional(readOnly = true)
@@ -299,6 +307,23 @@ public class LeaveRequestService {
 
     private LeaveRequestDtos.Response decorate(LeaveRequest r) {
         return mapper.toRequest(r, employeeLookup.fullName(r.getEmployeeId()));
+    }
+
+    /**
+     * Resolves the manager who will review this employee's request, as an
+     * {@link LeaveRequestDtos.EmployeeRef}, or {@code null} when no manager is
+     * assigned (or employee-service is unreachable). Surfaced to the requester
+     * so they can see who their request is waiting on.
+     */
+    private LeaveRequestDtos.EmployeeRef approverRef(UUID employeeId) {
+        EmployeeClient.ManagerSummary m = employeeLookup.manager(employeeId);
+        if (m == null) {
+            return null;
+        }
+        return LeaveRequestDtos.EmployeeRef.builder()
+                .id(m.id())
+                .fullName(m.fullName())
+                .build();
     }
 
     private LeaveRequest requireRequest(UUID id) {

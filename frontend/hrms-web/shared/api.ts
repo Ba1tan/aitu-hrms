@@ -522,6 +522,8 @@ export interface LeaveRequest {
   daysRequested: number;
   reason?: string | null;
   status: LeaveStatus;
+  /** The manager who will review this request; null when no manager is assigned. */
+  approver?: { id: string; fullName: string } | null;
   reviewerComment?: string | null;
   reviewedAt?: string | null;
   reviewedBy?: { id: string; fullName: string } | null;

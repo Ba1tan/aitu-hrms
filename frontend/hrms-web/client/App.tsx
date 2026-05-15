@@ -18,6 +18,7 @@ import EmployeeDetail from "./pages/EmployeeDetail";
 import Departments from "./pages/Departments";
 import Positions from "./pages/Positions";
 import OrgChart from "./pages/OrgChart";
+import Directory from "./pages/Directory";
 import PayrollPeriods from "./pages/PayrollPeriods";
 import PayrollPeriodDetail from "./pages/PayrollPeriodDetail";
 import MyPayslips from "./pages/MyPayslips";
@@ -107,6 +108,7 @@ const App = () => (
                 <Route path="/employees/:id" element={<EmployeeDetail />} />
                 <Route path="/employees/:id/edit" element={<EmployeeForm />} />
                 <Route path="/org-chart" element={<OrgChart />} />
+                <Route path="/directory" element={<Directory />} />
                 <Route path="/departments" element={<Departments />} />
                 <Route path="/positions" element={<Positions />} />
                 <Route path="/payroll" element={<PayrollRoute />} />

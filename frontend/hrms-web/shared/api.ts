@@ -236,6 +236,24 @@ export interface OrgChartNode {
   children?: OrgChartNode[];
 }
 
+/** Non-sensitive colleague row for the "my team" directory (no salary/IIN). */
+export interface DirectorySummary {
+  id: string;
+  employeeNumber?: string;
+  fullName: string;
+  email?: string;
+  department?: string;
+  position?: string;
+  status?: string;
+  hireDate?: string;
+}
+
+export interface DirectoryResponse {
+  department?: string | null;
+  manager?: { id: string; fullName: string } | null;
+  colleagues: DirectorySummary[];
+}
+
 export interface TerminateRequest {
   terminationDate: string;
   reason: string;
@@ -796,6 +814,8 @@ export const employeesApi = {
   deleteBiometric: (id: string) =>
     apiClient.delete<void>(`/v1/employees/${id}/biometric`),
   orgChart: () => apiClient.get<OrgChartNode[]>("/v1/employees/org-chart"),
+  directory: () =>
+    apiClient.get<DirectoryResponse>("/v1/employees/directory"),
 };
 
 // ── Users / Admin ────────────────────────────────────────────────────────────

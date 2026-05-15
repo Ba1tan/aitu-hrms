@@ -7,6 +7,7 @@ import {
   Lock,
   PlayCircle,
   Wallet,
+  Banknote,
 } from "lucide-react";
 import DashboardLayout from "./DashboardLayout";
 import { Button } from "@/components/ui/button";
@@ -24,6 +25,8 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { RequirePermission } from "../providers/RequirePermission";
+import { useBlobDownload } from "../hooks/api/useReports";
+import { integrationApi } from "../../shared/api";
 import {
   useApprovePeriod,
   useGeneratePayslips,
@@ -58,6 +61,7 @@ export default function PayrollPeriodDetail() {
 
   const [confirmKind, setConfirmKind] = useState<ConfirmKind>(null);
   const [selectedPayslip, setSelectedPayslip] = useState<string | null>(null);
+  const { pendingKey, download } = useBlobDownload();
 
   useEffect(() => {
     if (!job) return;
@@ -186,6 +190,23 @@ export default function PayrollPeriodDetail() {
                   <RequirePermission code="PAYROLL_PAY">
                     <Button onClick={() => setConfirmKind("mark-paid")}>
                       <Wallet className="h-4 w-4 mr-2" /> Отметить выплату
+                    </Button>
+                  </RequirePermission>
+                )}
+                {period.status === "PAID" && (
+                  <RequirePermission code="INTEGRATION_MANAGE">
+                    <Button
+                      variant="outline"
+                      disabled={pendingKey === "bank-file"}
+                      onClick={() =>
+                        download(
+                          "bank-file",
+                          () => integrationApi.bankFile(period.id),
+                          `bank-file-${period.name ?? period.id}`,
+                        )
+                      }
+                    >
+                      <Banknote className="h-4 w-4 mr-2" /> Банковский файл
                     </Button>
                   </RequirePermission>
                 )}

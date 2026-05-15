@@ -1033,7 +1033,11 @@ export const schedulesApi = {
 };
 
 export const settingsApi = {
-  get: () => apiClient.get<Record<string, string>>("/v1/settings"),
+  /** `category` filters server-side (company.*, payroll.*, …). */
+  get: (category?: string) =>
+    apiClient.get<Record<string, string>>("/v1/settings", {
+      params: category ? { category } : {},
+    }),
   put: (key: string, value: string) =>
     apiClient.put<SettingValue>(`/v1/settings/${key}`, { value }),
 };
@@ -1305,10 +1309,138 @@ export const payrollApi = {
     apiClient.delete<void>(`/v1/payroll/additions/${id}`),
 };
 
+// ── Reports / Integration / AI (Phase 5) ────────────────────────────────────
+
+/** Axios config shared by every report/bank-file download. */
+const BLOB = { responseType: "blob" as const };
+
+/**
+ * Every report endpoint streams an XLSX/PDF blob. Callers save the blob via
+ * `saveBlobResponse` in `client/hooks/api/useReports.ts`. reporting-service
+ * is not deployed yet — these 502 until it ships; the UI degrades cleanly.
+ */
 export const reportsApi = {
-  list: (): Promise<{ data: ReportItem[] }> => Promise.resolve({ data: [] }),
-  downloadPayrollSummary: (periodId: string) =>
-    apiClient.get("/v1/reports/payroll-summary", { params: { periodId }, responseType: "blob" }),
+  payrollSummaryXlsx: (periodId: string) =>
+    apiClient.get("/v1/reports/payroll-summary", { params: { periodId }, ...BLOB }),
+  payrollSummaryPdf: (periodId: string) =>
+    apiClient.get("/v1/reports/payroll-summary/pdf", { params: { periodId }, ...BLOB }),
+  form200: (year: number, quarter: number) =>
+    apiClient.get("/v1/reports/form200", { params: { year, quarter }, ...BLOB }),
+  salaryBreakdown: (departmentId?: string) =>
+    apiClient.get("/v1/reports/salary-breakdown", {
+      params: departmentId ? { departmentId } : {},
+      ...BLOB,
+    }),
+  attendanceMonthly: (year: number, month: number) =>
+    apiClient.get("/v1/reports/attendance-monthly", { params: { year, month }, ...BLOB }),
+  attendanceSummary: (year: number, month: number) =>
+    apiClient.get("/v1/reports/attendance-summary", { params: { year, month }, ...BLOB }),
+  leaveBalances: (year: number) =>
+    apiClient.get("/v1/reports/leave-balances", { params: { year }, ...BLOB }),
+  employeeDirectory: () =>
+    apiClient.get("/v1/reports/employee-directory", { ...BLOB }),
+  turnover: (year: number) =>
+    apiClient.get("/v1/reports/turnover", { params: { year }, ...BLOB }),
+  headcount: (from: string, to: string) =>
+    apiClient.get("/v1/reports/headcount", { params: { from, to }, ...BLOB }),
+  executiveSummary: (year: number, month: number) =>
+    apiClient.get("/v1/reports/executive-summary", { params: { year, month }, ...BLOB }),
+  aiInsights: () => apiClient.get("/v1/reports/ai-insights", { ...BLOB }),
+};
+
+export interface SyncJob {
+  id: string;
+  periodId?: string | null;
+  target?: string | null;
+  status:
+    | "PENDING"
+    | "IN_PROGRESS"
+    | "SUCCESS"
+    | "FAILED"
+    | "RETRYING"
+    | string;
+  retryCount?: number;
+  onecDocumentId?: string | null;
+  errorMessage?: string | null;
+  triggeredAt?: string | null;
+  createdAt?: string | null;
+  updatedAt?: string | null;
+}
+
+export const integrationApi = {
+  syncHistory: (
+    params: { target?: string; status?: string; page?: number; size?: number } = {},
+  ) =>
+    apiClient.get<PageResponse<SyncJob> | SyncJob[]>(
+      "/v1/integration/sync/history",
+      { params },
+    ),
+  syncStatus: (jobId: string) =>
+    apiClient.get<SyncJob>(`/v1/integration/sync/status/${jobId}`),
+  triggerSync: (periodId: string) =>
+    apiClient.post<SyncJob>(`/v1/integration/sync/${periodId}`),
+  retry: (jobId: string) =>
+    apiClient.post<SyncJob>(`/v1/integration/retry/${jobId}`),
+  bankFile: (periodId: string) =>
+    apiClient.get(`/v1/integration/bank-file/${periodId}`, { ...BLOB }),
+};
+
+export interface AttritionFactor {
+  factor: string;
+  weight: number;
+}
+
+export interface AttritionRisk {
+  employeeId: string;
+  employeeName?: string;
+  department?: string | null;
+  position?: string | null;
+  riskScore: number;
+  riskLevel: "LOW" | "MEDIUM" | "HIGH" | string;
+  topFactors?: AttritionFactor[];
+  recommendations?: string[];
+}
+
+export interface PayrollForecastPoint {
+  month: string; // "2026-06"
+  predictedGross: number;
+  predictedNet: number;
+  lowerBound?: number;
+  upperBound?: number;
+}
+
+export interface PayrollForecast {
+  horizonMonths: number;
+  points: PayrollForecastPoint[];
+  assumptions?: {
+    headcount?: number;
+    avgSalary?: number;
+    growthRate?: number;
+  };
+}
+
+export interface PayrollAnomaly {
+  payslipId: string;
+  periodId?: string | null;
+  periodName?: string | null;
+  employeeId?: string | null;
+  employeeName?: string | null;
+  anomalyScore: number;
+  flags?: string[];
+  detectedAt?: string | null;
+}
+
+export const aiApi = {
+  attritionRisk: (departmentId?: string) =>
+    apiClient.get<AttritionRisk[]>("/v1/ai/attrition/risk", {
+      params: departmentId ? { departmentId } : {},
+    }),
+  payrollForecast: (months: number) =>
+    apiClient.get<PayrollForecast>("/v1/ai/payroll/forecast", {
+      params: { months },
+    }),
+  recentAnomalies: () =>
+    apiClient.get<PayrollAnomaly[]>("/v1/ai/payroll/recent-anomalies"),
 };
 
 export default apiClient;

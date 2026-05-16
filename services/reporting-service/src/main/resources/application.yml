@@ -1,0 +1,79 @@
+server:
+  port: 8087
+  servlet:
+    context-path: /api
+
+spring:
+  application:
+    name: reporting-service
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
+      timeout: 2000ms
+  rabbitmq:
+    host: ${RABBIT_HOST:localhost}
+    port: ${RABBIT_PORT:5672}
+    username: ${RABBIT_USER:guest}
+    password: ${RABBIT_PASS:guest}
+  cache:
+    type: redis
+    redis:
+      time-to-live: 30s
+      cache-null-values: false
+      key-prefix: "reporting:"
+  jackson:
+    serialization:
+      write-dates-as-timestamps: false
+    default-property-inclusion: NON_NULL
+    time-zone: Asia/Almaty
+
+app:
+  jwt:
+    # Must be set via JWT_SECRET env var in production (same secret as user-service)
+    secret: ${JWT_SECRET:dGVzdC1zZWNyZXQtdGVzdC1zZWNyZXQtdGVzdC1zZWNyZXQtdGVzdA==}
+
+reporting:
+  pdf:
+    font-path: ${PDF_FONT_PATH:/app/fonts/DejaVuSans.ttf}
+  tmp-dir: ${REPORT_TMP_DIR:/tmp/hrms-reports}
+  service-token: ${REPORTING_SERVICE_TOKEN:dev-secret-change-me}
+
+feign:
+  client:
+    config:
+      default:
+        connectTimeout: 5000
+        readTimeout: 30000
+  compression:
+    request:
+      enabled: true
+    response:
+      enabled: true
+
+clients:
+  employee-service: ${EMPLOYEE_SERVICE_URL:http://employee-service:8082}
+  payroll-service: ${PAYROLL_SERVICE_URL:http://payroll-service:8085}
+  attendance-service: ${ATTENDANCE_SERVICE_URL:http://attendance-service:8083}
+  leave-service: ${LEAVE_SERVICE_URL:http://leave-service:8084}
+  ai-ml-service: ${AI_ML_SERVICE_URL:http://ai-ml-service:8086}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: when-authorized
+  health:
+    mail:
+      enabled: false
+
+logging:
+  level:
+    kz.aitu.hrms.reporting: INFO
+    org.springframework.security: WARN
+    org.springframework.amqp: WARN
+    org.apache.poi: WARN

@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="ru">
+<head>
+  <meta charset="UTF-8"/>
+  <title>Расчёт зарплаты запущен</title>
+</head>
+<body style="font-family:Arial,sans-serif;background:#f4f5f7;margin:0;padding:0;">
+  <div style="max-width:600px;margin:0 auto;background:#ffffff;border-radius:8px;overflow:hidden;">
+    <div style="background:#1a73e8;color:#fff;padding:20px;font-size:22px;">
+      HRMS — Расчёт зарплаты запущен
+    </div>
+    <div style="padding:24px;color:#222;line-height:1.6;font-size:15px;">
+      <p>Запущен расчёт заработной платы за период
+        <strong><span th:text="${month}">1</span>/<span th:text="${year}">2025</span></strong>.
+      </p>
+      <p>Сотрудников в обработке: <strong th:text="${employeeCount}">0</strong></p>
+      <p>Результаты будут доступны после завершения расчёта.</p>
+    </div>
+    <div style="padding:16px;background:#f4f5f7;color:#999;font-size:12px;text-align:center;">
+      Это автоматическое сообщение, не отвечайте на него.
+    </div>
+  </div>
+</body>
+</html>

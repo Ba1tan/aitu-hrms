@@ -153,6 +153,7 @@ function MyRequestsTab() {
               <TableHead>Дней</TableHead>
               <TableHead>Причина</TableHead>
               <TableHead>Статус</TableHead>
+              <TableHead>Согласующий</TableHead>
               <TableHead className="w-[100px]" />
             </TableRow>
           </TableHeader>
@@ -160,14 +161,14 @@ function MyRequestsTab() {
             {isLoading ? (
               Array.from({ length: 4 }).map((_, i) => (
                 <TableRow key={i}>
-                  <TableCell colSpan={6}>
+                  <TableCell colSpan={7}>
                     <Skeleton className="h-6 w-full" />
                   </TableCell>
                 </TableRow>
               ))
             ) : requests.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
                   Заявок нет
                 </TableCell>
               </TableRow>
@@ -192,6 +193,15 @@ function MyRequestsTab() {
                     >
                       {STATUS_LABEL[r.status] ?? r.status}
                     </Badge>
+                  </TableCell>
+                  <TableCell>
+                    {r.approver?.fullName ? (
+                      r.approver.fullName
+                    ) : (
+                      <span className="text-muted-foreground italic">
+                        Руководитель не назначен
+                      </span>
+                    )}
                   </TableCell>
                   <TableCell>
                     {r.status === "PENDING" && (

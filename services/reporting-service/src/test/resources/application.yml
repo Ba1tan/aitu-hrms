@@ -1,0 +1,32 @@
+spring:
+  cache:
+    type: simple
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration
+      - org.springframework.boot.autoconfigure.data.redis.RedisReactiveAutoConfiguration
+      - org.springframework.boot.autoconfigure.amqp.RabbitAutoConfiguration
+
+app:
+  jwt:
+    secret: dGVzdC1zZWNyZXQtdGVzdC1zZWNyZXQtdGVzdC1zZWNyZXQtdGVzdA==
+
+reporting:
+  service-token: test-token
+  pdf:
+    font-path: /tmp/DejaVuSans.ttf
+  tmp-dir: /tmp/hrms-reports
+
+clients:
+  employee-service: http://localhost:9999
+  payroll-service: http://localhost:9999
+  attendance-service: http://localhost:9999
+  leave-service: http://localhost:9999
+  ai-ml-service: http://localhost:9999
+
+feign:
+  client:
+    config:
+      default:
+        connectTimeout: 1000
+        readTimeout: 5000

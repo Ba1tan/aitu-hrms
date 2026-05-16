@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="ru">
+<head>
+  <meta charset="UTF-8"/>
+  <title>Новый запрос отпуска</title>
+</head>
+<body style="font-family:Arial,sans-serif;background:#f4f5f7;margin:0;padding:0;">
+  <div style="max-width:600px;margin:0 auto;background:#ffffff;border-radius:8px;overflow:hidden;">
+    <div style="background:#fbbc04;color:#222;padding:20px;font-size:22px;">
+      HRMS — Новый запрос отпуска
+    </div>
+    <div style="padding:24px;color:#222;line-height:1.6;font-size:15px;">
+      <p>Поступил новый запрос на отпуск, требующий вашего рассмотрения.</p>
+      <table style="margin:16px 0;border-collapse:collapse;">
+        <tr>
+          <td style="padding:8px 12px;background:#f0f1f3;">Тип отпуска</td>
+          <td style="padding:8px 12px;" th:text="${leaveType}">ANNUAL</td>
+        </tr>
+        <tr>
+          <td style="padding:8px 12px;background:#f0f1f3;">С</td>
+          <td style="padding:8px 12px;" th:text="${startDate}">01.07.2025</td>
+        </tr>
+        <tr>
+          <td style="padding:8px 12px;background:#f0f1f3;">По</td>
+          <td style="padding:8px 12px;" th:text="${endDate}">14.07.2025</td>
+        </tr>
+        <tr>
+          <td style="padding:8px 12px;background:#f0f1f3;">Дней</td>
+          <td style="padding:8px 12px;" th:text="${daysRequested}">14</td>
+        </tr>
+      </table>
+      <p>Войдите в систему HRMS для принятия решения.</p>
+    </div>
+    <div style="padding:16px;background:#f4f5f7;color:#999;font-size:12px;text-align:center;">
+      Это автоматическое сообщение, не отвечайте на него.
+    </div>
+  </div>
+</body>
+</html>

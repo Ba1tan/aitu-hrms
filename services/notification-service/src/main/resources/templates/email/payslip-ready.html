@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="ru">
+<head>
+  <meta charset="UTF-8"/>
+  <title>Расчётный лист готов</title>
+</head>
+<body style="font-family:Arial,sans-serif;background:#f4f5f7;margin:0;padding:0;">
+  <div style="max-width:600px;margin:0 auto;background:#ffffff;border-radius:8px;overflow:hidden;">
+    <div style="background:#1a73e8;color:#fff;padding:20px;font-size:22px;">
+      HRMS — Расчётный лист готов
+    </div>
+    <div style="padding:24px;color:#222;line-height:1.6;font-size:15px;">
+      <p>Ваш расчётный лист за <strong><span th:text="${month}">1</span>/<span th:text="${year}">2025</span></strong> готов.</p>
+      <table style="margin:16px 0;border-collapse:collapse;">
+        <tr>
+          <td style="padding:8px 12px;background:#f0f1f3;">К выплате</td>
+          <td style="padding:8px 12px;">₸ <span th:text="${netSalary}">0.00</span></td>
+        </tr>
+      </table>
+      <p>Войдите в систему HRMS для просмотра деталей.</p>
+    </div>
+    <div style="padding:16px;background:#f4f5f7;color:#999;font-size:12px;text-align:center;">
+      Это автоматическое сообщение, не отвечайте на него.
+    </div>
+  </div>
+</body>
+</html>

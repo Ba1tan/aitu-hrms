@@ -31,6 +31,9 @@ public interface EmployeeRepository extends JpaRepository<Employee, UUID> {
 
     List<Employee> findAllByManager_IdAndDeletedFalse(UUID managerId);
 
+    List<Employee> findByDepartment_IdAndStatusAndDeletedFalse(UUID departmentId,
+                                                               EmploymentStatus status);
+
     @Query("""
         SELECT e FROM Employee e
         WHERE e.deleted = false

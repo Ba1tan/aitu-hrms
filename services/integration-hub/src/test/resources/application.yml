@@ -1,0 +1,33 @@
+spring:
+  flyway:
+    enabled: false
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    properties:
+      hibernate:
+        default_schema: hrms_integration
+        dialect: org.hibernate.dialect.H2Dialect
+  datasource:
+    url: jdbc:h2:mem:integration-test;MODE=PostgreSQL;DB_CLOSE_DELAY=-1;NON_KEYWORDS=MONTH,YEAR,DAY,VALUE,KEY
+    username: sa
+    password:
+    driver-class-name: org.h2.Driver
+  sql:
+    init:
+      mode: always
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.amqp.RabbitAutoConfiguration
+
+app:
+  jwt:
+    secret: dGVzdC1zZWNyZXQtdGVzdC1zZWNyZXQtdGVzdC1zZWNyZXQtdGVzdA==
+
+integration:
+  service-token: test-token
+
+employee-service:
+  url: http://localhost:9999
+payroll-service:
+  url: http://localhost:9999

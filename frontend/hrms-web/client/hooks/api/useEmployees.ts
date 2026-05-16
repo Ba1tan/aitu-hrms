@@ -153,3 +153,9 @@ export const useOrgChart = () =>
     queryKey: ["employees", "org-chart"],
     queryFn: () => employeesApi.orgChart().then((r) => r.data),
   });
+
+export const useDirectory = () =>
+  useQuery({
+    queryKey: ["employees", "directory"],
+    queryFn: () => employeesApi.directory().then((r) => r.data),
+  });

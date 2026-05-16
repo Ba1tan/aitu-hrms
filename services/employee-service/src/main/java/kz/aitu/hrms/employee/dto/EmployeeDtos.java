@@ -162,6 +162,21 @@ public class EmployeeDtos {
         private String fullName;
     }
 
+    /**
+     * Read-only "my team" view available to any authenticated employee.
+     * Only non-sensitive fields (no salary / IIN) — same shape as
+     * {@link EmployeeSummary}. Server-scoped to the caller's own department.
+     */
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class DirectoryResponse {
+        private String department;
+        private ManagerSummary manager;
+        private java.util.List<EmployeeSummary> colleagues;
+    }
+
     @Data
     @Builder
     @NoArgsConstructor

@@ -35,6 +35,20 @@ public class AuthController {
         return ResponseEntity.ok(ApiResponse.ok(authService.login(request, http)));
     }
 
+    @Operation(summary = "Whether the tenant has its first SUPER_ADMIN yet (public)")
+    @GetMapping("/bootstrap-status")
+    public ResponseEntity<ApiResponse<AuthDtos.BootstrapStatusResponse>> bootstrapStatus() {
+        return ResponseEntity.ok(ApiResponse.ok(authService.bootstrapStatus()));
+    }
+
+    @Operation(summary = "One-time: register the first SUPER_ADMIN on a fresh tenant (public)")
+    @PostMapping("/bootstrap")
+    public ResponseEntity<ApiResponse<AuthDtos.AuthResponse>> bootstrap(
+            @Valid @RequestBody AuthDtos.BootstrapRequest request,
+            HttpServletRequest http) {
+        return ResponseEntity.ok(ApiResponse.ok(authService.bootstrap(request, http)));
+    }
+
     @Operation(summary = "Refresh access token")
     @PostMapping("/refresh")
     public ResponseEntity<ApiResponse<AuthDtos.AuthResponse>> refresh(

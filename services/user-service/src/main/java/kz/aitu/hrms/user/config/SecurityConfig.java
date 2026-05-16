@@ -29,6 +29,8 @@ public class SecurityConfig {
             "/auth/refresh",
             "/auth/forgot-password",
             "/auth/reset-password",
+            "/auth/bootstrap-status",
+            "/auth/bootstrap",
             "/actuator/health",
             "/actuator/info",
             "/v3/api-docs/**",

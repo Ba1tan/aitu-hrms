@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="ru">
+<head>
+  <meta charset="UTF-8"/>
+  <title>Добро пожаловать в HRMS</title>
+</head>
+<body style="font-family:Arial,sans-serif;background:#f4f5f7;margin:0;padding:0;">
+  <div style="max-width:600px;margin:0 auto;background:#ffffff;border-radius:8px;overflow:hidden;">
+    <div style="background:#1a73e8;color:#fff;padding:20px;font-size:22px;">
+      HRMS — Добро пожаловать
+    </div>
+    <div style="padding:24px;color:#222;line-height:1.6;font-size:15px;">
+      <p>Здравствуйте, <strong th:text="${firstName}">Иван</strong>!</p>
+      <p>Ваш аккаунт в системе HRMS создан. Для входа используйте следующие данные:</p>
+      <table style="margin:16px 0;border-collapse:collapse;">
+        <tr>
+          <td style="padding:8px 12px;background:#f0f1f3;">Логин (email)</td>
+          <td style="padding:8px 12px;"><span th:text="${email}">user@hrms.kz</span></td>
+        </tr>
+        <tr>
+          <td style="padding:8px 12px;background:#f0f1f3;">Временный пароль</td>
+          <td style="padding:8px 12px;">
+            <code th:text="${temporaryPassword}" style="font-size:15px;">TempPass123</code>
+          </td>
+        </tr>
+      </table>
+      <p>
+        <a th:href="${loginUrl}"
+           style="display:inline-block;padding:10px 22px;background:#1a73e8;color:#fff;text-decoration:none;border-radius:4px;">
+          Войти в систему
+        </a>
+      </p>
+      <p style="color:#888;font-size:13px;margin-top:32px;">
+        После первого входа смените временный пароль в настройках профиля.
+      </p>
+    </div>
+    <div style="padding:16px;background:#f4f5f7;color:#999;font-size:12px;text-align:center;">
+      Это автоматическое сообщение, не отвечайте на него.
+    </div>
+  </div>
+</body>
+</html>

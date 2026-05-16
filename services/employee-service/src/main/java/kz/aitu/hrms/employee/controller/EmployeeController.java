@@ -65,6 +65,13 @@ public class EmployeeController {
                 employeeService.list(search, departmentId, status, type, pageable)));
     }
 
+    @Operation(summary = "My team directory — caller's department colleagues + their lead")
+    @GetMapping("/directory")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<ApiResponse<EmployeeDtos.DirectoryResponse>> directory() {
+        return ResponseEntity.ok(ApiResponse.ok(employeeService.directory()));
+    }
+
     @Operation(summary = "Get org chart (tree from top-level employees)")
     @GetMapping("/org-chart")
     @PreAuthorize("isAuthenticated()")

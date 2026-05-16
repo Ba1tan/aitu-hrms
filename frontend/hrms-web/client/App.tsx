@@ -18,6 +18,7 @@ import EmployeeDetail from "./pages/EmployeeDetail";
 import Departments from "./pages/Departments";
 import Positions from "./pages/Positions";
 import OrgChart from "./pages/OrgChart";
+import Directory from "./pages/Directory";
 import PayrollPeriods from "./pages/PayrollPeriods";
 import PayrollPeriodDetail from "./pages/PayrollPeriodDetail";
 import MyPayslips from "./pages/MyPayslips";
@@ -32,6 +33,12 @@ import Attendance from "./pages/Attendance";
 import AttendanceHolidays from "./pages/AttendanceHolidays";
 import AttendanceSchedules from "./pages/AttendanceSchedules";
 import Reports from "./pages/Reports";
+import ExecutiveDashboard from "./pages/ExecutiveDashboard";
+import IntegrationHistory from "./pages/IntegrationHistory";
+import Settings from "./pages/Settings";
+import AiInsights from "./pages/ai/Insights";
+import AiAttrition from "./pages/ai/Attrition";
+import AiForecast from "./pages/ai/Forecast";
 import AdminUsers from "./pages/admin/Users";
 import AdminAuditLog from "./pages/admin/AuditLog";
 import AdminRoles from "./pages/admin/Roles";
@@ -107,6 +114,7 @@ const App = () => (
                 <Route path="/employees/:id" element={<EmployeeDetail />} />
                 <Route path="/employees/:id/edit" element={<EmployeeForm />} />
                 <Route path="/org-chart" element={<OrgChart />} />
+                <Route path="/directory" element={<Directory />} />
                 <Route path="/departments" element={<Departments />} />
                 <Route path="/positions" element={<Positions />} />
                 <Route path="/payroll" element={<PayrollRoute />} />
@@ -121,6 +129,12 @@ const App = () => (
                 <Route path="/attendance/holidays" element={<AttendanceHolidays />} />
                 <Route path="/attendance/schedules" element={<AttendanceSchedules />} />
                 <Route path="/reports" element={<Reports />} />
+                <Route path="/executive" element={<ExecutiveDashboard />} />
+                <Route path="/integration" element={<IntegrationHistory />} />
+                <Route path="/settings" element={<Settings />} />
+                <Route path="/ai/insights" element={<AiInsights />} />
+                <Route path="/ai/attrition" element={<AiAttrition />} />
+                <Route path="/ai/forecast" element={<AiForecast />} />
                 <Route path="/admin/users" element={<AdminUsers />} />
                 <Route path="/admin/audit" element={<AdminAuditLog />} />
                 <Route path="/admin/roles" element={<AdminRoles />} />

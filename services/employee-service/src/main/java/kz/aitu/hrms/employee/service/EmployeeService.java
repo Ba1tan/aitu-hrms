@@ -27,4 +27,6 @@ public interface EmployeeService {
     EmployeeDtos.EmployeeResponse terminate(UUID id, EmployeeDtos.TerminateRequest req);
 
     EmployeeDtos.EmployeeResponse createAccount(UUID id);
+
+    EmployeeDtos.DirectoryResponse directory();
 }

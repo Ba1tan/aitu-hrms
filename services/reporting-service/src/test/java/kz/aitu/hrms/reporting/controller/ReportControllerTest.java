@@ -76,7 +76,7 @@ class ReportControllerTest {
         doNothing().when(payrollSummaryXlsx).write(any(), any());
         mvc.perform(get("/v1/reports/payroll-summary")
                         .param("periodId", UUID.randomUUID().toString())
-                        .with(authentication(auth("REPORT_FINANCIAL"))))
+                        .with(authentication(auth("REPORT_PAYROLL"))))
                 .andExpect(status().isOk())
                 .andExpect(header().string("Content-Type", XLSX));
     }
@@ -96,7 +96,7 @@ class ReportControllerTest {
         doNothing().when(payrollSummaryPdf).write(any(), any());
         mvc.perform(get("/v1/reports/payroll-summary/pdf")
                         .param("periodId", UUID.randomUUID().toString())
-                        .with(authentication(auth("REPORT_FINANCIAL"))))
+                        .with(authentication(auth("REPORT_PAYROLL"))))
                 .andExpect(status().isOk())
                 .andExpect(header().string("Content-Type", PDF));
     }
@@ -108,7 +108,7 @@ class ReportControllerTest {
         doNothing().when(form200Xlsx).write(anyInt(), anyInt(), any());
         mvc.perform(get("/v1/reports/form200")
                         .param("year", "2026").param("quarter", "2")
-                        .with(authentication(auth("REPORT_FORM_200"))))
+                        .with(authentication(auth("REPORT_PAYROLL"))))
                 .andExpect(status().isOk())
                 .andExpect(header().string("Content-Type", XLSX));
     }
@@ -117,7 +117,7 @@ class ReportControllerTest {
     void form200_invalidYear_returns400() throws Exception {
         mvc.perform(get("/v1/reports/form200")
                         .param("year", "1999").param("quarter", "1")
-                        .with(authentication(auth("REPORT_FORM_200"))))
+                        .with(authentication(auth("REPORT_PAYROLL"))))
                 .andExpect(status().isBadRequest());
     }
 
@@ -125,7 +125,7 @@ class ReportControllerTest {
     void form200_invalidQuarter_returns400() throws Exception {
         mvc.perform(get("/v1/reports/form200")
                         .param("year", "2026").param("quarter", "5")
-                        .with(authentication(auth("REPORT_FORM_200"))))
+                        .with(authentication(auth("REPORT_PAYROLL"))))
                 .andExpect(status().isBadRequest());
     }
 
@@ -135,7 +135,7 @@ class ReportControllerTest {
     void salaryBreakdown_withPermission_returnsXlsx() throws Exception {
         doNothing().when(salaryBreakdownXlsx).write(any(), any());
         mvc.perform(get("/v1/reports/salary-breakdown")
-                        .with(authentication(auth("REPORT_FINANCIAL"))))
+                        .with(authentication(auth("REPORT_PAYROLL"))))
                 .andExpect(status().isOk())
                 .andExpect(header().string("Content-Type", XLSX));
     }
@@ -147,7 +147,7 @@ class ReportControllerTest {
         doNothing().when(attendanceMonthlyXlsx).write(anyInt(), anyInt(), any());
         mvc.perform(get("/v1/reports/attendance-monthly")
                         .param("year", "2026").param("month", "5")
-                        .with(authentication(auth("REPORT_OPERATIONAL"))))
+                        .with(authentication(auth("REPORT_ATTENDANCE"))))
                 .andExpect(status().isOk())
                 .andExpect(header().string("Content-Type", XLSX));
     }
@@ -156,7 +156,7 @@ class ReportControllerTest {
     void attendanceMonthly_invalidMonth_returns400() throws Exception {
         mvc.perform(get("/v1/reports/attendance-monthly")
                         .param("year", "2026").param("month", "13")
-                        .with(authentication(auth("REPORT_OPERATIONAL"))))
+                        .with(authentication(auth("REPORT_ATTENDANCE"))))
                 .andExpect(status().isBadRequest());
     }
 
@@ -167,7 +167,7 @@ class ReportControllerTest {
         doNothing().when(attendanceSummaryXlsx).write(anyInt(), anyInt(), any());
         mvc.perform(get("/v1/reports/attendance-summary")
                         .param("year", "2026").param("month", "5")
-                        .with(authentication(auth("REPORT_OPERATIONAL"))))
+                        .with(authentication(auth("REPORT_ATTENDANCE"))))
                 .andExpect(status().isOk())
                 .andExpect(header().string("Content-Type", XLSX));
     }
@@ -179,7 +179,7 @@ class ReportControllerTest {
         doNothing().when(leaveBalancesXlsx).write(anyInt(), any());
         mvc.perform(get("/v1/reports/leave-balances")
                         .param("year", "2026")
-                        .with(authentication(auth("REPORT_OPERATIONAL"))))
+                        .with(authentication(auth("REPORT_LEAVE"))))
                 .andExpect(status().isOk())
                 .andExpect(header().string("Content-Type", XLSX));
     }
@@ -198,7 +198,7 @@ class ReportControllerTest {
     void employeeDirectory_withPermission_returnsXlsx() throws Exception {
         doNothing().when(employeeDirectoryXlsx).write(any());
         mvc.perform(get("/v1/reports/employee-directory")
-                        .with(authentication(auth("REPORT_OPERATIONAL"))))
+                        .with(authentication(auth("REPORT_HR"))))
                 .andExpect(status().isOk())
                 .andExpect(header().string("Content-Type", XLSX));
     }
@@ -223,7 +223,7 @@ class ReportControllerTest {
         doNothing().when(turnoverXlsx).write(anyInt(), any());
         mvc.perform(get("/v1/reports/turnover")
                         .param("year", "2026")
-                        .with(authentication(auth("REPORT_EXECUTIVE"))))
+                        .with(authentication(auth("REPORT_HR"))))
                 .andExpect(status().isOk())
                 .andExpect(header().string("Content-Type", XLSX));
     }
@@ -243,7 +243,7 @@ class ReportControllerTest {
         doNothing().when(headcountXlsx).write(any(), any(), any());
         mvc.perform(get("/v1/reports/headcount")
                         .param("from", "2026-01-01").param("to", "2026-03-01")
-                        .with(authentication(auth("REPORT_EXECUTIVE"))))
+                        .with(authentication(auth("REPORT_HR"))))
                 .andExpect(status().isOk())
                 .andExpect(header().string("Content-Type", XLSX));
     }
@@ -266,7 +266,7 @@ class ReportControllerTest {
     void aiInsights_withPermission_returnsPdf() throws Exception {
         doNothing().when(aiInsightsPdf).write(any());
         mvc.perform(get("/v1/reports/ai-insights")
-                        .with(authentication(auth("AI_ANOMALY"))))
+                        .with(authentication(auth("AI_DASHBOARD"))))
                 .andExpect(status().isOk())
                 .andExpect(header().string("Content-Type", PDF));
     }

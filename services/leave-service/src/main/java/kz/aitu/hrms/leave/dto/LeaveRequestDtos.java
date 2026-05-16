@@ -54,6 +54,8 @@ public class LeaveRequestDtos {
         private int daysRequested;
         private String reason;
         private LeaveStatus status;
+        /** The requester's manager who will review this request; null if none assigned. */
+        private EmployeeRef approver;
         private UUID reviewedBy;
         private LocalDateTime reviewedAt;
         private String reviewComment;

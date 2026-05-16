@@ -35,6 +35,11 @@ public class LeaveMapper {
     }
 
     public LeaveRequestDtos.Response toRequest(LeaveRequest r, String employeeName) {
+        return toRequest(r, employeeName, null);
+    }
+
+    public LeaveRequestDtos.Response toRequest(LeaveRequest r, String employeeName,
+                                               LeaveRequestDtos.EmployeeRef approver) {
         return LeaveRequestDtos.Response.builder()
                 .id(r.getId())
                 .employee(LeaveRequestDtos.EmployeeRef.builder()
@@ -47,6 +52,7 @@ public class LeaveMapper {
                 .daysRequested(r.getDaysRequested())
                 .reason(r.getReason())
                 .status(r.getStatus())
+                .approver(approver)
                 .reviewedBy(r.getReviewedBy())
                 .reviewedAt(r.getReviewedAt())
                 .reviewComment(r.getReviewComment())

@@ -57,16 +57,27 @@ public class EmployeeLookup {
      * manager linkage exists).
      */
     public UUID managerId(UUID employeeId) {
+        EmployeeClient.ManagerSummary m = manager(employeeId);
+        return m == null ? null : m.id();
+    }
+
+    /**
+     * Returns the employee's manager (id + full name) in a single lookup, or
+     * {@code null} when employee-service is unreachable or the employee has no
+     * manager assigned. Used to surface "who approves this request" to the
+     * requesting employee — display-only, so transport errors are swallowed.
+     */
+    public EmployeeClient.ManagerSummary manager(UUID employeeId) {
         if (employeeId == null) return null;
         try {
             EmployeeClient.Envelope<EmployeeClient.EmployeeDetail> resp = employeeClient.get(employeeId);
             if (resp != null && resp.data() != null && resp.data().manager() != null) {
-                return resp.data().manager().id();
+                return resp.data().manager();
             }
         } catch (FeignException e) {
             log.debug("employee-service manager lookup failed for {}: {}", employeeId, e.getMessage());
         } catch (Exception e) {
-            log.warn("employee-service unexpected error in managerId({}): {}", employeeId, e.getMessage());
+            log.warn("employee-service unexpected error in manager({}): {}", employeeId, e.getMessage());
         }
         return null;
     }

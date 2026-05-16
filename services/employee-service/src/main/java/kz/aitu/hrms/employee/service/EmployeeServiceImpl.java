@@ -26,6 +26,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
 import java.util.UUID;
 
 @Slf4j
@@ -208,6 +209,34 @@ public class EmployeeServiceImpl implements EmployeeService {
         }
         publishCreated(emp);
         return mapper.toResponse(emp);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public EmployeeDtos.DirectoryResponse directory() {
+        UUID meId = accessControl.resolveEmployeeId();
+        if (meId == null) {
+            throw new BusinessException("Caller has no associated employee profile");
+        }
+        Employee me = requireEmployee(meId);
+        Employee mgr = me.getManager();
+
+        // Server-scoped: an employee can only ever see their own department,
+        // never an arbitrary one. No salary/IIN — EmployeeSummary is safe.
+        List<EmployeeDtos.EmployeeSummary> colleagues = me.getDepartment() == null
+                ? List.of(mapper.toSummary(me))
+                : employeeRepository
+                        .findByDepartment_IdAndStatusAndDeletedFalse(
+                                me.getDepartment().getId(), EmploymentStatus.ACTIVE)
+                        .stream()
+                        .map(mapper::toSummary)
+                        .toList();
+
+        return EmployeeDtos.DirectoryResponse.builder()
+                .department(me.getDepartment() != null ? me.getDepartment().getName() : null)
+                .manager(mgr != null ? mapper.toManagerSummary(mgr) : null)
+                .colleagues(colleagues)
+                .build();
     }
 
     private void publishCreated(Employee saved) {

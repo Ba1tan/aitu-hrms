@@ -38,7 +38,7 @@ public class ReportController {
     private final AiInsightsPdf aiInsightsPdf;
 
     @GetMapping("/payroll-summary")
-    @PreAuthorize("hasAuthority('REPORT_FINANCIAL')")
+    @PreAuthorize("hasAuthority('REPORT_PAYROLL')")
     public void payrollSummary(@RequestParam UUID periodId, HttpServletResponse response) throws IOException {
         String name = "payroll-summary-" + periodId + ".xlsx";
         setXlsxHeaders(response, name);
@@ -47,7 +47,7 @@ public class ReportController {
     }
 
     @GetMapping("/payroll-summary/pdf")
-    @PreAuthorize("hasAuthority('REPORT_FINANCIAL')")
+    @PreAuthorize("hasAuthority('REPORT_PAYROLL')")
     public void payrollSummaryPdf(@RequestParam UUID periodId, HttpServletResponse response) throws Exception {
         String name = "payroll-summary-" + periodId + ".pdf";
         setPdfHeaders(response, name);
@@ -56,7 +56,7 @@ public class ReportController {
     }
 
     @GetMapping("/form200")
-    @PreAuthorize("hasAuthority('REPORT_FORM_200')")
+    @PreAuthorize("hasAuthority('REPORT_PAYROLL')")
     public void form200(
             @RequestParam @Min(2020) @Max(2100) int year,
             @RequestParam @Min(1) @Max(4) int quarter,
@@ -68,7 +68,7 @@ public class ReportController {
     }
 
     @GetMapping("/salary-breakdown")
-    @PreAuthorize("hasAuthority('REPORT_FINANCIAL')")
+    @PreAuthorize("hasAuthority('REPORT_PAYROLL')")
     public void salaryBreakdown(
             @RequestParam(required = false) UUID departmentId,
             HttpServletResponse response) throws IOException {
@@ -79,7 +79,7 @@ public class ReportController {
     }
 
     @GetMapping("/attendance-monthly")
-    @PreAuthorize("hasAuthority('REPORT_OPERATIONAL')")
+    @PreAuthorize("hasAuthority('REPORT_ATTENDANCE')")
     public void attendanceMonthly(
             @RequestParam @Min(2020) @Max(2100) int year,
             @RequestParam @Min(1) @Max(12) int month,
@@ -91,7 +91,7 @@ public class ReportController {
     }
 
     @GetMapping("/attendance-summary")
-    @PreAuthorize("hasAuthority('REPORT_OPERATIONAL')")
+    @PreAuthorize("hasAuthority('REPORT_ATTENDANCE')")
     public void attendanceSummary(
             @RequestParam @Min(2020) @Max(2100) int year,
             @RequestParam @Min(1) @Max(12) int month,
@@ -103,7 +103,7 @@ public class ReportController {
     }
 
     @GetMapping("/leave-balances")
-    @PreAuthorize("hasAuthority('REPORT_OPERATIONAL')")
+    @PreAuthorize("hasAuthority('REPORT_LEAVE')")
     public void leaveBalances(
             @RequestParam(defaultValue = "#{T(java.time.Year).now().getValue()}") int year,
             HttpServletResponse response) throws IOException {
@@ -114,7 +114,7 @@ public class ReportController {
     }
 
     @GetMapping("/employee-directory")
-    @PreAuthorize("hasAuthority('REPORT_OPERATIONAL')")
+    @PreAuthorize("hasAuthority('REPORT_HR')")
     public void employeeDirectory(HttpServletResponse response) throws IOException {
         String name = "employee-directory.xlsx";
         setXlsxHeaders(response, name);
@@ -123,7 +123,7 @@ public class ReportController {
     }
 
     @GetMapping("/turnover")
-    @PreAuthorize("hasAuthority('REPORT_EXECUTIVE')")
+    @PreAuthorize("hasAuthority('REPORT_HR')")
     public void turnover(
             @RequestParam @Min(2020) @Max(2100) int year,
             HttpServletResponse response) throws IOException {
@@ -134,7 +134,7 @@ public class ReportController {
     }
 
     @GetMapping("/headcount")
-    @PreAuthorize("hasAuthority('REPORT_EXECUTIVE')")
+    @PreAuthorize("hasAuthority('REPORT_HR')")
     public void headcount(
             @RequestParam String from,
             @RequestParam String to,
@@ -160,7 +160,7 @@ public class ReportController {
     }
 
     @GetMapping("/ai-insights")
-    @PreAuthorize("hasAuthority('AI_ANOMALY')")
+    @PreAuthorize("hasAuthority('AI_DASHBOARD')")
     public void aiInsights(HttpServletResponse response) throws Exception {
         String name = "ai-insights.pdf";
         setPdfHeaders(response, name);

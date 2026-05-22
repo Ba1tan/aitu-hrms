@@ -1033,11 +1033,22 @@ export const schedulesApi = {
 };
 
 export const settingsApi = {
-  /** `category` filters server-side (company.*, payroll.*, …). */
-  get: (category?: string) =>
-    apiClient.get<Record<string, string>>("/v1/settings", {
+  /**
+   * `category` filters server-side (company.*, payroll.*, …). The backend
+   * returns a list of {key, value, …}; flatten it into a key→value map since
+   * every caller indexes settings by key.
+   */
+  get: async (category?: string) => {
+    const res = await apiClient.get<SettingValue[]>("/v1/settings", {
       params: category ? { category } : {},
-    }),
+    });
+    const list = Array.isArray(res.data) ? res.data : [];
+    const values = list.reduce<Record<string, string>>((acc, s) => {
+      acc[s.key] = s.value;
+      return acc;
+    }, {});
+    return { ...res, data: values };
+  },
   put: (key: string, value: string) =>
     apiClient.put<SettingValue>(`/v1/settings/${key}`, { value }),
 };

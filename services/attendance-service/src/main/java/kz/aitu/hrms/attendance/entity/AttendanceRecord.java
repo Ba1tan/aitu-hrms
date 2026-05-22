@@ -62,12 +62,6 @@ public class AttendanceRecord extends BaseEntity {
     @Builder.Default
     private Integer overtimeMinutes = 0;
 
-    @Column(name = "fraud_score", precision = 4, scale = 3)
-    private BigDecimal fraudScore;
-
-    @Column(name = "fraud_flags", length = 500)
-    private String fraudFlags;
-
     @Column(columnDefinition = "TEXT")
     private String notes;
 }

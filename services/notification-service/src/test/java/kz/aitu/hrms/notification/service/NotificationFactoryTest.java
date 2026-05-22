@@ -66,16 +66,6 @@ class NotificationFactoryTest {
     }
 
     @Test
-    void fromFraudAttemptDetected_correctType() {
-        when(recipientResolver.resolveEmail(any())).thenReturn(null);
-        var event = FraudAttemptDetectedEvent.builder().employeeId(UUID.randomUUID())
-                .fraudScore(0.95).flags("SPOOFED").build();
-        var built = factory.fromFraudAttemptDetected(event, UUID.randomUUID());
-        assertThat(built.notification().getType()).isEqualTo(NotificationType.FRAUD_ALERT);
-        assertThat(built.notification().getReferenceType()).isEqualTo("ATTENDANCE");
-    }
-
-    @Test
     void fromLeaveRequestCreated_correctType() {
         UUID managerId = UUID.randomUUID();
         when(recipientResolver.resolveEmail(managerId)).thenReturn("mgr@test.kz");
@@ -122,15 +112,6 @@ class NotificationFactoryTest {
                 .employeeCount(100).totalNet(BigDecimal.valueOf(5000000)).build();
         var built = factory.fromPayrollJobCompleted(event, UUID.randomUUID());
         assertThat(built.notification().getType()).isEqualTo(NotificationType.PAYROLL_READY);
-    }
-
-    @Test
-    void fromPayrollAnomalyDetected_correctType() {
-        var event = PayrollAnomalyDetectedEvent.builder().payslipId(UUID.randomUUID())
-                .employeeId(UUID.randomUUID()).anomalyScore(BigDecimal.valueOf(0.85)).build();
-        var built = factory.fromPayrollAnomalyDetected(event, UUID.randomUUID());
-        assertThat(built.notification().getType()).isEqualTo(NotificationType.PAYROLL_ANOMALY);
-        assertThat(built.notification().getReferenceType()).isEqualTo("PAYSLIP");
     }
 
     @Test

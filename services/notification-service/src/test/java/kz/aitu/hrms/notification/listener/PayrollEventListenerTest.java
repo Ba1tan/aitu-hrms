@@ -1,6 +1,5 @@
 package kz.aitu.hrms.notification.listener;
 
-import kz.aitu.hrms.common.event.PayrollAnomalyDetectedEvent;
 import kz.aitu.hrms.common.event.PayrollJobCompletedEvent;
 import kz.aitu.hrms.common.event.PayrollJobStartedEvent;
 import kz.aitu.hrms.common.event.PayrollPeriodApprovedEvent;
@@ -77,20 +76,6 @@ class PayrollEventListenerTest {
         when(factory.fromPayrollJobCompleted(event, userId)).thenReturn(built(userId, NotificationType.PAYROLL_READY));
 
         listener.onPayrollJobCompleted(event);
-
-        verify(service).create(any(), any(), any());
-    }
-
-    @Test
-    void onPayrollAnomalyDetected_happyPath_createsNotifications() {
-        UUID userId = UUID.randomUUID();
-        PayrollAnomalyDetectedEvent event = PayrollAnomalyDetectedEvent.builder()
-                .payslipId(UUID.randomUUID()).employeeId(UUID.randomUUID())
-                .anomalyScore(BigDecimal.valueOf(0.9)).flags(List.of("FLAG1")).build();
-        when(recipients.resolveUserIdsByPermission("PAYROLL_APPROVE")).thenReturn(List.of(userId));
-        when(factory.fromPayrollAnomalyDetected(event, userId)).thenReturn(built(userId, NotificationType.PAYROLL_ANOMALY));
-
-        listener.onPayrollAnomalyDetected(event);
 
         verify(service).create(any(), any(), any());
     }

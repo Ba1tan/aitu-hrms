@@ -1,7 +1,7 @@
 # Phase 3 — Payroll
 
 **Goal:** ACCOUNTANT / HR_MANAGER can run an entire payroll cycle through
-the UI: create period → generate payslips → review AI flags → adjust →
+the UI: create period → generate payslips → review → adjust →
 approve → mark paid → lock. Employees see their own payslips with PDF.
 
 This is the biggest single-domain UI in the system. Budget time.
@@ -41,12 +41,11 @@ Body: payslip table (Task 3 below).
 
 ### 3. Payslip table (component inside period detail)
 
-- Columns: employee, gross, earned, allowances, deductions, IPN, OPV, ВОСМС, net, status, AI flag
-- Status filter dropdown (DRAFT/FLAGGED/APPROVED/PAID)
+- Columns: employee, gross, earned, allowances, deductions, IPN, OPV, ВОСМС, net, status
+- Status filter dropdown (DRAFT/APPROVED/PAID)
 - Search on employee name/number — debounced, server-side via
   `/v1/payroll/periods/{id}/payslips?search=`
 - Row click → payslip detail side-panel (Task 4)
-- Each row with `anomaly_score > 0.65` gets a red-tinted row + flag icon
 
 ### 4. Payslip detail (side-panel or full page)
 
@@ -56,7 +55,6 @@ Two variants:
 - Full tax breakdown table: gross, earned, OPV (10%), ВОСМС (2%),
   deduction (30 МРП), taxable, IPN (10% or 20%), employer SO/SN/ОПВР
 - Allowances + deductions list with edit buttons (`PAYSLIP_ADJUST`)
-- AI anomaly section: score, flags array, "Approve flagged" button if FLAGGED
 - "Recalculate" button → `POST /v1/payroll/payslips/{id}/recalculate`
 - PDF download button
 
@@ -109,7 +107,6 @@ Recharts already in deps).
 
 - [ ] Full Bruno flow (01 → 11) reproducible through the UI
 - [ ] Admin can edit a payslip's allowances, see the recalculated net
-- [ ] AI-flagged payslip is visually distinct + approve-flagged button works
 - [ ] PDF download triggers a real file (verify `Content-Disposition`)
 - [ ] Employee view shows only own payslips
 - [ ] Once `Approve` is clicked, the action buttons swap correctly

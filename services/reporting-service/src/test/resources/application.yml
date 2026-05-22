@@ -22,7 +22,6 @@ clients:
   payroll-service: http://localhost:9999
   attendance-service: http://localhost:9999
   leave-service: http://localhost:9999
-  ai-ml-service: http://localhost:9999
 
 feign:
   client:

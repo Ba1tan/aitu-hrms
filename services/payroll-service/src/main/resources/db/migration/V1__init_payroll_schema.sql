@@ -73,14 +73,7 @@ CREATE TABLE payslips (
 
     -- Status
     status              VARCHAR(20) NOT NULL DEFAULT 'DRAFT'
-                          CHECK (status IN ('DRAFT','FLAGGED','APPROVED','PAID')),
-
-    -- AI anomaly detection
-    anomaly_score       NUMERIC(5,4),
-    anomaly_flags       TEXT,
-    ai_reviewed         BOOLEAN NOT NULL DEFAULT FALSE,
-    ai_reviewed_by      UUID,
-    ai_reviewed_at      TIMESTAMP,
+                          CHECK (status IN ('DRAFT','APPROVED','PAID')),
 
     pdf_url             TEXT,
 
@@ -95,7 +88,6 @@ CREATE UNIQUE INDEX idx_payslips_period_employee_unique
 CREATE INDEX idx_payslips_period       ON payslips(period_id);
 CREATE INDEX idx_payslips_employee     ON payslips(employee_id);
 CREATE INDEX idx_payslips_status       ON payslips(status) WHERE is_deleted = FALSE;
-CREATE INDEX idx_payslips_flagged      ON payslips(period_id) WHERE status = 'FLAGGED' AND is_deleted = FALSE;
 
 -- ─────────────────────────────────────────────────────────────────────────────
 -- Payroll additions — bonuses and ad-hoc deductions per (employee, period)

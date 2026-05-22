@@ -1,5 +1,6 @@
 INSERT INTO hrms_integration.company_settings (key, value, description, category)
 VALUES
+    ('company.name',            'HRMS',       'name',                   'company'),
     ('company.timezone',            'Asia/Almaty',       'IANA timezone name',                   'company'),
     ('company.currency',            'KZT',               'ISO 4217 currency code',               'company'),
     ('company.locale_default',      'ru',                'Default locale: ru | kk | en',         'company'),

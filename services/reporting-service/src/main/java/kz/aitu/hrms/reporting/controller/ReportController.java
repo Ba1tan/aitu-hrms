@@ -35,7 +35,6 @@ public class ReportController {
     private final TurnoverXlsx turnoverXlsx;
     private final HeadcountXlsx headcountXlsx;
     private final ExecutiveSummaryPdf executiveSummaryPdf;
-    private final AiInsightsPdf aiInsightsPdf;
 
     @GetMapping("/payroll-summary")
     @PreAuthorize("hasAuthority('REPORT_PAYROLL')")
@@ -156,15 +155,6 @@ public class ReportController {
         String name = "executive-summary-" + year + "-" + String.format("%02d", month) + ".pdf";
         setPdfHeaders(response, name);
         executiveSummaryPdf.write(year, month, response.getOutputStream());
-        response.flushBuffer();
-    }
-
-    @GetMapping("/ai-insights")
-    @PreAuthorize("hasAuthority('AI_DASHBOARD')")
-    public void aiInsights(HttpServletResponse response) throws Exception {
-        String name = "ai-insights.pdf";
-        setPdfHeaders(response, name);
-        aiInsightsPdf.write(response.getOutputStream());
         response.flushBuffer();
     }
 

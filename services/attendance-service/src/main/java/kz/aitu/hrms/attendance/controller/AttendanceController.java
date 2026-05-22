@@ -15,7 +15,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.format.annotation.DateTimeFormat;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -26,13 +25,12 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 
-@Tag(name = "Attendance", description = "Check-in/out, records, summaries — face & manual modes")
+@Tag(name = "Attendance", description = "Check-in/out, records, summaries — web/manual")
 @RestController
 @RequestMapping("/v1/attendance")
 @RequiredArgsConstructor
@@ -40,22 +38,6 @@ public class AttendanceController {
 
     private final AttendanceService attendanceService;
     private final SummaryService summaryService;
-
-    // Face check-in / check-out (kiosk — permitAll, face IS the auth)
-
-    @Operation(summary = "Face recognition check-in (kiosk)")
-    @PostMapping(path = "/check-in/face", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<ApiResponse<AttendanceDtos.CheckInResponse>> checkInFace(
-            @RequestParam("photo") MultipartFile photo) {
-        return ResponseEntity.ok(ApiResponse.ok(attendanceService.checkInWithFace(photo)));
-    }
-
-    @Operation(summary = "Face recognition check-out (kiosk)")
-    @PostMapping(path = "/check-out/face", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<ApiResponse<AttendanceDtos.CheckInResponse>> checkOutFace(
-            @RequestParam("photo") MultipartFile photo) {
-        return ResponseEntity.ok(ApiResponse.ok(attendanceService.checkOutWithFace(photo)));
-    }
 
     // Manual / web check-in / check-out
 
@@ -72,8 +54,7 @@ public class AttendanceController {
                         employeeId,
                         req == null ? null : req.getMethod(),
                         req == null ? null : req.getLocationLat(),
-                        req == null ? null : req.getLocationLng(),
-                        null)));
+                        req == null ? null : req.getLocationLng())));
     }
 
     @Operation(summary = "Web/manual check-out (uses JWT identity by default)")
@@ -89,8 +70,7 @@ public class AttendanceController {
                         employeeId,
                         req == null ? null : req.getMethod(),
                         req == null ? null : req.getLocationLat(),
-                        req == null ? null : req.getLocationLng(),
-                        null)));
+                        req == null ? null : req.getLocationLng())));
     }
 
     @Operation(summary = "My attendance status today")

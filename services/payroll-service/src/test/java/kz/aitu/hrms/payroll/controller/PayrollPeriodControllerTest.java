@@ -137,7 +137,7 @@ class PayrollPeriodControllerTest {
         when(generationService.shouldUseBatch(eq(0), any())).thenReturn(false);
         when(generationService.generate(eq(periodId), any())).thenReturn(
                 PeriodDtos.GenerateResponse.builder()
-                        .async(false).generated(0).skipped(0).errors(0).flagged(0)
+                        .async(false).generated(0).skipped(0).errors(0)
                         .totalGrossPayout(java.math.BigDecimal.ZERO)
                         .totalNetPayout(java.math.BigDecimal.ZERO)
                         .errorDetails(List.of())

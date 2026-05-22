@@ -30,7 +30,6 @@ DELETE /v1/notifications/{id}           Soft delete
 | `PayrollJobStartedEvent` | → HR: "Payroll processing started for {month}" |
 | `PayrollJobCompletedEvent` | → HR: "Payroll completed! {count} employees, ₸{total}" |
 | `PayrollAnomalyDetectedEvent` | → HR: "⚠️ Flagged payslip for {name} — score {score}" |
-| `FraudAttemptDetectedEvent` | → HR: "🚨 Fraud alert: {name}, score {score}" |
 | `UserAccountCreatedEvent` | → Employee: "Welcome! Your account is ready" (email with temp password) |
 | `PasswordResetRequestedEvent` | → User: password reset email with token link |
 | `IntegrationSyncFailedEvent` | → HR: "1C sync failed for {period}" |
@@ -68,8 +67,6 @@ src/main/resources/templates/email/
 ├── leave-approved.html
 ├── leave-rejected.html
 ├── payslip-ready.html
-├── fraud-alert.html       # For HR
-└── payroll-anomaly.html   # For HR
 ```
 
 ## Feign Clients

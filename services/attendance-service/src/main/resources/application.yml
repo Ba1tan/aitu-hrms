@@ -65,18 +65,9 @@ app:
 
   zone: Asia/Almaty
 
-  attendance:
-    fraud:
-      # If a check-in within `recent-window-min` minutes of the previous one is observed
-      # we run AI fraud detection and block above `block-threshold`.
-      recent-window-min: 30
-      block-threshold: 0.65
-      review-threshold: 0.30
-
   services:
     user-service-uri: ${USER_SERVICE_URI:http://localhost:8081}
     employee-service-uri: ${EMPLOYEE_SERVICE_URI:http://localhost:8082}
-    ai-ml-service-uri: ${AI_ML_SERVICE_URI:http://localhost:8086}
 
 management:
   endpoints:

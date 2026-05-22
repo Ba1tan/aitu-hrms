@@ -42,7 +42,6 @@ public class EmployeeServiceImpl implements EmployeeService {
     private final EventPublisher eventPublisher;
     private final EmployeeAccessControl accessControl;
     private final EmployeeMapper mapper;
-    private final BiometricService biometricService;
 
     @Override
     @Transactional
@@ -189,8 +188,6 @@ public class EmployeeServiceImpl implements EmployeeService {
         emp.setTerminationDate(req.getTerminationDate());
         emp.setTerminationReason(req.getReason());
         log.info("Employee terminated: {} on {}", emp.getEmployeeNumber(), req.getTerminationDate());
-
-        biometricService.delete(id);
 
         eventPublisher.publish(EmployeeTerminatedEvent.builder()
                 .employeeId(emp.getId())

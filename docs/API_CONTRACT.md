@@ -58,10 +58,6 @@ under "Pending endpoints — payload shapes".
 | POST | `/v1/employees/{id}/emergency-contacts` | EMPLOYEE_UPDATE |
 | PUT | `/v1/employees/{id}/emergency-contacts/{cId}` | EMPLOYEE_UPDATE |
 | DELETE | `/v1/employees/{id}/emergency-contacts/{cId}` | EMPLOYEE_UPDATE |
-| POST | `/v1/employees/{id}/biometric/enroll` | EMPLOYEE_BIOMETRIC — multipart: photos[] (3-5) |
-| GET | `/v1/employees/{id}/biometric/status` | EMPLOYEE_VIEW_OWN or EMPLOYEE_VIEW_ALL |
-| DELETE | `/v1/employees/{id}/biometric` | EMPLOYEE_BIOMETRIC |
-| GET | `/v1/employees/{id}/biometric/photos/{filename}` | EMPLOYEE_VIEW_OWN or EMPLOYEE_VIEW_ALL |
 | GET | `/v1/employees/org-chart` | any authenticated |
 | POST | `/v1/employees/import` | EMPLOYEE_CREATE |
 | GET | `/v1/employees/export` | EMPLOYEE_READ |
@@ -157,18 +153,6 @@ under "Pending endpoints — payload shapes".
 | DELETE | `/v1/payroll/additions/{id}` | PAYSLIP_ADJUST |
 | POST | `/v1/payroll/additions/bulk` | PAYSLIP_ADJUST |
 
-### AI/ML (8)
-| Method | Path | Permission |
-|--------|------|------------|
-| POST | `/v1/ai/payroll/detect` | (internal — payroll-service only) |
-| POST | `/v1/ai/payroll/detect/batch` | (internal) |
-| POST | `/v1/ai/attendance/fraud-detect` | (internal) |
-| GET | `/v1/ai/attrition/risk` | AI_DASHBOARD |
-| GET | `/v1/ai/attrition/risk/employee/{id}` | AI_DASHBOARD |
-| GET | `/v1/ai/attrition/dashboard` | AI_DASHBOARD |
-| GET | `/v1/ai/payroll/forecast` | AI_DASHBOARD |
-| GET | `/v1/ai/health` | SYSTEM_SETTINGS |
-
 ### Reports (12)
 | Method | Path | Permission |
 |--------|------|------------|
@@ -183,7 +167,6 @@ under "Pending endpoints — payload shapes".
 | GET | `/v1/reports/turnover` | REPORT_EXECUTIVE |
 | GET | `/v1/reports/headcount` | REPORT_EXECUTIVE |
 | GET | `/v1/reports/executive-summary` | REPORT_EXECUTIVE |
-| GET | `/v1/reports/ai-insights` | AI_DASHBOARD |
 
 ### Notifications (5)
 | Method | Path | Permission |
@@ -454,26 +437,7 @@ const showFaceButton = methods.includes('FACE');
 // Request: multipart/form-data with photo file
 const formData = new FormData();
 formData.append('photo', capturedImageBlob, 'face.jpg');
-const response = await fetch('/api/v1/attendance/check-in/face', {
-  method: 'POST',
-  body: formData   // NO Authorization header — kiosk mode
-});
-```
-```json
-// Response 200 — face matched, checked in
-{
-  "id": "uuid", "workDate": "2026-04-08",
-  "checkIn": "2026-04-08T09:05:00", "checkOut": null,
-  "status": "PRESENT", "workedHours": null,
-  "method": "FACE",
-  "employeeName": "Иванов Иван",
-  "faceConfidence": 0.94
-}
-// Response 401 — face not recognized
-{ "success": false, "message": "Face not recognized: no_match" }
-// Response 503 — AI service down
-{ "success": false, "message": "Face recognition unavailable. Use manual check-in." }
-```
+
 
 **POST `/v1/attendance/check-in`** — Web/manual (requires JWT)
 ```json
@@ -532,7 +496,6 @@ const response = await fetch('/api/v1/attendance/check-in/face', {
   "soAmount": "13500.00", "snAmount": "18000.00", "opvrAmount": "10500.00",
   "mrpUsed": 4325, "isResident": true,
   "status": "DRAFT",
-  "anomalyScore": null, "anomalyFlags": null, "aiReviewed": false
 }
 ```
 
@@ -560,23 +523,6 @@ const response = await fetch('/api/v1/attendance/check-in/face', {
 **GET `/v1/notifications/unread-count`**
 ```json
 { "count": 3 }
-```
-
-### AI
-
-**GET `/v1/ai/attrition/risk?departmentId=uuid`**
-```json
-[
-  {
-    "employeeId": "uuid", "fullName": "Иванов Иван",
-    "attritionRisk": 0.72, "riskLevel": "HIGH",
-    "topFactors": [
-      { "factor": "salary_below_average", "impact": 0.35, "detail": "15% below position avg" },
-      { "factor": "no_promotion_18_months", "impact": 0.25 }
-    ],
-    "recommendedActions": ["Schedule retention conversation", "Review salary"]
-  }
-]
 ```
 
 ### Reports — Download Pattern
@@ -627,5 +573,5 @@ link.click();
 
 - Dates display: `dd.MM.yyyy` (Kazakhstan standard: `08.04.2026`)
 - Money display: `₸ 300,000.00` — use `Intl.NumberFormat('ru-KZ', {style:'currency', currency:'KZT'})`
-- Status badge colors: ACTIVE/APPROVED/PRESENT=green, PENDING/PROCESSING=yellow, REJECTED/ABSENT/FLAGGED=red, DRAFT=gray, PAID=blue, LOCKED=purple
+- Status badge colors: ACTIVE/APPROVED/PRESENT=green, PENDING/PROCESSING=yellow, REJECTED/ABSENT=red, DRAFT=gray, PAID=blue, LOCKED=purple
 - Pagination: backend uses 0-indexed pages. UI shows 1-indexed.

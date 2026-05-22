@@ -7,7 +7,7 @@ update the other doc, do not invent new codes.
 This catalog covers:
 1. The 8 system roles
 2. Every permission code referenced by `@PreAuthorize(...)` in service code today
-3. Permission codes reserved for the four pending services (ai-ml, reporting, notification, integration-hub) so Askar can adopt them without re-litigating names
+3. Permission codes reserved for pending services (reporting, notification, integration-hub) so Askar can adopt them without re-litigating names
 
 Permissions are flat strings. Spring Security `hasAuthority('CODE')` matches
 exactly — no `ROLE_` prefix, no wildcards. Roles are mapped to permissions in
@@ -102,13 +102,10 @@ status, and which roles get it by default. Statuses:
 > Dashboard (`/v1/dashboard/stats`) is **not** permission-gated; field visibility
 > is role-aware inside the service. Any authenticated caller can hit it.
 
-### 2.6 AI/ML domain (ai-ml-service — pending)
 
 | Code | Status | Default roles | Used by |
 |------|--------|---------------|---------|
-| `AI_DASHBOARD` | 🟡 | SUPER_ADMIN, HR_MANAGER, DIRECTOR | View AI insights, attrition risks, anomalies dashboard |
 
-> AI inference endpoints called server-to-server (anomaly check from payroll,
 > face verify from attendance) are **not** user-facing — guard them at the
 > network/Feign layer, not with permission codes.
 
@@ -146,10 +143,10 @@ SUPER_ADMIN       → ALL codes from §2.1–2.9
 DIRECTOR          → EMPLOYEE_VIEW_ALL, EMPLOYEE_READ, EMPLOYEE_SALARY_VIEW,
                     ATTENDANCE_VIEW_ALL, PAYROLL_VIEW,
                     REPORT_EXECUTIVE, REPORT_PAYROLL, REPORT_HR,
-                    AI_DASHBOARD, SYSTEM_AUDIT
+                    SYSTEM_AUDIT
 HR_MANAGER        → all EMPLOYEE_*, all ATTENDANCE_*, all LEAVE_*,
                     all PAYROLL_*, all PAYSLIP_*, all REPORT_*,
-                    DEPT_MANAGE, AI_DASHBOARD
+                    DEPT_MANAGE
 HR_SPECIALIST     → EMPLOYEE_CREATE/READ/UPDATE/VIEW_ALL/DOCUMENTS/BIOMETRIC,
                     ATTENDANCE_VIEW_ALL, ATTENDANCE_MANAGE,
                     LEAVE_APPROVE_ALL,

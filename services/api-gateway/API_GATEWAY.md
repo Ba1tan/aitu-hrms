@@ -62,11 +62,6 @@ spring:
           predicates:
             - Path=/api/v1/payroll/**
         
-        # AI/ML
-        - id: ai
-          uri: http://ai-ml-service:8086
-          predicates:
-            - Path=/api/v1/ai/**
         
         # Reports
         - id: reports

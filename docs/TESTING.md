@@ -67,14 +67,13 @@ class FooRepositoryTest {
 | Service | Target line coverage | Critical-path coverage |
 |---|---|---|
 | user-service | ≥ 70% | 100% on `AuthService.login/refresh/logout` |
-| employee-service | ≥ 70% | 100% on `EmployeeService.terminate`, biometric enrollment |
+| employee-service | ≥ 70% | 100% on `EmployeeService.terminate` |
 | attendance-service | ≥ 70% | 100% on face check-in flow, holiday/weekend gating |
 | leave-service | ≥ 70% | 100% on balance arithmetic, carryover, approval state machine |
 | payroll-service | ≥ 80% | **100% on `KazakhstanPayrollCalculator` — non-negotiable** |
 | reporting-service (pending) | ≥ 60% | Dashboard role-section logic |
 | notification-service (pending) | ≥ 60% | Channel routing rules |
 | integration-hub (pending) | ≥ 60% | 1C contract serialization, bank file format |
-| ai-ml-service (pending) | ≥ 70% (pytest) | Face similarity threshold, anomaly threshold |
 
 These are aspirational, not gates — let CI fail on test errors, not on
 coverage % drops below target.

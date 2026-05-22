@@ -10,9 +10,6 @@ import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.Named;
 
-import java.util.Arrays;
-import java.util.List;
-
 @Mapper(componentModel = "spring")
 public interface PayrollMapper {
 
@@ -26,7 +23,6 @@ public interface PayrollMapper {
     @Mapping(target = "employee", source = ".",        qualifiedByName = "toEmployeeInfo")
     @Mapping(target = "isResident",     source = "resident")
     @Mapping(target = "hasDisability",  source = "disability")
-    @Mapping(target = "anomalyFlags",   source = "anomalyFlags", qualifiedByName = "toFlagList")
     PayslipDtos.Response toPayslipResponse(Payslip entity);
 
     @Named("toPeriodInfo")
@@ -50,15 +46,6 @@ public interface PayrollMapper {
                 .department(s.getDepartmentName())
                 .position(s.getPositionTitle())
                 .build();
-    }
-
-    @Named("toFlagList")
-    default List<String> toFlagList(String csv) {
-        if (csv == null || csv.isBlank()) return null;
-        return Arrays.stream(csv.split(","))
-                .map(String::trim)
-                .filter(s -> !s.isEmpty())
-                .toList();
     }
 
     // ── Addition ───────────────────────────────────────────────────────────

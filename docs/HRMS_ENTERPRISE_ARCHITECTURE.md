@@ -1,6 +1,6 @@
 # HRMS Enterprise Architecture — Complete Specification
 
-**System:** Human Resource Management System with Automated Payroll & AI  
+**System:** Human Resource Management System with Automated Payroll  
 **Target:** Kazakhstan SMEs (10–500 employees)  
 **Team:** Nursultan Bukenbayev, Askar Seralinov, Nurbol Sembayev  
 **Version:** 2.0 — Enterprise Microservices Architecture  
@@ -21,15 +21,12 @@
 
 ### 1.1 What This System Does
 
-A fully functioning HR platform for Kazakhstan businesses that handles the entire employee lifecycle — from hiring to termination — with automated payroll compliant with the 2026 Kazakhstan Tax Code, AI-powered fraud detection, anomaly flagging, attrition prediction, and deep integration with 1C:Enterprise for government reporting.
+A fully functioning HR platform for Kazakhstan businesses that handles the entire employee lifecycle — from hiring to termination — with automated payroll compliant with the 2026 Kazakhstan Tax Code and deep integration with 1C:Enterprise for government reporting.
 
 ### 1.2 Core Innovations
 
 1. **Automated Payroll Engine** — 10-step Kazakhstan tax calculation (ИПН, ОПВ, ВОСМС, СО, СН, ОПВР) with proration, disability deductions, and resident/non-resident handling
-2. **AI Payroll Anomaly Detection** — Isolation Forest catches salary spikes, ghost employees, and suspicious allowances before payslips are approved
-3. **AI Attendance Fraud Detection** — Isolation Forest on check-in patterns detects buddy-punching, impossible locations, and device spoofing
-4. **AI Attrition Prediction** — XGBoost predicts flight-risk employees with actionable retention recommendations
-5. **1C:Enterprise Integration** — Automated sync of payroll data for Form 200.00 generation and accounting entries
+2. **1C:Enterprise Integration** — Automated sync of payroll data for Form 200.00 generation and accounting entries
 
 ### 1.3 Users & Roles
 
@@ -63,7 +60,7 @@ ATTENDANCE_MANAGE
 REPORT_PAYROLL             REPORT_ATTENDANCE          REPORT_LEAVE
 REPORT_FORM200             REPORT_EXECUTIVE
 SYSTEM_SETTINGS            SYSTEM_USERS               SYSTEM_AUDIT
-SYSTEM_ROLES               AI_DASHBOARD
+SYSTEM_ROLES
 ```
 
 **Default Role → Permission Mapping:**
@@ -101,7 +98,6 @@ SYSTEM_ROLES               AI_DASHBOARD
 | SYSTEM_USERS | ✓ | — | — | — | — | — | — | — |
 | SYSTEM_AUDIT | ✓ | — | ✓ | — | ✓ | — | — | — |
 | SYSTEM_ROLES | ✓ | — | — | — | — | — | — | — |
-| AI_DASHBOARD | ✓ | ✓ | ✓ | — | — | — | — | — |
 
 ---
 
@@ -127,7 +123,7 @@ SYSTEM_ROLES               AI_DASHBOARD
    └────┬────┘ └────┬─────┘ └───┬────┘ └────┬─────┘ └────┬─────┘
         │           │           │            │            │
         │      ┌────▼─────┐    │       ┌────▼─────┐ ┌───▼──────┐
-        │      │Reporting │    │       │  AI/ML   │ │Integrat° │
+        │      │Reporting │    │         Notification │ │Integrat° │
         │      │  :8087   │    │       │  :8086   │ │Hub :8089 │
         │      └──────────┘    │       └──────────┘ └──────────┘
         │                      │
@@ -148,10 +144,9 @@ SYSTEM_ROLES               AI_DASHBOARD
 | 1 | **api-gateway** | 8080 | — | Spring Cloud Gateway | JWT validation, routing, rate limiting, CORS |
 | 2 | **user-service** | 8081 | hrms_user | Spring Boot | Auth, RBAC, user CRUD, permissions, sessions |
 | 3 | **employee-service** | 8082 | hrms_employee | Spring Boot | Employee CRUD, departments, positions, org chart, documents, salary history |
-| 4 | **attendance-service** | 8083 | hrms_attendance | Spring Boot | Check-in/out (face recognition primary, manual fallback), holidays, schedules |
+| 4 | **attendance-service** | 8083 | hrms_attendance | Spring Boot | Check-in/out (web/manual), holidays, schedules |
 | 5 | **leave-service** | 8084 | hrms_leave | Spring Boot | Leave types, requests, approvals, balances, calendar |
 | 6 | **payroll-service** | 8085 | hrms_payroll | Spring Boot | KZ tax calculator, Spring Batch, payslip generation, additions |
-| 7 | **ai-ml-service** | 8086 | — (stateless) | Python FastAPI | Isolation Forest anomaly/fraud, XGBoost attrition, forecasting |
 | 8 | **reporting-service** | 8087 | hrms_reporting | Spring Boot | XLSX/PDF generation, Form 200.00, dashboards |
 | 9 | **notification-service** | 8088 | hrms_notification | Spring Boot | DB notifications, email (SMTP), push (FCM) |
 | 10 | **integration-hub** | 8089 | hrms_integration | Spring Boot | 1C:Enterprise OData sync, bank file generation |
@@ -167,7 +162,6 @@ SYSTEM_ROLES               AI_DASHBOARD
 - Decouples services — failure in one doesn't cascade
 
 **Real-time:**
-- Kiosk/tablet → Attendance Service (face photo upload → AI verification → record). HTTP multipart, not WebSocket.
 - Future: WebSocket for live dashboard updates.
 
 ### 2.4 Event Catalog
@@ -474,37 +468,6 @@ CREATE TABLE hrms_attendance.attendance_records (
 -- Note: enrollment workflow is owned by employee-service; attendance reads this to know
 -- which employees can use face check-in. Schema location TBD — see services/employee-service/EMPLOYEE_SERVICE.md
 -- and services/attendance-service/ATTENDANCE_SERVICE.md for the current ownership split.
-CREATE TABLE hrms_attendance.biometric_data (
-    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    employee_id     UUID NOT NULL UNIQUE,
-    method          VARCHAR(16) NOT NULL CHECK (method IN ('FACE','FINGERPRINT')),
-    embedding_path  VARCHAR(500),                -- Path on ai-ml-service host
-    photo_urls      JSONB NOT NULL DEFAULT '[]', -- Enrollment photo paths
-    enrolled_at     TIMESTAMP NOT NULL DEFAULT NOW(),
-    enrolled_by     UUID,
-    is_active       BOOLEAN NOT NULL DEFAULT TRUE
-);
-
--- Failed biometric attempts (security log) — only face attempts now; fingerprint is Phase 5+
-CREATE TABLE hrms_attendance.biometric_attempts (
-    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    employee_id     UUID,                        -- Nullable: not always known on failure
-    method          VARCHAR(16) NOT NULL CHECK (method IN ('FACE','FINGERPRINT')),
-    device_id       VARCHAR(50),
-    result          VARCHAR(20) NOT NULL CHECK (result IN ('SUCCESS','FAILED','BLOCKED','LIVENESS_FAILED')),
-    fraud_score     NUMERIC(5,4),
-    created_at      TIMESTAMP NOT NULL DEFAULT NOW()
-);
-
-CREATE INDEX idx_attendance_emp_date ON hrms_attendance.attendance_records(employee_id, work_date);
-CREATE INDEX idx_attendance_date ON hrms_attendance.attendance_records(work_date) WHERE is_deleted = false;
-CREATE INDEX idx_holidays_date ON hrms_attendance.holidays(date);
-```
-
-#### Schema: hrms_leave (leave-service)
-
-```sql
--- Leave types
 CREATE TABLE hrms_leave.leave_types (
     id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     name            VARCHAR(100) NOT NULL UNIQUE,
@@ -636,13 +599,7 @@ CREATE TABLE hrms_payroll.payslips (
     is_resident         BOOLEAN NOT NULL DEFAULT TRUE,
     has_disability      BOOLEAN NOT NULL DEFAULT FALSE,
     status              VARCHAR(20) NOT NULL DEFAULT 'DRAFT'
-                          CHECK (status IN ('DRAFT','FLAGGED','APPROVED','PAID')),
-    -- AI anomaly detection
-    anomaly_score       NUMERIC(5,4),
-    anomaly_flags       TEXT,
-    ai_reviewed         BOOLEAN NOT NULL DEFAULT FALSE,
-    ai_reviewed_by      UUID,
-    ai_reviewed_at      TIMESTAMP,
+                          CHECK (status IN ('DRAFT','APPROVED','PAID')),
     -- PDF
     pdf_url             TEXT,
     is_deleted          BOOLEAN NOT NULL DEFAULT FALSE,
@@ -694,7 +651,6 @@ CREATE TABLE hrms_payroll.salary_advances (
 CREATE INDEX idx_payslips_period ON hrms_payroll.payslips(period_id);
 CREATE INDEX idx_payslips_emp ON hrms_payroll.payslips(employee_id);
 CREATE INDEX idx_payslips_status ON hrms_payroll.payslips(status) WHERE is_deleted = false;
-CREATE INDEX idx_payslips_flagged ON hrms_payroll.payslips(period_id) WHERE status = 'FLAGGED';
 CREATE INDEX idx_additions_period ON hrms_payroll.payroll_additions(period_id, employee_id);
 ```
 
@@ -892,9 +848,7 @@ POST   /v1/attendance/schedules
 PUT    /v1/attendance/schedules/{id}
 
 # Face Recognition Check-in (ATTENDANCE_CHECKIN) — primary check-in method
-POST   /v1/attendance/check-in/face                    # Multipart: face photo → AI verifies → record
 POST   /v1/attendance/check-out/face                   # Same on exit
-# Enrollment lives in employee-service: POST /v1/employees/{id}/biometric/enroll
 ```
 
 ### 4.5 Leave Service — 19 endpoints
@@ -950,7 +904,6 @@ GET    /v1/payroll/payslips/{id}                       # Single payslip detail
 PATCH  /v1/payroll/payslips/{id}/adjust                # Adjust {allowances, deductions, workedDays}
 POST   /v1/payroll/payslips/{id}/recalculate           # Recalculate after adjustment
 GET    /v1/payroll/payslips/{id}/pdf                   # Download payslip PDF
-POST   /v1/payroll/payslips/{id}/approve-flagged       # Approve AI-flagged payslip after review
 
 # Employee Self-Service (PAYSLIP_VIEW_OWN)
 GET    /v1/payroll/my-payslips                         # Own payslips (paginated)
@@ -966,28 +919,6 @@ POST   /v1/payroll/additions                           # Create {employeeId, per
 PUT    /v1/payroll/additions/{id}                      # Update
 DELETE /v1/payroll/additions/{id}                      # Delete
 POST   /v1/payroll/additions/bulk                      # Bulk create for all/selected employees
-```
-
-### 4.7 AI/ML Service — 8 endpoints
-
-```
-# Payroll Anomaly Detection
-POST   /v1/ai/payroll/detect                           # Single payslip anomaly check
-POST   /v1/ai/payroll/detect/batch                     # Batch check (array of payslips)
-
-# Attendance Fraud Detection
-POST   /v1/ai/attendance/fraud-detect                  # Single check-in fraud analysis
-
-# Attrition Prediction
-GET    /v1/ai/attrition/risk                           # All employees (?departmentId=)
-GET    /v1/ai/attrition/risk/employee/{id}             # Individual employee risk
-GET    /v1/ai/attrition/dashboard                      # Company-wide summary
-
-# Payroll Forecasting
-GET    /v1/ai/payroll/forecast                         # ?months=3 → predicted payroll costs
-
-# Health
-GET    /v1/ai/health                                   # Model versions, load status
 ```
 
 ### 4.8 Reporting Service — 12 endpoints
@@ -1014,8 +945,6 @@ GET    /v1/reports/headcount                           # ?from=&to= → XLSX
 # Executive (REPORT_EXECUTIVE)
 GET    /v1/reports/executive-summary                   # ?year=&month= → PDF (all-in-one)
 
-# AI Report (AI_DASHBOARD)
-GET    /v1/reports/ai-insights                         # → PDF (anomalies, attrition risks, forecasts)
 ```
 
 ### 4.9 Notification Service — 5 endpoints
@@ -1062,7 +991,6 @@ GET    /v1/dashboard/stats                             # Role-aware dashboard da
 | Attendance Service | 18 |
 | Leave Service | 19 |
 | Payroll Service | 23 |
-| AI/ML Service | 8 |
 | Reporting Service | 12 |
 | Notification Service | 5 |
 | Integration Hub | 7 |
@@ -1071,151 +999,7 @@ GET    /v1/dashboard/stats                             # Role-aware dashboard da
 
 ---
 
-## 6. AI/ML Architecture
-
-### 6.1 Service Overview
-
-Python FastAPI service, stateless, no database. Loads serialized models at startup. All endpoints are inference-only — training happens offline.
-
-### 6.2 Models
-
-| Model | Algorithm | Purpose | Training Data | Key Metrics |
-|-------|-----------|---------|---------------|-------------|
-| Payroll Anomaly | Isolation Forest (scikit-learn) | Flag suspicious payslips | Historical payslips + injected anomalies | Precision ≥97%, Response <100ms |
-| Attendance Fraud | Isolation Forest (scikit-learn) | Detect buddy-punching, spoofing | Attendance records + synthetic fraud | Precision ≥95%, Response <100ms |
-| Attrition | XGBoost | Predict flight-risk employees | Terminated + active employees (features: tenure, salary, leave, attendance) | AUC ≥0.85, F1 ≥0.80 |
-| Payroll Forecast | Prophet / ARIMA | Predict future payroll costs | 12+ months of historical payroll totals | MAPE <5% |
-
-### 6.3 Payroll Anomaly — Features & Response
-
-**Input features (14):**
-```
-earned_salary, net_salary, allowances, deductions,
-work_ratio (worked/total days),
-salary_zscore ((earned - historical_avg) / historical_std),
-months_employed, allowance_ratio (allowances / earned),
-deduction_ratio (deductions / earned),
-ipn_deviation (actual IPN vs calculated IPN),
-opv_deviation, is_new_employee (< 3 months),
-previous_month_salary, salary_change_pct
-```
-
-**Response:**
-```json
-{
-  "anomaly_score": 0.82,
-  "is_anomaly": true,
-  "confidence": 0.91,
-  "flags": ["salary_spike", "unusual_allowance"],
-  "recommendation": "REVIEW",
-  "explanation": "Earned salary is 3.2σ above 6-month average. Allowances are 45% of earned (typical <10%)."
-}
-```
-
-**Thresholds:** score < 0.3 → NORMAL, 0.3–0.65 → WARNING (log only), > 0.65 → REVIEW (set payslip to FLAGGED)
-
-### 6.4 Attendance Fraud — Features & Response
-
-**Input features (10):**
-```
-time_diff_minutes (since last check-in),
-location_distance_meters, device_switch (bool),
-hour_of_day, day_of_week,
-historical_checkin_hour_avg, historical_checkin_hour_std,
-checkins_today_count, days_since_last_checkin,
-is_remote_worker (bool)
-```
-
-**Response:**
-```json
-{
-  "fraud_probability": 0.87,
-  "is_fraud": true,
-  "flags": ["multiple_checkins", "suspicious_location"],
-  "recommendation": "BLOCK"
-}
-```
-
-**Actions:** score < 0.3 → allow, 0.3–0.65 → allow but flag, > 0.65 → block check-in + alert HR
-
-### 6.5 Attrition Prediction — Features & Response
-
-**Input features (14):**
-```
-tenure_months, salary_vs_position_avg,
-salary_growth_rate_annual, months_since_last_promotion,
-leave_usage_rate, sick_leave_frequency_quarterly,
-late_attendance_rate, overtime_hours_monthly_avg,
-team_turnover_last_6m, manager_change_count,
-age, department_avg_tenure,
-performance_rating (if available), engagement_proxy_score
-```
-
-**Response:**
-```json
-{
-  "attrition_risk": 0.72,
-  "risk_level": "HIGH",
-  "top_factors": [
-    {"factor": "salary_below_average", "impact": 0.35, "detail": "15% below position average"},
-    {"factor": "no_promotion_18_months", "impact": 0.25},
-    {"factor": "high_overtime", "impact": 0.20, "detail": "avg 25h/month (company avg: 8h)"}
-  ],
-  "recommended_actions": [
-    "Schedule 1-on-1 retention conversation",
-    "Review salary against position band",
-    "Evaluate workload redistribution"
-  ]
-}
-```
-
-### 6.6 Integration Flow
-
-```
-1. Payroll Service generates payslip
-   → POST /v1/ai/payroll/detect (Feign client)
-   → if anomaly_score > 0.65:
-       payslip.status = FLAGGED
-       payslip.anomalyScore = score
-       payslip.anomalyFlags = flags
-       publish PayrollAnomalyDetectedEvent
-   → else: payslip.status = DRAFT
-
-2. Attendance Service receives check-in
-   → check recent records for suspicious patterns
-   → if suspicious: POST /v1/ai/attendance/fraud-detect
-   → if BLOCK: reject check-in, publish FraudAttemptDetectedEvent
-   → if WARNING: record with fraud_score, continue
-
-3. HR Dashboard loads attrition widget
-   → GET /v1/ai/attrition/risk?departmentId=...
-   → display risk cards with recommended actions
-
-4. Finance views forecast
-   → GET /v1/ai/payroll/forecast?months=3
-   → display predicted costs with confidence intervals
-```
-
-### 6.7 AI Service — Non-Critical Pattern
-
-AI service failures must NEVER block business operations:
-
-```java
-try {
-    AnomalyResponse result = aiMlClient.detectPayrollAnomaly(request);
-    if (result.isAnomaly()) {
-        payslip.setStatus(PayslipStatus.FLAGGED);
-        payslip.setAnomalyScore(result.getAnomalyScore());
-    }
-} catch (Exception e) {
-    log.warn("AI service unavailable — skipping anomaly detection: {}", e.getMessage());
-    // Continue with DRAFT status — business is not blocked
-}
-```
-
----
-
-## 7. 1C:Enterprise Integration
+## 6.. 1C:Enterprise Integration
 
 ### 7.1 Data Flow
 
@@ -1301,7 +1085,7 @@ Push to main    → Test all services → Build Docker images → Push to GHCR �
 | Tool | Purpose |
 |------|---------|
 | Prometheus | Metrics collection (JVM, API latency, queue depth, cache hit rate) |
-| Grafana | Dashboards (payroll processing time, error rates, AI model performance) |
+| Grafana | Dashboards (payroll processing time, error rates, service health) |
 | ELK Stack | Centralized logging across all services |
 | Jaeger | Distributed tracing (request flow across services) |
 | Spring Boot Actuator | Health checks, metrics endpoints per service |
@@ -1319,13 +1103,12 @@ Push to main    → Test all services → Build Docker images → Push to GHCR �
 | 5 | Employee Form | /employees/new, /employees/:id/edit | Multi-step form with validation |
 | 6 | Org Chart | /org-chart | Interactive tree visualization |
 | 7 | Payroll Periods | /payroll | Period list, status badges, generate/approve/pay actions |
-| 8 | Payslip Detail | /payroll/payslips/:id | Full breakdown with tax lines, anomaly flag indicator |
+| 8 | Payslip Detail | /payroll/payslips/:id | Full breakdown with tax lines |
 | 9 | My Payslips | /my-payslips | Employee self-service: monthly payslip list + PDF download |
 | 10 | Leave Management | /leave | Tabs: My Requests, Balances, Pending Approval (managers) |
 | 11 | Leave Calendar | /leave/calendar | Monthly calendar showing who's on leave per day |
 | 12 | Attendance | /attendance | Check-in/out button, monthly calendar grid, summary stats |
 | 13 | Reports | /reports | Cards per report type with download buttons |
-| 14 | AI Insights | /ai-insights | Attrition risk list, anomaly overview, payroll forecast chart |
 | 15 | User Management | /users | User list, role assignment, enable/disable |
 | 16 | Settings | /settings | Company info, attendance config, leave config, notification config |
 | 17 | My Profile | /profile | View/edit own info, change password |

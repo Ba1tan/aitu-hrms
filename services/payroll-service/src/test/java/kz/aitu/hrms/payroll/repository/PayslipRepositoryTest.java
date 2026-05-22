@@ -33,15 +33,15 @@ class PayslipRepositoryTest {
         UUID alice = UUID.randomUUID();
         UUID bob = UUID.randomUUID();
         persistPayslip(period, alice, "Alice", "EMP-1", PayslipStatus.DRAFT);
-        persistPayslip(period, bob,   "Bob",   "EMP-2", PayslipStatus.FLAGGED);
+        persistPayslip(period, bob,   "Bob",   "EMP-2", PayslipStatus.APPROVED);
 
         Page<Payslip> drafts = payslipRepo.search(period.getId(), PayslipStatus.DRAFT, null, PageRequest.of(0, 10));
         assertThat(drafts.getTotalElements()).isEqualTo(1);
         assertThat(drafts.getContent().get(0).getEmployeeName()).isEqualTo("Alice");
 
-        Page<Payslip> flagged = payslipRepo.search(period.getId(), PayslipStatus.FLAGGED, null, PageRequest.of(0, 10));
-        assertThat(flagged.getTotalElements()).isEqualTo(1);
-        assertThat(flagged.getContent().get(0).getEmployeeName()).isEqualTo("Bob");
+        Page<Payslip> approved = payslipRepo.search(period.getId(), PayslipStatus.APPROVED, null, PageRequest.of(0, 10));
+        assertThat(approved.getTotalElements()).isEqualTo(1);
+        assertThat(approved.getContent().get(0).getEmployeeName()).isEqualTo("Bob");
     }
 
     @Test
@@ -103,12 +103,12 @@ class PayslipRepositoryTest {
     @Test
     void countByStatus_excludesDeleted() {
         PayrollPeriod period = persistPeriod(2026, 5);
-        persistPayslip(period, UUID.randomUUID(), "A", "EMP-A", PayslipStatus.FLAGGED);
-        Payslip dropped = persistPayslip(period, UUID.randomUUID(), "B", "EMP-B", PayslipStatus.FLAGGED);
+        persistPayslip(period, UUID.randomUUID(), "A", "EMP-A", PayslipStatus.APPROVED);
+        Payslip dropped = persistPayslip(period, UUID.randomUUID(), "B", "EMP-B", PayslipStatus.APPROVED);
         dropped.setDeleted(true);
         payslipRepo.save(dropped);
 
-        long count = payslipRepo.countByPeriodIdAndStatusAndDeletedFalse(period.getId(), PayslipStatus.FLAGGED);
+        long count = payslipRepo.countByPeriodIdAndStatusAndDeletedFalse(period.getId(), PayslipStatus.APPROVED);
         assertThat(count).isEqualTo(1L);
     }
 

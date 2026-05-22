@@ -33,7 +33,7 @@ Example: leave-service consuming `employee.created` → queue named
 {producer-domain}.{noun}.{verb-past}
 ```
 
-Example: `payroll.job.completed`, `attendance.fraud.detected`. Use lowercase,
+Example: `payroll.job.completed`, `leave.approved`. Use lowercase,
 dot-separated, past-tense verbs. Never include the producer service name in
 the routing key — domain ownership is what matters.
 
@@ -53,13 +53,11 @@ Status:
 | `employee.terminated` | `EmployeeTerminatedEvent` | employee-service | user-service 🟡 (deactivate account), payroll-service 🟡 (stop calc), leave-service 🟡 (cancel pending), notification-service 🟡 | ✅ (publisher only — no listeners wired yet) |
 | `employee.salary.changed` | `SalaryChangedEvent` | employee-service | payroll-service (`payroll.employee.salary.changed`), notification-service 🟡 | ✅ |
 | `attendance.recorded` | `AttendanceRecordedEvent` | attendance-service | reporting-service 🟡 (dashboard cache invalidation), notification-service 🟡 (late-arrival nudge) | ✅ (publisher only) |
-| `attendance.fraud.detected` | `FraudAttemptDetectedEvent` | attendance-service | notification-service 🟡 (alert HR), reporting-service 🟡 (audit log) | ✅ (publisher only) |
 | `leave.request.created` | `LeaveRequestCreatedEvent` | leave-service | notification-service 🟡 (notify approver) | ✅ (publisher only) |
 | `leave.approved` | `LeaveApprovedEvent` | leave-service | attendance-service (`attendance.leave.approved`) auto-marks ON_LEAVE; notification-service 🟡 (notify employee) | ✅ |
 | `leave.rejected` | `LeaveRejectedEvent` | leave-service | notification-service 🟡 (notify employee) | ✅ (publisher only) |
 | `payroll.job.started` | `PayrollJobStartedEvent` | payroll-service | reporting-service 🟡 (cache lock), notification-service 🟡 (HR progress notice) | ✅ (publisher only) |
 | `payroll.job.completed` | `PayrollJobCompletedEvent` | payroll-service | reporting-service 🟡 (invalidate dashboard cache, pre-gen XLSX), notification-service 🟡 (HR notice) | ✅ (publisher only) |
-| `payroll.anomaly.detected` | `PayrollAnomalyDetectedEvent` | payroll-service | notification-service 🟡 (HR alert with payslipId), reporting-service 🟡 (anomaly audit) | ✅ (publisher only) |
 | `payroll.period.approved` | `PayrollPeriodApprovedEvent` | payroll-service | notification-service 🟡 (per-employee payslip-ready), integration-hub 🟡 (1C sync trigger) | ✅ (publisher only) |
 | `user.account.created` | `UserAccountCreatedEvent` | user-service | notification-service 🟡 (welcome email + temp password) | ✅ (publisher only) |
 | `user.password.reset-requested` | `PasswordResetRequestedEvent` | user-service | notification-service 🟡 (reset link email) | ✅ (publisher only) |
@@ -120,16 +118,6 @@ Status:
   "checkIn":      "ISO datetime|null",
   "checkOut":     "ISO datetime|null",
   "workedHours":  "decimal|null"
-}
-```
-
-### `FraudAttemptDetectedEvent`
-```json
-{
-  "employeeId": "UUID|null",
-  "fraudScore": "double 0..1",
-  "flags":      "string (comma-separated)",
-  "deviceId":   "string|null"
 }
 ```
 
@@ -280,11 +268,10 @@ following the same naming convention. See §1 for the convention.
   notification-service has no consumers wired but is documented as the
   consumer for 11 of the 14 events. Treat the 🟡 markers above as Askar's
   TODO list.
-- **`employee.terminated`, `attendance.recorded`, `attendance.fraud.detected`,
+- **`employee.terminated`, `attendance.recorded`,
   `leave.request.created`, `leave.rejected`, `payroll.*` events are
   publish-only today** — every reactive workflow downstream is currently a
   no-op. This is acceptable until notification-service ships, but it does
-  mean nothing reacts to e.g. payroll anomalies right now.
 - **No DLQ / retry policy declared** — every queue is plain durable. Once
   notification-service starts sending email, add a per-queue DLX with
   `x-dead-letter-exchange = hrms.events.dlx` and a retry exchange. See

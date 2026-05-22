@@ -11,7 +11,6 @@ import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.List;
 import java.util.UUID;
 
 public class PayslipDtos {
@@ -62,11 +61,6 @@ public class PayslipDtos {
         private boolean hasDisability;
 
         private PayslipStatus status;
-        private BigDecimal anomalyScore;
-        private List<String> anomalyFlags;
-        private boolean aiReviewed;
-        private UUID aiReviewedBy;
-        private LocalDateTime aiReviewedAt;
 
         private String pdfUrl;
         private LocalDateTime createdAt;

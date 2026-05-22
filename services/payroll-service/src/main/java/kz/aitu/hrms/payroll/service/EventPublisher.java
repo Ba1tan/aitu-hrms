@@ -1,6 +1,5 @@
 package kz.aitu.hrms.payroll.service;
 
-import kz.aitu.hrms.common.event.PayrollAnomalyDetectedEvent;
 import kz.aitu.hrms.common.event.PayrollJobCompletedEvent;
 import kz.aitu.hrms.common.event.PayrollJobStartedEvent;
 import kz.aitu.hrms.common.event.PayrollPeriodApprovedEvent;
@@ -23,10 +22,6 @@ public class EventPublisher {
 
     public void publishJobCompleted(PayrollJobCompletedEvent event) {
         send(RabbitConfig.RK_PAYROLL_JOB_COMPLETED, event);
-    }
-
-    public void publishAnomaly(PayrollAnomalyDetectedEvent event) {
-        send(RabbitConfig.RK_PAYROLL_ANOMALY, event);
     }
 
     public void publishPeriodApproved(PayrollPeriodApprovedEvent event) {

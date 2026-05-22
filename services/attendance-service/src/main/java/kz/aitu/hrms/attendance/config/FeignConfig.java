@@ -1,30 +1,18 @@
 package kz.aitu.hrms.attendance.config;
 
 import feign.RequestInterceptor;
-import feign.codec.Encoder;
-import feign.form.spring.SpringFormEncoder;
 import jakarta.servlet.http.HttpServletRequest;
-import org.springframework.beans.factory.ObjectFactory;
-import org.springframework.boot.autoconfigure.http.HttpMessageConverters;
-import org.springframework.cloud.openfeign.support.SpringEncoder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
 /**
- * Feign clients in attendance-service:
- *   - send multipart/form-data to ai-ml-service (face verify)
- *   - need to forward the caller's JWT to employee-service (otherwise the
- *     downstream JwtAuthenticationFilter rejects them with 403)
+ * Forwards the caller's JWT and identity headers to downstream services so
+ * their JwtAuthenticationFilter accepts the request.
  */
 @Configuration
 public class FeignConfig {
-
-    @Bean
-    public Encoder feignFormEncoder(ObjectFactory<HttpMessageConverters> messageConverters) {
-        return new SpringFormEncoder(new SpringEncoder(messageConverters));
-    }
 
     @Bean
     public RequestInterceptor authForwardingInterceptor() {

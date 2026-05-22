@@ -4,7 +4,6 @@ import kz.aitu.hrms.common.exception.BusinessException;
 import kz.aitu.hrms.payroll.dto.PeriodDtos;
 import kz.aitu.hrms.payroll.entity.PayrollPeriod;
 import kz.aitu.hrms.payroll.entity.PayrollPeriodStatus;
-import kz.aitu.hrms.payroll.entity.PayslipStatus;
 import kz.aitu.hrms.payroll.repository.PayrollPeriodRepository;
 import kz.aitu.hrms.payroll.repository.PayslipRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -80,18 +79,6 @@ class PayrollPeriodServiceTest {
         assertThat(resp.getStatus()).isEqualTo(PayrollPeriodStatus.DRAFT);
         assertThat(resp.getYear()).isEqualTo(2026);
         assertThat(resp.getMonth()).isEqualTo(4);
-    }
-
-    @Test
-    void approve_rejectsWhenFlaggedPayslipsExist() {
-        UUID id = UUID.randomUUID();
-        PayrollPeriod period = newPeriod(id, PayrollPeriodStatus.COMPLETED);
-        when(periodRepo.findByIdAndDeletedFalse(id)).thenReturn(Optional.of(period));
-        when(payslipRepo.countByPeriodIdAndStatusAndDeletedFalse(id, PayslipStatus.FLAGGED)).thenReturn(2L);
-
-        assertThatThrownBy(() -> service.approve(id))
-                .isInstanceOf(BusinessException.class)
-                .hasMessageContaining("flagged");
     }
 
     @Test

@@ -163,17 +163,6 @@ export const useRecalculatePayslip = (id: string) => {
   });
 };
 
-export const useApproveFlaggedPayslip = (id: string) => {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: () => payrollApi.approveFlagged(id).then((r) => r.data),
-    onSuccess: (data) => {
-      qc.invalidateQueries({ queryKey: [...PAYSLIPS_KEY, "detail", id] });
-      qc.invalidateQueries({ queryKey: [...PAYSLIPS_KEY, data.period.id] });
-    },
-  });
-};
-
 // ── Self-service ─────────────────────────────────────────────────────────────
 
 export const useMyPayslips = (params: Record<string, unknown> = {}) =>

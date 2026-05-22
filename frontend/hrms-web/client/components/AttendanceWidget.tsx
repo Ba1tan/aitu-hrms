@@ -48,10 +48,9 @@ export default function AttendanceWidget() {
   const checkIn = useCheckIn();
   const checkOut = useCheckOut();
 
-  const { withinHours, methodsAllowed, requireFace } = useMemo(() => {
+  const { withinHours, methodsAllowed } = useMemo(() => {
     const methodsRaw = settings?.["attendance.check_in_methods"] ?? "WEB";
     const methods = methodsRaw.split(",").map((s) => s.trim().toUpperCase());
-    const requireFace = settings?.["attendance.require_face"] === "true";
 
     // Soft check against schedule.work_start/end if exposed; otherwise window
     // is wide (06:00–23:59) so we don't accidentally block in dev.
@@ -63,10 +62,10 @@ export default function AttendanceWidget() {
     void tzOffset; // backend enforces tz; we just block before/after business hours roughly
     const mins = now.getHours() * 60 + now.getMinutes();
     const within = mins >= start - 60 && mins <= end + 120; // wide buffer
-    return { withinHours: within, methodsAllowed: methods, requireFace };
+    return { withinHours: within, methodsAllowed: methods };
   }, [settings]);
 
-  const showWebButton = methodsAllowed.includes("WEB") && !requireFace;
+  const showWebButton = methodsAllowed.includes("WEB");
 
   const checkedIn = !!today?.checkedIn;
   const checkedOut = !!today?.checkedOut;
@@ -132,9 +131,7 @@ export default function AttendanceWidget() {
 
       {!showWebButton ? (
         <p className="text-xs text-muted-foreground">
-          {requireFace
-            ? "Включён режим распознавания лица. Используйте киоск на проходной."
-            : "Веб-отметка недоступна в текущей конфигурации."}
+          Веб-отметка недоступна в текущей конфигурации.
         </p>
       ) : !checkedIn ? (
         <Button

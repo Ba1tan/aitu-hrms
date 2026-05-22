@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { AlertTriangle, Search } from "lucide-react";
+import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -28,12 +28,9 @@ import {
 const STATUSES: { value: string; label: string }[] = [
   { value: "ALL", label: "Все" },
   { value: "DRAFT", label: "Черновик" },
-  { value: "FLAGGED", label: "Помечен AI" },
   { value: "APPROVED", label: "Утверждён" },
   { value: "PAID", label: "Выплачен" },
 ];
-
-const ANOMALY_THRESHOLD = 0.65;
 
 function useDebounced<T>(value: T, ms = 300): T {
   const [debounced, setDebounced] = useState(value);
@@ -99,14 +96,13 @@ export default function PayslipTable({ periodId, onSelectPayslip }: Props) {
               <TableHead className="text-right">ВОСМС</TableHead>
               <TableHead className="text-right">К выплате</TableHead>
               <TableHead>Статус</TableHead>
-              <TableHead>AI</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {isLoading ? (
               Array.from({ length: 5 }).map((_, i) => (
                 <TableRow key={i}>
-                  <TableCell colSpan={11}>
+                  <TableCell colSpan={10}>
                     <Skeleton className="h-7 w-full" />
                   </TableCell>
                 </TableRow>
@@ -114,7 +110,7 @@ export default function PayslipTable({ periodId, onSelectPayslip }: Props) {
             ) : !payslips || payslips.length === 0 ? (
               <TableRow>
                 <TableCell
-                  colSpan={11}
+                  colSpan={10}
                   className="text-center text-muted-foreground py-10"
                 >
                   Расчётных листов не найдено
@@ -122,18 +118,10 @@ export default function PayslipTable({ periodId, onSelectPayslip }: Props) {
               </TableRow>
             ) : (
               payslips.map((p) => {
-                const score = p.anomalyScore ? Number(p.anomalyScore) : null;
-                const flagged =
-                  p.status === "FLAGGED" ||
-                  (score !== null &&
-                    !Number.isNaN(score) &&
-                    score > ANOMALY_THRESHOLD);
                 return (
                   <TableRow
                     key={p.id}
-                    className={`cursor-pointer ${
-                      flagged ? "bg-red-50 hover:bg-red-100" : "hover:bg-white/80"
-                    }`}
+                    className="cursor-pointer hover:bg-white/80"
                     onClick={() => onSelectPayslip(p.id)}
                   >
                     <TableCell>
@@ -178,16 +166,6 @@ export default function PayslipTable({ periodId, onSelectPayslip }: Props) {
                       >
                         {payrollStatusLabel[p.status] ?? p.status}
                       </Badge>
-                    </TableCell>
-                    <TableCell>
-                      {flagged && (
-                        <span className="inline-flex items-center gap-1 text-red-600">
-                          <AlertTriangle className="h-4 w-4" />
-                          {score !== null && !Number.isNaN(score)
-                            ? score.toFixed(2)
-                            : ""}
-                        </span>
-                      )}
                     </TableCell>
                   </TableRow>
                 );

@@ -21,7 +21,6 @@ const REQUIRED_KEY_LABELS: Record<string, { label: string; step: string }> = {
   "company.locale_default": { label: "Язык интерфейса", step: "company" },
   "company.tax_resident": { label: "Налоговый резидент", step: "company" },
   "attendance.check_in_methods": { label: "Способы отметки", step: "attendance-methods" },
-  "attendance.require_face": { label: "Требовать лицо", step: "attendance-methods" },
   "attendance.work_schedule_default_id": {
     label: "График работы",
     step: "work-schedule",
@@ -150,7 +149,6 @@ export default function StepReview() {
               "Способы отметки",
               settings["attendance.check_in_methods"],
             ],
-            ["Требовать лицо", settings["attendance.require_face"]],
             ["График по умолчанию", settings["attendance.work_schedule_default_id"]],
           ]}
         />

@@ -8,7 +8,6 @@ import {
   Users,
   CalendarClock,
   Palmtree,
-  Sparkles,
 } from "lucide-react";
 import type { AxiosResponse } from "axios";
 import DashboardLayout from "./DashboardLayout";
@@ -189,16 +188,6 @@ const REPORTS: ReportDef[] = [
     icon: FileText,
     fields: ["year", "month"],
     request: (p) => reportsApi.executiveSummary(p.year, p.month),
-  },
-  {
-    key: "ai-insights",
-    title: "AI-аналитика",
-    description: "Аномалии, риски оттока, прогнозы (PDF).",
-    permission: "AI_DASHBOARD",
-    format: "PDF",
-    icon: Sparkles,
-    fields: [],
-    request: () => reportsApi.aiInsights(),
   },
 ];
 

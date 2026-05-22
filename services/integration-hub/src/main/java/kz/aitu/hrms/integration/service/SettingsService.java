@@ -40,22 +40,31 @@ public class SettingsService {
     @Transactional(readOnly = true)
     public String get(String key) {
         return repo.findByKey(key)
-                .map(s -> isEncryptedKey(key) ? encryptor.decrypt(s.getValue()) : s.getValue())
+                .map(this::reveal)
                 .orElse(null);
     }
 
     @Transactional(readOnly = true)
     public String getRequired(String key) {
         return repo.findByKey(key)
-                .map(s -> isEncryptedKey(key) ? encryptor.decrypt(s.getValue()) : s.getValue())
+                .map(this::reveal)
                 .orElseThrow(() -> new ResourceNotFoundException("Setting", "key", key));
     }
 
     @Transactional(readOnly = true)
     public String getOrDefault(String key, String defaultValue) {
         return repo.findByKey(key)
-                .map(s -> isEncryptedKey(key) ? encryptor.decrypt(s.getValue()) : s.getValue())
+                .map(this::reveal)
                 .orElse(defaultValue);
+    }
+
+    // A blank stored value can never be ciphertext (e.g. a seeded-but-unset
+    // encrypted key), so return it as-is rather than feeding it to decrypt().
+    private String reveal(CompanySetting s) {
+        if (isEncryptedKey(s.getKey()) && !s.getValue().isBlank()) {
+            return encryptor.decrypt(s.getValue());
+        }
+        return s.getValue();
     }
 
     public SettingDto update(String key, String value, AuthenticatedUser actor) {

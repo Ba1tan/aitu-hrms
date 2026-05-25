@@ -1,6 +1,5 @@
 package kz.aitu.hrms.notification.listener;
 
-import kz.aitu.hrms.common.event.FraudAttemptDetectedEvent;
 import kz.aitu.hrms.notification.config.RabbitConfig;
 import kz.aitu.hrms.notification.event.dto.AttendanceRecordedEvent;
 import kz.aitu.hrms.notification.service.NotificationFactory;
@@ -35,20 +34,6 @@ public class AttendanceEventListener {
             log.info("consumed AttendanceRecordedEvent recordId={} status=LATE", event.getRecordId());
         } catch (Exception e) {
             log.error("Failed to process AttendanceRecordedEvent {}: {}", event.getRecordId(), e.getMessage(), e);
-        }
-    }
-
-    @RabbitListener(queues = RabbitConfig.Q_ATTENDANCE_FRAUD)
-    public void onFraudAttemptDetected(FraudAttemptDetectedEvent event) {
-        try {
-            List<UUID> userIds = recipients.resolveUserIdsByPermission("ATTENDANCE_MANAGE");
-            for (UUID userId : userIds) {
-                var built = factory.fromFraudAttemptDetected(event, userId);
-                service.create(built.notification(), built.idempotencyKey(), built.emailRequest());
-            }
-            log.info("consumed FraudAttemptDetectedEvent employeeId={}", event.getEmployeeId());
-        } catch (Exception e) {
-            log.error("Failed to process FraudAttemptDetectedEvent {}: {}", event.getEmployeeId(), e.getMessage(), e);
         }
     }
 }

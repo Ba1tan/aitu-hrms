@@ -1,8 +1,5 @@
 -- V1 — hrms_attendance schema: attendance_records, work_schedules, holidays.
 -- Schema `hrms_attendance` is created upfront in scripts/init-db.sql.
---
--- Note: biometric enrollment is owned by employee-service (see hrms_employee.biometric_data).
--- This service only consults ai-ml-service for face verification at check-in time.
 
 -- Configurable shifts (one row marked is_default = TRUE for the standard 09:00-18:00 day).
 CREATE TABLE work_schedules (
@@ -60,8 +57,6 @@ CREATE TABLE attendance_records (
     location_lng      NUMERIC(9,6),
     worked_minutes    INT,
     overtime_minutes  INT           NOT NULL DEFAULT 0,
-    fraud_score       NUMERIC(4,3),
-    fraud_flags       VARCHAR(500),
     notes             TEXT,
     is_deleted        BOOLEAN       NOT NULL DEFAULT FALSE,
     created_at        TIMESTAMP     NOT NULL DEFAULT NOW(),

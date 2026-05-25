@@ -1,6 +1,5 @@
 package kz.aitu.hrms.notification.listener;
 
-import kz.aitu.hrms.common.event.FraudAttemptDetectedEvent;
 import kz.aitu.hrms.notification.domain.Notification;
 import kz.aitu.hrms.notification.domain.NotificationType;
 import kz.aitu.hrms.notification.event.dto.AttendanceRecordedEvent;
@@ -58,33 +57,5 @@ class AttendanceEventListenerTest {
 
         verifyNoInteractions(service);
         verifyNoInteractions(recipients);
-    }
-
-    @Test
-    void onFraudAttemptDetected_happyPath_createsNotifications() {
-        UUID userId = UUID.randomUUID();
-        FraudAttemptDetectedEvent event = FraudAttemptDetectedEvent.builder()
-                .employeeId(UUID.randomUUID()).fraudScore(0.95).flags("FLAG1").build();
-        var built = new NotificationFactory.BuiltNotification(
-                Notification.builder().userId(userId).title("T").message("M")
-                        .type(NotificationType.FRAUD_ALERT).build(),
-                "key", null);
-        when(recipients.resolveUserIdsByPermission("ATTENDANCE_MANAGE")).thenReturn(List.of(userId));
-        when(factory.fromFraudAttemptDetected(event, userId)).thenReturn(built);
-
-        listener.onFraudAttemptDetected(event);
-
-        verify(service).create(any(), any(), any());
-    }
-
-    @Test
-    void onFraudAttemptDetected_serviceThrows_doesNotPropagate() {
-        FraudAttemptDetectedEvent event = FraudAttemptDetectedEvent.builder()
-                .employeeId(UUID.randomUUID()).fraudScore(0.5).flags("").build();
-        when(recipients.resolveUserIdsByPermission(any())).thenThrow(new RuntimeException("down"));
-
-        listener.onFraudAttemptDetected(event);
-
-        verify(service, never()).create(any(), any(), any());
     }
 }

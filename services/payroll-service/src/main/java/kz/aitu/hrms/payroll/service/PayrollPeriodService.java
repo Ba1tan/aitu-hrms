@@ -76,12 +76,6 @@ public class PayrollPeriodService {
             throw new BusinessException(
                     "Only COMPLETED periods can be approved (current: " + period.getStatus() + ")");
         }
-        long flagged = payslipRepo.countByPeriodIdAndStatusAndDeletedFalse(periodId, PayslipStatus.FLAGGED);
-        if (flagged > 0) {
-            throw new BusinessException(
-                    "Period has " + flagged + " flagged payslip(s). Resolve them via approve-flagged first.");
-        }
-
         long count = payslipRepo.countByPeriodIdAndDeletedFalse(periodId);
         if (count == 0) {
             throw new BusinessException("No payslips found for this period. Generate payslips first.");
@@ -173,7 +167,6 @@ public class PayrollPeriodService {
                     .totalOpvr(toBd(row[7]))
                     .payslipCount(count)
                     .approvedCount(payslipRepo.countByPeriodIdAndStatusAndDeletedFalse(periodId, PayslipStatus.APPROVED))
-                    .flaggedCount(payslipRepo.countByPeriodIdAndStatusAndDeletedFalse(periodId, PayslipStatus.FLAGGED))
                     .build());
         } catch (Exception e) {
             log.debug("Could not load period summary for {}: {}", periodId, e.getMessage());

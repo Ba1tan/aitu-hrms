@@ -83,7 +83,6 @@ Replaces the current `/employees/:id` → EmployeeForm redirect. Tabs:
 - **Salary history** — table of salary_history entries; "Salary change" button (`EMPLOYEE_SALARY_CHANGE` once that permission exists; for now gate with `EMPLOYEE_UPDATE`)
 - **Documents** — list + upload + download. Multipart POST to `/v1/employees/{id}/documents`
 - **Emergency contacts** — list + CRUD
-- **Biometric** — show enrollment status; "Enroll face" button (multipart 3-5 photos) gated by `EMPLOYEE_BIOMETRIC`. ai-ml-service must be up.
 - **Leave / Attendance** — embed compact widgets pulling from employee's own data
 
 Route: `<Route path="/employees/:id" element={<EmployeeDetail />} />`.
@@ -127,7 +126,7 @@ none are stub-only by reading the file size.
 - [ ] SUPER_ADMIN can create / list / edit / delete a department.
 - [ ] SUPER_ADMIN can create / list / edit / delete a position.
 - [ ] EmployeesList shows real server-paged data with working search + filters.
-- [ ] EmployeeDetail renders Profile/Salary/Documents/Emergency/Biometric tabs.
+- [ ] EmployeeDetail renders Profile/Salary/Documents/Emergency tabs.
 - [ ] Org chart renders for at least 10 employees.
 - [ ] Hire flow ends with a user account created (verify via Bruno test).
 - [ ] Terminate flow soft-deletes + records terminationDate.

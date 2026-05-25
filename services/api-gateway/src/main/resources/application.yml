@@ -23,10 +23,7 @@ spring:
             key-resolver: "#{@userKeyResolver}"
 
       # ---------------------------------------------------------------
-      # All traffic is routed to per-service hostnames. Routes for services
-      # that are not yet implemented (ai-ml, reporting, notification,
-      # integration-hub) are pre-wired to their planned URIs — they return
-      # 502/connection-refused until the underlying service comes up.
+      # All traffic is routed to per-service hostnames.
       # ---------------------------------------------------------------
       routes:
         - id: user-service-swagger
@@ -101,11 +98,6 @@ spring:
           uri: ${PAYROLL_SERVICE_URI:http://localhost:8085}
           predicates:
             - Path=/api/v1/payroll/**
-
-        - id: ai
-          uri: ${AI_ML_SERVICE_URI:http://localhost:8086}
-          predicates:
-            - Path=/api/v1/ai/**
 
         - id: reports
           uri: ${REPORTING_SERVICE_URI:http://localhost:8087}

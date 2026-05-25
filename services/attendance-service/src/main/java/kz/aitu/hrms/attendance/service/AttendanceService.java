@@ -4,7 +4,6 @@ import kz.aitu.hrms.attendance.dto.AttendanceDtos;
 import kz.aitu.hrms.attendance.entity.CheckInMethod;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.web.multipart.MultipartFile;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -13,21 +12,15 @@ import java.util.UUID;
 
 public interface AttendanceService {
 
-    AttendanceDtos.CheckInResponse checkInWithFace(MultipartFile photo);
-
-    AttendanceDtos.CheckInResponse checkOutWithFace(MultipartFile photo);
-
     AttendanceDtos.CheckInResponse checkIn(UUID employeeId,
                                            CheckInMethod method,
                                            BigDecimal locationLat,
-                                           BigDecimal locationLng,
-                                           Double faceConfidence);
+                                           BigDecimal locationLng);
 
     AttendanceDtos.CheckInResponse checkOut(UUID employeeId,
                                             CheckInMethod method,
                                             BigDecimal locationLat,
-                                            BigDecimal locationLng,
-                                            Double faceConfidence);
+                                            BigDecimal locationLng);
 
     AttendanceDtos.TodayResponse today(UUID employeeId);
 

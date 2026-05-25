@@ -2,7 +2,6 @@ package kz.aitu.hrms.attendance.service;
 
 import kz.aitu.hrms.attendance.config.RabbitConfig;
 import kz.aitu.hrms.attendance.event.AttendanceRecordedEvent;
-import kz.aitu.hrms.common.event.FraudAttemptDetectedEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
@@ -29,18 +28,6 @@ public class EventPublisher {
                     event);
         } catch (Exception e) {
             log.warn("Failed to publish attendance.recorded: {}", e.getMessage());
-        }
-    }
-
-    public void publishFraudDetected(FraudAttemptDetectedEvent event) {
-        if (rabbitTemplate == null) return;
-        try {
-            rabbitTemplate.convertAndSend(
-                    RabbitConfig.EXCHANGE,
-                    RabbitConfig.RK_FRAUD_DETECTED,
-                    event);
-        } catch (Exception e) {
-            log.warn("Failed to publish attendance.fraud.detected: {}", e.getMessage());
         }
     }
 }

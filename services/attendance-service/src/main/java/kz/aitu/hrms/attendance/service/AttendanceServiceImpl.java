@@ -1,7 +1,5 @@
 package kz.aitu.hrms.attendance.service;
 
-import feign.FeignException;
-import kz.aitu.hrms.attendance.client.AiMlClient;
 import kz.aitu.hrms.attendance.client.EmployeeClient;
 import kz.aitu.hrms.attendance.dto.AttendanceDtos;
 import kz.aitu.hrms.attendance.entity.AttendanceRecord;
@@ -13,7 +11,6 @@ import kz.aitu.hrms.attendance.event.AttendanceRecordedEvent;
 import kz.aitu.hrms.attendance.repository.AttendanceRecordRepository;
 import kz.aitu.hrms.attendance.repository.HolidayRepository;
 import kz.aitu.hrms.attendance.repository.WorkScheduleRepository;
-import kz.aitu.hrms.common.event.FraudAttemptDetectedEvent;
 import kz.aitu.hrms.common.exception.BusinessException;
 import kz.aitu.hrms.common.exception.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -21,11 +18,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.math.BigDecimal;
 import java.time.DayOfWeek;
@@ -50,7 +44,6 @@ public class AttendanceServiceImpl implements AttendanceService {
     private final AttendanceRecordRepository recordRepo;
     private final HolidayRepository holidayRepo;
     private final WorkScheduleRepository scheduleRepo;
-    private final AiMlClient aiMlClient;
     private final EmployeeLookup employeeLookup;
     private final EventPublisher events;
     private final AttendanceMapper mapper;
@@ -58,70 +51,16 @@ public class AttendanceServiceImpl implements AttendanceService {
     @Value("${app.zone:Asia/Almaty}")
     private String zoneId;
 
-    @Value("${app.attendance.fraud.recent-window-min:30}")
-    private int fraudWindowMin;
-
-    @Value("${app.attendance.fraud.block-threshold:0.65}")
-    private double fraudBlockThreshold;
-
-    @Value("${app.attendance.fraud.review-threshold:0.30}")
-    private double fraudReviewThreshold;
-
     private ZoneId zone() {
         return ZoneId.of(zoneId);
     }
-
-    // Face check-in / check-out
-
-    @Override
-    @Transactional
-    public AttendanceDtos.CheckInResponse checkInWithFace(MultipartFile photo) {
-        AiMlClient.VerifyResponse verify = verifyFaceOrThrow(photo);
-        UUID employeeId = UUID.fromString(verify.employeeId());
-        return checkIn(employeeId, CheckInMethod.FACE, null, null, verify.confidence());
-    }
-
-    @Override
-    @Transactional
-    public AttendanceDtos.CheckInResponse checkOutWithFace(MultipartFile photo) {
-        AiMlClient.VerifyResponse verify = verifyFaceOrThrow(photo);
-        UUID employeeId = UUID.fromString(verify.employeeId());
-        return checkOut(employeeId, CheckInMethod.FACE, null, null, verify.confidence());
-    }
-
-    private AiMlClient.VerifyResponse verifyFaceOrThrow(MultipartFile photo) {
-        if (photo == null || photo.isEmpty()) {
-            throw new BusinessException("Photo is required for face check-in");
-        }
-        AiMlClient.VerifyResponse verify;
-        try {
-            verify = aiMlClient.verifyFace(photo);
-        } catch (FeignException e) {
-            log.warn("AI service unavailable for face verification: {}", e.getMessage());
-            throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE,
-                    "Face recognition unavailable. Use manual check-in.");
-        } catch (Exception e) {
-            log.warn("AI service error during face verification: {}", e.getMessage());
-            throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE,
-                    "Face recognition unavailable. Use manual check-in.");
-        }
-        if (verify == null || !verify.matched()) {
-            String reason = verify == null ? "no_response" : verify.reason();
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED,
-                    "Face not recognized: " + (reason == null ? "no_match" : reason));
-        }
-        return verify;
-    }
-
-    // Generic check-in / check-out
 
     @Override
     @Transactional
     public AttendanceDtos.CheckInResponse checkIn(UUID employeeId,
                                                   CheckInMethod method,
                                                   BigDecimal locationLat,
-                                                  BigDecimal locationLng,
-                                                  Double faceConfidence) {
+                                                  BigDecimal locationLng) {
         if (employeeId == null) {
             throw new BusinessException("employeeId is required");
         }
@@ -146,44 +85,6 @@ public class AttendanceServiceImpl implements AttendanceService {
         WorkSchedule schedule = resolveSchedule(null);
         AttendanceStatus status = computeStatus(now.toLocalTime(), schedule);
 
-        // Layer 2 fraud detection (only for FACE/BIOMETRIC, only if a recent record exists).
-        BigDecimal fraudScore = null;
-        String fraudFlags = null;
-        if (resolvedMethod == CheckInMethod.FACE || resolvedMethod == CheckInMethod.BIOMETRIC) {
-            Optional<AttendanceRecord> recent = recordRepo
-                    .findFirstByEmployeeIdAndDeletedFalseOrderByCreatedAtDesc(employeeId);
-            if (recent.isPresent() && isSuspicious(recent.get(), now, locationLat, locationLng)) {
-                AiMlClient.FraudResponse fraud = callFraudDetection(recent.get(), employeeId, now,
-                        resolvedMethod, locationLat, locationLng);
-                if (fraud != null) {
-                    fraudScore = BigDecimal.valueOf(fraud.fraudProbability());
-                    fraudFlags = fraud.flags() == null ? null : String.join(",", fraud.flags());
-                    if (fraud.fraudProbability() >= fraudBlockThreshold) {
-                        AttendanceRecord blocked = AttendanceRecord.builder()
-                                .employeeId(employeeId)
-                                .workDate(today)
-                                .checkIn(now)
-                                .status(AttendanceStatus.BLOCKED)
-                                .checkInMethod(resolvedMethod)
-                                .locationLat(locationLat)
-                                .locationLng(locationLng)
-                                .fraudScore(fraudScore)
-                                .fraudFlags(fraudFlags)
-                                .build();
-                        recordRepo.save(blocked);
-                        events.publishFraudDetected(FraudAttemptDetectedEvent.builder()
-                                .employeeId(employeeId)
-                                .fraudScore(fraud.fraudProbability())
-                                .flags(fraudFlags)
-                                .deviceId(null)
-                                .build());
-                        throw new BusinessException(
-                                "Check-in blocked: suspicious activity detected. Contact HR.");
-                    }
-                }
-            }
-        }
-
         AttendanceRecord record = AttendanceRecord.builder()
                 .employeeId(employeeId)
                 .workDate(today)
@@ -192,8 +93,6 @@ public class AttendanceServiceImpl implements AttendanceService {
                 .checkInMethod(resolvedMethod)
                 .locationLat(locationLat)
                 .locationLng(locationLng)
-                .fraudScore(fraudScore)
-                .fraudFlags(fraudFlags)
                 .overtimeMinutes(0)
                 .build();
         record = recordRepo.save(record);
@@ -208,7 +107,7 @@ public class AttendanceServiceImpl implements AttendanceService {
                 .build());
 
         String name = employeeLookup.fullName(employeeId);
-        return mapper.toCheckIn(record, name, faceConfidence);
+        return mapper.toCheckIn(record, name);
     }
 
     @Override
@@ -216,8 +115,7 @@ public class AttendanceServiceImpl implements AttendanceService {
     public AttendanceDtos.CheckInResponse checkOut(UUID employeeId,
                                                    CheckInMethod method,
                                                    BigDecimal locationLat,
-                                                   BigDecimal locationLng,
-                                                   Double faceConfidence) {
+                                                   BigDecimal locationLng) {
         if (employeeId == null) {
             throw new BusinessException("employeeId is required");
         }
@@ -244,13 +142,11 @@ public class AttendanceServiceImpl implements AttendanceService {
         if (workedMinutes < 0) workedMinutes = 0;
         record.setWorkedMinutes(workedMinutes);
 
-        // Half-day status if worked under threshold and we were marked PRESENT/LATE.
         if ((record.getStatus() == AttendanceStatus.PRESENT || record.getStatus() == AttendanceStatus.LATE)
                 && workedMinutes < schedule.getHalfDayThresholdMin()) {
             record.setStatus(AttendanceStatus.HALF_DAY);
         }
 
-        // Overtime — anything past scheduled end time.
         long scheduledEndMinutes = Duration.between(LocalTime.MIDNIGHT, schedule.getWorkEndTime()).toMinutes();
         long actualEndMinutes = Duration.between(LocalTime.MIDNIGHT, now.toLocalTime()).toMinutes();
         int overtime = (int) Math.max(0, actualEndMinutes - scheduledEndMinutes);
@@ -270,10 +166,8 @@ public class AttendanceServiceImpl implements AttendanceService {
                 .build());
 
         String name = employeeLookup.fullName(employeeId);
-        return mapper.toCheckIn(record, name, faceConfidence);
+        return mapper.toCheckIn(record, name);
     }
-
-    // Today / records / summaries
 
     @Override
     @Transactional(readOnly = true)
@@ -449,8 +343,6 @@ public class AttendanceServiceImpl implements AttendanceService {
                 .build();
     }
 
-    // Helpers
-
     private WorkSchedule resolveSchedule(UUID departmentId) {
         if (departmentId != null) {
             Optional<WorkSchedule> dept = scheduleRepo.findByDepartmentIdAndDeletedFalse(departmentId);
@@ -462,52 +354,5 @@ public class AttendanceServiceImpl implements AttendanceService {
     private AttendanceStatus computeStatus(LocalTime now, WorkSchedule schedule) {
         LocalTime threshold = schedule.getWorkStartTime().plusMinutes(schedule.getLateThresholdMin());
         return now.isAfter(threshold) ? AttendanceStatus.LATE : AttendanceStatus.PRESENT;
-    }
-
-    private boolean isSuspicious(AttendanceRecord recent,
-                                 LocalDateTime now,
-                                 BigDecimal locationLat,
-                                 BigDecimal locationLng) {
-        if (recent.getCheckIn() == null) return false;
-        long minutes = Duration.between(recent.getCheckIn(), now).toMinutes();
-        if (minutes >= 0 && minutes < fraudWindowMin) return true;
-        // Location jump > ~0.1 degrees (~11 km) within the window is suspicious.
-        if (locationLat != null && locationLng != null
-                && recent.getLocationLat() != null && recent.getLocationLng() != null) {
-            BigDecimal latDiff = locationLat.subtract(recent.getLocationLat()).abs();
-            BigDecimal lngDiff = locationLng.subtract(recent.getLocationLng()).abs();
-            if (latDiff.compareTo(new BigDecimal("0.1")) > 0
-                    || lngDiff.compareTo(new BigDecimal("0.1")) > 0) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    private AiMlClient.FraudResponse callFraudDetection(AttendanceRecord recent,
-                                                        UUID employeeId,
-                                                        LocalDateTime now,
-                                                        CheckInMethod method,
-                                                        BigDecimal locationLat,
-                                                        BigDecimal locationLng) {
-        try {
-            int minutesSince = (int) Duration.between(recent.getCheckIn(), now).toMinutes();
-            return aiMlClient.detectFraud(new AiMlClient.FraudRequest(
-                    employeeId.toString(),
-                    now,
-                    recent.getCheckIn(),
-                    minutesSince,
-                    method.name(),
-                    recent.getCheckInMethod() == null ? null : recent.getCheckInMethod().name(),
-                    locationLat == null ? null : locationLat.doubleValue(),
-                    locationLng == null ? null : locationLng.doubleValue(),
-                    recent.getLocationLat() == null ? null : recent.getLocationLat().doubleValue(),
-                    recent.getLocationLng() == null ? null : recent.getLocationLng().doubleValue(),
-                    null
-            ));
-        } catch (Exception e) {
-            log.warn("Fraud detection unavailable: {}", e.getMessage());
-            return null; // non-critical — let check-in proceed
-        }
     }
 }

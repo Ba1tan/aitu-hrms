@@ -48,7 +48,6 @@ public class PeriodDtos {
         private Integer generated;
         private Integer skipped;
         private Integer errors;
-        private Integer flagged;
         private BigDecimal totalGrossPayout;
         private BigDecimal totalNetPayout;
         private List<String> errorDetails;
@@ -84,7 +83,6 @@ public class PeriodDtos {
     public static class Summary {
         private long payslipCount;
         private long approvedCount;
-        private long flaggedCount;
         private BigDecimal totalGrossSalary;
         private BigDecimal totalNetSalary;
         private BigDecimal totalIpn;

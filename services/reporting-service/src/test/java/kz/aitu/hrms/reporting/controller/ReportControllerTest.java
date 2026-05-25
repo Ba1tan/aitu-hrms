@@ -54,7 +54,6 @@ class ReportControllerTest {
     @MockBean TurnoverXlsx turnoverXlsx;
     @MockBean HeadcountXlsx headcountXlsx;
     @MockBean ExecutiveSummaryPdf executiveSummaryPdf;
-    @MockBean AiInsightsPdf aiInsightsPdf;
     @MockBean JwtAuthenticationFilter jwtAuthenticationFilter;
 
     private static final String XLSX = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
@@ -258,24 +257,6 @@ class ReportControllerTest {
                         .with(authentication(auth("REPORT_EXECUTIVE"))))
                 .andExpect(status().isOk())
                 .andExpect(header().string("Content-Type", PDF));
-    }
-
-    // ── ai-insights ───────────────────────────────────────────────────────────
-
-    @Test
-    void aiInsights_withPermission_returnsPdf() throws Exception {
-        doNothing().when(aiInsightsPdf).write(any());
-        mvc.perform(get("/v1/reports/ai-insights")
-                        .with(authentication(auth("AI_DASHBOARD"))))
-                .andExpect(status().isOk())
-                .andExpect(header().string("Content-Type", PDF));
-    }
-
-    @Test
-    void aiInsights_withoutPermission_returns403() throws Exception {
-        mvc.perform(get("/v1/reports/ai-insights")
-                        .with(authentication(auth("REPORT_PAYROLL"))))
-                .andExpect(status().isForbidden());
     }
 
     // ─────────────────────────────────────────────────────────────────────────

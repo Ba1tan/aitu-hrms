@@ -96,28 +96,6 @@ public class NotificationFactory {
         return new BuiltNotification(n, key, null);
     }
 
-    public BuiltNotification fromFraudAttemptDetected(FraudAttemptDetectedEvent e, UUID recipientUserId) {
-        String title = "🚨 Подозрение на мошенничество";
-        String message = "Score: " + e.getFraudScore() + ", flags: " + e.getFlags();
-        String recipientEmail = recipientResolver.resolveEmail(null); // HR email from user record
-        Notification n = Notification.builder()
-                .userId(recipientUserId)
-                .title(title)
-                .message(message)
-                .type(NotificationType.FRAUD_ALERT)
-                .channel(NotificationChannel.EMAIL)
-                .referenceType("ATTENDANCE")
-                .referenceId(e.getEmployeeId())
-                .build();
-        String key = "FRAUD_ALERT:" + e.getEmployeeId() + ":" + recipientUserId;
-        EmailRequest emailReq = recipientEmail == null ? null : new EmailRequest(
-                recipientEmail,
-                "🚨 Подозрение на мошенничество",
-                "fraud-alert",
-                Map.of("fraudScore", e.getFraudScore(), "flags", e.getFlags()));
-        return new BuiltNotification(n, key, emailReq);
-    }
-
     // ── Leave events ─────────────────────────────────────────────────────────
 
     public BuiltNotification fromLeaveRequestCreated(LeaveRequestCreatedEvent e, UUID recipientUserId) {
@@ -226,27 +204,6 @@ public class NotificationFactory {
                 "Расчёт зарплаты завершён",
                 "payroll-job-completed",
                 Map.of("employeeCount", e.getEmployeeCount(), "totalNet", e.getTotalNet()));
-        return new BuiltNotification(n, key, emailReq);
-    }
-
-    public BuiltNotification fromPayrollAnomalyDetected(PayrollAnomalyDetectedEvent e, UUID recipientUserId) {
-        String title = "⚠️ Аномалия в расчёте";
-        String message = "Payslip " + e.getPayslipId() + ", score " + e.getAnomalyScore();
-        Notification n = Notification.builder()
-                .userId(recipientUserId)
-                .title(title)
-                .message(message)
-                .type(NotificationType.PAYROLL_ANOMALY)
-                .channel(NotificationChannel.EMAIL)
-                .referenceType("PAYSLIP")
-                .referenceId(e.getPayslipId())
-                .build();
-        String key = "PAYROLL_ANOMALY:" + e.getPayslipId() + ":" + recipientUserId;
-        EmailRequest emailReq = new EmailRequest(
-                recipientUserId.toString(),
-                "⚠️ Аномалия в расчёте зарплаты",
-                "payroll-anomaly",
-                Map.of("payslipId", e.getPayslipId(), "anomalyScore", e.getAnomalyScore()));
         return new BuiltNotification(n, key, emailReq);
     }
 

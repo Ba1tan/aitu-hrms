@@ -219,13 +219,6 @@ export interface EmergencyContact {
   isPrimary?: boolean;
 }
 
-export interface BiometricStatus {
-  enrolled: boolean;
-  method?: string;
-  enrolledAt?: string;
-  photoUrls?: string[];
-}
-
 export interface OrgChartNode {
   id: string;
   fullName: string;
@@ -420,8 +413,6 @@ export interface AttendanceRecord {
   checkInMethod?: string | null;
   workedHours?: string | null;
   overtimeHours?: string | null;
-  fraudScore?: string | null;
-  fraudFlags?: string | null;
   notes?: string | null;
 }
 
@@ -805,14 +796,6 @@ export const employeesApi = {
     apiClient.put<EmergencyContact>(`/v1/employees/${id}/emergency-contacts/${cId}`, data),
   deleteEmergencyContact: (id: string, cId: string) =>
     apiClient.delete<void>(`/v1/employees/${id}/emergency-contacts/${cId}`),
-  biometricStatus: (id: string) =>
-    apiClient.get<BiometricStatus>(`/v1/employees/${id}/biometric/status`),
-  enrollBiometric: (id: string, formData: FormData) =>
-    apiClient.post<BiometricStatus>(`/v1/employees/${id}/biometric/enroll`, formData, {
-      headers: { "Content-Type": "multipart/form-data" },
-    }),
-  deleteBiometric: (id: string) =>
-    apiClient.delete<void>(`/v1/employees/${id}/biometric`),
   orgChart: () => apiClient.get<OrgChartNode[]>("/v1/employees/org-chart"),
   directory: () =>
     apiClient.get<DirectoryResponse>("/v1/employees/directory"),
@@ -1033,11 +1016,22 @@ export const schedulesApi = {
 };
 
 export const settingsApi = {
-  /** `category` filters server-side (company.*, payroll.*, …). */
-  get: (category?: string) =>
-    apiClient.get<Record<string, string>>("/v1/settings", {
+  /**
+   * `category` filters server-side (company.*, payroll.*, …). The backend
+   * returns a list of {key, value, …}; flatten it into a key→value map since
+   * every caller indexes settings by key.
+   */
+  get: async (category?: string) => {
+    const res = await apiClient.get<SettingValue[]>("/v1/settings", {
       params: category ? { category } : {},
-    }),
+    });
+    const list = Array.isArray(res.data) ? res.data : [];
+    const values = list.reduce<Record<string, string>>((acc, s) => {
+      acc[s.key] = s.value;
+      return acc;
+    }, {});
+    return { ...res, data: values };
+  },
   put: (key: string, value: string) =>
     apiClient.put<SettingValue>(`/v1/settings/${key}`, { value }),
 };
@@ -1052,7 +1046,7 @@ export type PayrollPeriodStatus =
   | "PAID"
   | "LOCKED";
 
-export type PayslipStatus = "DRAFT" | "FLAGGED" | "APPROVED" | "PAID";
+export type PayslipStatus = "DRAFT" | "APPROVED" | "PAID";
 
 export type AdditionType = "BONUS" | "DEDUCTION";
 
@@ -1174,11 +1168,6 @@ export interface Payslip {
   isResident: boolean;
   hasDisability: boolean;
   status: PayslipStatus;
-  anomalyScore?: string | null;
-  anomalyFlags?: string[] | null;
-  aiReviewed: boolean;
-  aiReviewedBy?: string | null;
-  aiReviewedAt?: string | null;
   pdfUrl?: string | null;
   createdAt?: string | null;
 }
@@ -1279,8 +1268,6 @@ export const payrollApi = {
     apiClient.post<Payslip>(`/v1/payroll/payslips/${id}/recalculate`),
   payslipPdf: (id: string) =>
     apiClient.get(`/v1/payroll/payslips/${id}/pdf`, { responseType: "blob" }),
-  approveFlagged: (id: string) =>
-    apiClient.post<Payslip>(`/v1/payroll/payslips/${id}/approve-flagged`),
 
   // Self-service
   myPayslips: (params: Record<string, unknown> = {}) =>
@@ -1345,7 +1332,6 @@ export const reportsApi = {
     apiClient.get("/v1/reports/headcount", { params: { from, to }, ...BLOB }),
   executiveSummary: (year: number, month: number) =>
     apiClient.get("/v1/reports/executive-summary", { params: { year, month }, ...BLOB }),
-  aiInsights: () => apiClient.get("/v1/reports/ai-insights", { ...BLOB }),
 };
 
 export interface SyncJob {
@@ -1383,64 +1369,6 @@ export const integrationApi = {
     apiClient.post<SyncJob>(`/v1/integration/retry/${jobId}`),
   bankFile: (periodId: string) =>
     apiClient.get(`/v1/integration/bank-file/${periodId}`, { ...BLOB }),
-};
-
-export interface AttritionFactor {
-  factor: string;
-  weight: number;
-}
-
-export interface AttritionRisk {
-  employeeId: string;
-  employeeName?: string;
-  department?: string | null;
-  position?: string | null;
-  riskScore: number;
-  riskLevel: "LOW" | "MEDIUM" | "HIGH" | string;
-  topFactors?: AttritionFactor[];
-  recommendations?: string[];
-}
-
-export interface PayrollForecastPoint {
-  month: string; // "2026-06"
-  predictedGross: number;
-  predictedNet: number;
-  lowerBound?: number;
-  upperBound?: number;
-}
-
-export interface PayrollForecast {
-  horizonMonths: number;
-  points: PayrollForecastPoint[];
-  assumptions?: {
-    headcount?: number;
-    avgSalary?: number;
-    growthRate?: number;
-  };
-}
-
-export interface PayrollAnomaly {
-  payslipId: string;
-  periodId?: string | null;
-  periodName?: string | null;
-  employeeId?: string | null;
-  employeeName?: string | null;
-  anomalyScore: number;
-  flags?: string[];
-  detectedAt?: string | null;
-}
-
-export const aiApi = {
-  attritionRisk: (departmentId?: string) =>
-    apiClient.get<AttritionRisk[]>("/v1/ai/attrition/risk", {
-      params: departmentId ? { departmentId } : {},
-    }),
-  payrollForecast: (months: number) =>
-    apiClient.get<PayrollForecast>("/v1/ai/payroll/forecast", {
-      params: { months },
-    }),
-  recentAnomalies: () =>
-    apiClient.get<PayrollAnomaly[]>("/v1/ai/payroll/recent-anomalies"),
 };
 
 export default apiClient;

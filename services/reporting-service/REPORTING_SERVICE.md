@@ -32,8 +32,6 @@ GET /v1/reports/headcount               ?from=&to= → XLSX (count by dept/statu
 # Executive (REPORT_EXECUTIVE)
 GET /v1/reports/executive-summary       ?year=&month= → PDF (all-in-one)
 
-# AI (AI_DASHBOARD)
-GET /v1/reports/ai-insights             → PDF (anomalies, attrition risks, forecasts)
 
 # Dashboard (any authenticated)
 GET /v1/dashboard/stats                 → JSON, role-aware aggregation
@@ -78,7 +76,6 @@ reportService.generate(params, response.getOutputStream());
 - `employee-service` → employee list for directory/headcount + dashboard employee counts
 - `attendance-service` → attendance records for monthly grid + dashboard today's counts
 - `leave-service` → leave balances + dashboard pending count and personal balance
-- `ai-ml-service` → attrition risks for AI report
 
 ## Events Consumed
 - `PayrollJobCompletedEvent` → optionally pre-generate payroll summary report; invalidate dashboard payroll cache

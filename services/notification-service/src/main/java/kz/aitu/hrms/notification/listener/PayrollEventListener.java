@@ -1,6 +1,5 @@
 package kz.aitu.hrms.notification.listener;
 
-import kz.aitu.hrms.common.event.PayrollAnomalyDetectedEvent;
 import kz.aitu.hrms.common.event.PayrollJobCompletedEvent;
 import kz.aitu.hrms.common.event.PayrollJobStartedEvent;
 import kz.aitu.hrms.common.event.PayrollPeriodApprovedEvent;
@@ -54,20 +53,6 @@ public class PayrollEventListener {
             log.info("consumed PayrollJobCompletedEvent periodId={}", event.getPeriodId());
         } catch (Exception e) {
             log.error("Failed to process PayrollJobCompletedEvent {}: {}", event.getPeriodId(), e.getMessage(), e);
-        }
-    }
-
-    @RabbitListener(queues = RabbitConfig.Q_PAYROLL_ANOMALY)
-    public void onPayrollAnomalyDetected(PayrollAnomalyDetectedEvent event) {
-        try {
-            List<UUID> userIds = recipients.resolveUserIdsByPermission("PAYROLL_APPROVE");
-            for (UUID userId : userIds) {
-                var built = factory.fromPayrollAnomalyDetected(event, userId);
-                service.create(built.notification(), built.idempotencyKey(), built.emailRequest());
-            }
-            log.info("consumed PayrollAnomalyDetectedEvent payslipId={}", event.getPayslipId());
-        } catch (Exception e) {
-            log.error("Failed to process PayrollAnomalyDetectedEvent {}: {}", event.getPayslipId(), e.getMessage(), e);
         }
     }
 

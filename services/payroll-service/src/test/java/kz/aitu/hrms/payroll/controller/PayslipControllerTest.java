@@ -25,7 +25,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -94,18 +93,6 @@ class PayslipControllerTest {
                         .content("{\"allowances\":15000,\"workedDays\":22}"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.allowances").value(15000));
-    }
-
-    @Test
-    @WithMockJwtUser(authorities = "PAYROLL_APPROVE")
-    void approveFlagged_returnsApprovedDraft() throws Exception {
-        UUID id = UUID.randomUUID();
-        when(payslipService.approveFlagged(id)).thenReturn(PayslipDtos.Response.builder()
-                .id(id).status(PayslipStatus.DRAFT).aiReviewed(true).build());
-
-        mvc.perform(post("/v1/payroll/payslips/" + id + "/approve-flagged"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.aiReviewed").value(true));
     }
 
     @Test

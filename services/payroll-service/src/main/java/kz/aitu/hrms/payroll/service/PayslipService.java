@@ -18,7 +18,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Slf4j
@@ -48,10 +47,9 @@ public class PayslipService {
     @Transactional
     public PayslipDtos.Response adjust(UUID payslipId, PayslipDtos.AdjustRequest req) {
         Payslip payslip = requirePayslip(payslipId);
-        if (payslip.getStatus() != PayslipStatus.DRAFT
-                && payslip.getStatus() != PayslipStatus.FLAGGED) {
+        if (payslip.getStatus() != PayslipStatus.DRAFT) {
             throw new BusinessException(
-                    "Only DRAFT or FLAGGED payslips can be adjusted (current: " + payslip.getStatus() + ")");
+                    "Only DRAFT payslips can be adjusted (current: " + payslip.getStatus() + ")");
         }
         if (payslip.getPeriod().getStatus() == PayrollPeriodStatus.LOCKED) {
             throw new BusinessException("Cannot adjust payslip in a locked period");
@@ -79,21 +77,6 @@ public class PayslipService {
                 payslip.getWorkedDays(),
                 payslip.getAllowances(),
                 payslip.getOtherDeductions());
-        return mapper.toPayslipResponse(payslipRepo.save(payslip));
-    }
-
-    @Transactional
-    public PayslipDtos.Response approveFlagged(UUID payslipId) {
-        Payslip payslip = requirePayslip(payslipId);
-        if (payslip.getStatus() != PayslipStatus.FLAGGED) {
-            throw new BusinessException(
-                    "Only FLAGGED payslips can be approved via approve-flagged (current: "
-                            + payslip.getStatus() + ")");
-        }
-        payslip.setStatus(PayslipStatus.DRAFT);
-        payslip.setAiReviewed(true);
-        payslip.setAiReviewedBy(CurrentUser.userId());
-        payslip.setAiReviewedAt(LocalDateTime.now());
         return mapper.toPayslipResponse(payslipRepo.save(payslip));
     }
 

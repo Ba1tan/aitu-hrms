@@ -27,13 +27,11 @@ public class AttendanceMapper {
                 .checkOutMethod(r.getCheckOutMethod())
                 .workedHours(toHours(r.getWorkedMinutes()))
                 .overtimeMinutes(r.getOvertimeMinutes())
-                .fraudScore(r.getFraudScore())
-                .fraudFlags(r.getFraudFlags())
                 .notes(r.getNotes())
                 .build();
     }
 
-    public AttendanceDtos.CheckInResponse toCheckIn(AttendanceRecord r, String employeeName, Double faceConfidence) {
+    public AttendanceDtos.CheckInResponse toCheckIn(AttendanceRecord r, String employeeName) {
         return AttendanceDtos.CheckInResponse.builder()
                 .id(r.getId())
                 .employeeId(r.getEmployeeId())
@@ -44,8 +42,6 @@ public class AttendanceMapper {
                 .status(r.getStatus())
                 .method(r.getCheckOut() != null ? r.getCheckOutMethod() : r.getCheckInMethod())
                 .workedHours(toHours(r.getWorkedMinutes()))
-                .faceConfidence(faceConfidence)
-                .fraudScore(r.getFraudScore())
                 .build();
     }
 

@@ -53,7 +53,6 @@ Authoritative list lives in `env.example`. Pending services need:
 
 | Service | Required new vars |
 |---|---|
-| ai-ml-service | `FACE_MODEL_NAME`, `FACE_SIMILARITY_THRESHOLD`, `MODEL_DIR` |
 | reporting-service | `PDF_FONT_PATH`, `REPORT_TMP_DIR` |
 | notification-service | `MAIL_HOST/PORT/USERNAME/PASSWORD`, `FCM_CREDENTIALS_JSON` (optional), `NOTIFICATION_FROM_EMAIL` |
 | integration-hub | `ONE_C_BASE_URL`, `ONE_C_USERNAME`, `ONE_C_PASSWORD`, `BANK_FILE_FORMAT` |
@@ -169,7 +168,7 @@ Restart consumers after RMQ recovers — they re-bind queues automatically.
 
 ### 5.4 File storage
 
-`/data/hrms/uploads/` (employee docs, biometric photos) and
+`/data/hrms/uploads/` (employee documents) and
 `/data/hrms/payslips/` (PDFs) live on a docker-managed volume. The compose
 volumes are persistent across container recreate. Off-host backup: same
 nightly cron, `tar.gz` to the same offsite.

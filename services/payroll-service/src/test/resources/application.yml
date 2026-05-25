@@ -51,7 +51,6 @@ app:
     sn-rate: 0.06
     opvr-rate: 0.035
     oopv-rate: 0.0
-    anomaly-flag-threshold: 0.65
     pdf-storage-path: /tmp/hrms-payslips-test
     batch-threshold: 50
   services:
@@ -59,4 +58,3 @@ app:
     employee-service-uri: http://localhost:8082
     attendance-service-uri: http://localhost:8083
     leave-service-uri: http://localhost:8084
-    ai-ml-service-uri: http://localhost:8086

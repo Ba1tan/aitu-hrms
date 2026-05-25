@@ -3,21 +3,19 @@
 **Port:** 8083 | **Schema:** hrms_attendance | **Owner:** Askar
 
 ## Responsibility
-Check-in/out via face recognition (primary) or manual entry, work schedules, holiday calendar, fraud detection via AI, overtime tracking, daily/monthly summaries.
+Check-in/out via web or manual entry, work schedules, holiday calendar, overtime tracking, daily/monthly summaries.
 
 ## Tables
-- `attendance_records` — daily record per employee with check_in/out times, status, method (FACE/MANUAL/WEB/MOBILE), location, fraud_score
+- `attendance_records` — daily record per employee with check_in/out times, status, method (MANUAL/WEB/MOBILE)
 - `work_schedules` — configurable shifts (start/end time, late threshold)
 - `holidays` — KZ public holidays (16 seeded for 2026, is_annual flag)
-- `biometric_data` — enrollment status (method, embedding_path, photo_urls, enrolled_at)
 
 ## Endpoints (20)
 
 ```
 # Face Recognition Check-in (ATTENDANCE_CHECKIN)
-POST /v1/attendance/check-in/face          # Multipart: face photo → AI verifies → records attendance
 POST /v1/attendance/check-out/face         # Same — captures face on exit
-POST /v1/attendance/check-in               # Manual/web: {employeeId?, method?} — fallback when AI unavailable
+POST /v1/attendance/check-in               # {employeeId?, method: WEB|MANUAL}
 POST /v1/attendance/check-out              # Manual/web check-out
 GET  /v1/attendance/today                  # My status today
 
@@ -77,11 +75,8 @@ This is the primary check-in method. A tablet/kiosk at the office entrance captu
     → Get recent check-ins for this employee
     → If time_diff < 30min from last check-in, or unusual patterns:
       → Call AI: POST /v1/ai/attendance/fraud-detect {behavioral features}
-      → If fraud_score > 0.65 → BLOCK, save fraud_score + flags, alert HR
-      → If fraud_score 0.3-0.65 → ALLOW but save fraud_score for review
 13. Save attendance_record with:
     → check_in_method = 'FACE'
-    → fraud_score (if checked)
     → Return success with employee name + time
 ```
 
@@ -197,8 +192,6 @@ public CheckInResponse checkIn(UUID employeeId, String method,
         .checkInMethod(method)
         .locationLat(locationLat != null ? BigDecimal.valueOf(locationLat) : null)
         .locationLng(locationLng != null ? BigDecimal.valueOf(locationLng) : null)
-        .fraudScore(fraudScore != null ? BigDecimal.valueOf(fraudScore) : null)
-        .fraudFlags(fraudFlags)
         .build();
 
     record = recordRepo.save(record);
@@ -213,40 +206,19 @@ public CheckInResponse checkIn(UUID employeeId, String method,
 }
 ```
 
-## Two-Layer AI Protection
-
-```
-Layer 1: Face Recognition (identity verification)
-├── Is this a real face? (liveness detection)
-├── Whose face is this? (embedding comparison)
-└── Confidence > 0.85? (threshold check)
-
-Layer 2: Behavioral Fraud Detection (pattern analysis)
-├── Same person checked in 15 min ago from different location?
-├── Check-in at unusual hour for this employee?
-├── Suspicious device/location pattern?
-└── Isolation Forest anomaly score > 0.65 → BLOCK
-```
-
-Layer 1 runs on EVERY face check-in. Layer 2 only runs when suspicious patterns are detected (recent check-in exists, unusual timing, etc.) to avoid unnecessary AI calls.
-
 ## Events Published
 - `AttendanceRecordedEvent` {employeeId, workDate, status, workedHours, method}
-- `FraudAttemptDetectedEvent` {employeeId, fraudScore, flags, method, deviceId}
 
 ## Events Consumed
 - `LeaveApprovedEvent` → mark leave dates as ON_LEAVE in attendance_records
 
 ## Feign Clients
 - `employee-service` → verify employee exists, get department, get schedule
-- `ai-ml-service` → POST /v1/ai/biometric/verify (face recognition)
-- `ai-ml-service` → POST /v1/ai/attendance/fraud-detect (behavioral, non-critical try/catch)
 
 ## Environment Variables
 ```
 DB_URL=jdbc:postgresql://postgres:5432/hrms?currentSchema=hrms_attendance
 REDIS_HOST=redis
 RABBITMQ_HOST=rabbitmq
-AI_ML_SERVICE_URL=http://ai-ml-service:8086
 EMPLOYEE_SERVICE_URL=http://employee-service:8082
 ```

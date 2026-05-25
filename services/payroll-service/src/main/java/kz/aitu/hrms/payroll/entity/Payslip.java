@@ -15,7 +15,6 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
 import java.util.UUID;
 
 /**
@@ -124,27 +123,11 @@ public class Payslip extends BaseEntity {
     @Builder.Default
     private boolean disability = false;
 
-    // ── Status & AI ────────────────────────────────────────────────────────
+    // ── Status ─────────────────────────────────────────────────────────────
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     @Builder.Default
     private PayslipStatus status = PayslipStatus.DRAFT;
-
-    @Column(name = "anomaly_score", precision = 5, scale = 4)
-    private BigDecimal anomalyScore;
-
-    @Column(name = "anomaly_flags", columnDefinition = "text")
-    private String anomalyFlags;
-
-    @Column(name = "ai_reviewed", nullable = false)
-    @Builder.Default
-    private boolean aiReviewed = false;
-
-    @Column(name = "ai_reviewed_by")
-    private UUID aiReviewedBy;
-
-    @Column(name = "ai_reviewed_at")
-    private LocalDateTime aiReviewedAt;
 
     @Column(name = "pdf_url", columnDefinition = "text")
     private String pdfUrl;

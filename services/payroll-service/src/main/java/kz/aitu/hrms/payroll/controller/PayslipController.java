@@ -55,7 +55,7 @@ public class PayslipController {
         return ResponseEntity.ok(ApiResponse.ok(payslipService.detail(id)));
     }
 
-    @Operation(summary = "Adjust a DRAFT or FLAGGED payslip")
+    @Operation(summary = "Adjust a DRAFT payslip")
     @PatchMapping("/payslips/{id}/adjust")
     @PreAuthorize("hasAuthority('PAYSLIP_ADJUST')")
     public ResponseEntity<ApiResponse<PayslipDtos.Response>> adjust(
@@ -69,14 +69,6 @@ public class PayslipController {
     @PreAuthorize("hasAuthority('PAYSLIP_ADJUST')")
     public ResponseEntity<ApiResponse<PayslipDtos.Response>> recalculate(@PathVariable UUID id) {
         return ResponseEntity.ok(ApiResponse.ok(payslipService.recalculate(id)));
-    }
-
-    @Operation(summary = "Approve a FLAGGED payslip after manual review")
-    @PostMapping("/payslips/{id}/approve-flagged")
-    @PreAuthorize("hasAuthority('PAYROLL_APPROVE')")
-    public ResponseEntity<ApiResponse<PayslipDtos.Response>> approveFlagged(@PathVariable UUID id) {
-        return ResponseEntity.ok(ApiResponse.ok(
-                "Flagged payslip approved", payslipService.approveFlagged(id)));
     }
 
     @Operation(summary = "Download payslip as PDF (HR/finance)")

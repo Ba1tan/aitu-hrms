@@ -17,8 +17,7 @@ identifiable natural person. In this system that includes:
 |---|---|---|
 | Full name, IIN, contact details, photo | `hrms_employee.employees` | High (IIN is regulated) |
 | Salary, bank details, payslips | `hrms_employee`, `hrms_payroll` | High |
-| Biometric (face photos + embeddings) | `/data/hrms/uploads/employees/{id}/biometric/`, ai-ml-service embedding store | **Special category** — written consent required |
-| Attendance check-ins (with photo on face check-in) | `hrms_attendance.attendance_records`, `biometric_attempts` | Medium |
+| Attendance check-ins | `hrms_attendance.attendance_records` | Low |
 | Leave reasons (may include medical) | `hrms_leave.leave_requests.reason` | High |
 | Audit log (who did what) | `hrms_user.audit_logs` | Internal |
 
@@ -30,8 +29,6 @@ identifiable natural person. In this system that includes:
 |---|---|
 | Employment lifecycle, payroll calculation | Performance of employment contract |
 | KZ tax / state pension reporting | Compliance with legal obligation |
-| Biometric check-in | **Explicit written consent** of the employee — required before enrollment |
-| AI fraud / anomaly flagging | Legitimate interest (operator's right) — must be documented |
 | Marketing / non-employment use | Out of scope. Do not add. |
 
 ---
@@ -44,7 +41,6 @@ necessary for the purpose." The schedule below is operational policy.
 | Data | Retention | Trigger | Method |
 |---|---|---|---|
 | Employee profile | Active employment + 5 years | Termination + 5y | Soft delete on termination; hard delete after 5y via batch job |
-| Biometric photos + embeddings | Active employment only | Termination | **Hard delete immediately** on termination — legal minimum |
 | Payslips (PDF + DB row) | 5 years | Period close | KZ Tax Code Art. 48 — keep 5y from period |
 | Audit logs | 3 years | Row creation | Trim batch monthly |
 | Attendance records | 3 years | Workday | Trim batch monthly |
@@ -70,7 +66,6 @@ delete within **30 calendar days**.
 
 1. SUPER_ADMIN opens `/v1/employees/{id}` and triggers "GDPR delete".
 2. employee-service:
-   - Drops biometric photos + embeddings (call ai-ml-service to drop the
      embedding row).
    - Anonymizes profile: name → `Удалённый сотрудник`, email → `null`,
      phone → `null`, IIN → `null`. Keep `id` for FK integrity.
@@ -84,11 +79,7 @@ delete within **30 calendar days**.
 
 ---
 
-## 5. Biometric consent
-
-Required artifact: a signed **biometric consent form** in Russian + Kazakh,
 stored in `employee_documents` with type `BIOMETRIC_CONSENT`. Enrollment
-endpoint (`POST /v1/employees/{id}/biometric/enroll`) MUST refuse if no
 active consent document exists. This check is not implemented today — add
 it before signing the first customer.
 
@@ -102,7 +93,7 @@ it before signing the first customer.
   do not surface salary in employee directory exports without explicit
   permission.
 - Logs MUST NOT log full IIN, full name + DOB + address, salary numeric,
-  or biometric content. Use `LogSanitizer` (TBD utility) before any
+  Use `LogSanitizer` (TBD utility) before any
   `log.info`.
 
 ---
@@ -116,7 +107,6 @@ exceptions. Practical implications:
 - Hosting must be in Kazakhstan (or a jurisdiction with PDPL adequacy).
   Today's deploy at `hrms.nursnerv.uk` is fine if hosted in KZ — verify
   with the hosting provider.
-- AI inference happens in `ai-ml-service`, which runs on the same host —
   no transfer.
 - Email (SMTP) and push (FCM) are external. SMTP is operator-chosen, can
   be a KZ provider. FCM is Google → falls under "Google Workspace KZ
@@ -150,7 +140,6 @@ TODO list — see `docs/HRMS_ENTERPRISE_ARCHITECTURE.md` §5.
 
 ## 10. Open items before customer #1
 
-- [ ] Biometric consent gate in employee-service enrollment endpoint.
 - [ ] GDPR-delete endpoint + `EmployeePurgedEvent` wiring.
 - [ ] Per-service retention batch job.
 - [ ] LogSanitizer utility + adoption review.

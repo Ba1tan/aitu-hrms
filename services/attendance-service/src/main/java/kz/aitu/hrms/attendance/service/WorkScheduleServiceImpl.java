@@ -87,7 +87,10 @@ public class WorkScheduleServiceImpl implements WorkScheduleService {
         Optional<WorkSchedule> existing = scheduleRepo.findByIsDefaultTrueAndDeletedFalse();
         existing.ifPresent(s -> {
             s.setDefault(false);
-            scheduleRepo.save(s);
+            // Flush immediately: otherwise Hibernate orders the new default's
+            // INSERT before this UPDATE on commit, and the two rows transiently
+            // collide on the idx_work_schedules_default partial unique index.
+            scheduleRepo.saveAndFlush(s);
         });
     }
 }

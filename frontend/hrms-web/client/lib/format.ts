@@ -76,7 +76,6 @@ export const statusColor: Record<string, string> = {
   LOCKED: "#8B5CF6",
   PROCESSING: "#F59E0B",
   COMPLETED: "#10B981",
-  FLAGGED: "#EF4444",
 };
 
 export const payrollStatusLabel: Record<string, string> = {
@@ -86,7 +85,6 @@ export const payrollStatusLabel: Record<string, string> = {
   APPROVED: "Утверждён",
   PAID: "Выплачен",
   LOCKED: "Заблокирован",
-  FLAGGED: "Помечен AI",
 };
 
 const MONTHS_RU = [

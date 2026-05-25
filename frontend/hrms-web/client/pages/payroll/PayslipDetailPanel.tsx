@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { toast } from "sonner";
-import { AlertTriangle, Calculator, Download, FileText } from "lucide-react";
+import { Calculator, Download, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -13,7 +13,6 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import {
-  useApproveFlaggedPayslip,
   useMyPayslip,
   usePayslip,
   useRecalculatePayslip,
@@ -27,11 +26,9 @@ interface Props {
   payslipId: string | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  /** Admin variant shows tax breakdown + adjust/recalculate/approve-flagged + employer taxes. */
+  /** Admin variant shows tax breakdown + adjust/recalculate + employer taxes. */
   variant?: "admin" | "employee";
 }
-
-const ANOMALY_THRESHOLD = 0.65;
 
 const parseAmount = (v: string | number | null | undefined): number => {
   if (v === null || v === undefined || v === "") return 0;
@@ -101,12 +98,9 @@ export default function PayslipDetailPanel({
   const payslip = isAdmin ? adminQuery.data : selfQuery.data;
   const isLoading = isAdmin ? adminQuery.isLoading : selfQuery.isLoading;
   const recalc = useRecalculatePayslip(payslipId ?? "");
-  const approveFlagged = useApproveFlaggedPayslip(payslipId ?? "");
   const [downloading, setDownloading] = useState(false);
 
-
   const canAdjust = isAdmin && hasPermission("PAYSLIP_ADJUST");
-  const canApproveFlagged = isAdmin && hasPermission("PAYROLL_APPROVE");
 
   const downloadPdf = async () => {
     if (!payslipId || !payslip) return;
@@ -143,19 +137,6 @@ export default function PayslipDetailPanel({
         toast.error(e?.response?.data?.message ?? "Ошибка пересчёта"),
     });
   };
-
-  const onApproveFlagged = () => {
-    approveFlagged.mutate(undefined, {
-      onSuccess: () => toast.success("AI-флаги подтверждены вручную"),
-      onError: (e: any) =>
-        toast.error(e?.response?.data?.message ?? "Не удалось подтвердить"),
-    });
-  };
-
-  const score = payslip?.anomalyScore ? Number(payslip.anomalyScore) : null;
-  const isFlagged =
-    payslip?.status === "FLAGGED" ||
-    (score !== null && !Number.isNaN(score) && score > ANOMALY_THRESHOLD);
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -203,45 +184,6 @@ export default function PayslipDetailPanel({
                 </span>
               )}
             </div>
-
-            {isFlagged && (
-              <div className="rounded-xl border border-red-200 bg-red-50 p-4">
-                <div className="flex items-start gap-2">
-                  <AlertTriangle className="h-5 w-5 text-red-500 mt-0.5" />
-                  <div className="flex-1">
-                    <div className="font-semibold text-red-700">
-                      AI отметил аномалию
-                    </div>
-                    {score !== null && !Number.isNaN(score) && (
-                      <div className="text-sm text-red-700">
-                        Оценка: {score.toFixed(2)}
-                      </div>
-                    )}
-                    {Array.isArray(payslip.anomalyFlags) &&
-                      payslip.anomalyFlags.length > 0 && (
-                        <ul className="text-sm text-red-700 list-disc list-inside mt-1">
-                          {payslip.anomalyFlags.map((f) => (
-                            <li key={f}>{f}</li>
-                          ))}
-                        </ul>
-                      )}
-                    {canApproveFlagged && payslip.status === "FLAGGED" && (
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="mt-3 border-red-300"
-                        onClick={onApproveFlagged}
-                        disabled={approveFlagged.isPending}
-                      >
-                        {approveFlagged.isPending
-                          ? "Подтверждение…"
-                          : "Подтвердить вручную"}
-                      </Button>
-                    )}
-                  </div>
-                </div>
-              </div>
-            )}
 
             <div>
               <div className="flex items-center justify-between text-sm py-1.5">

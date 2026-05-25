@@ -19,7 +19,6 @@ import org.springframework.context.annotation.Configuration;
 /**
  * Attendance-service publishes:
  *   - attendance.recorded       (after each successful check-in/out)
- *   - attendance.fraud.detected (when fraud_score crosses block-threshold)
  *
  * Consumes:
  *   - leave.approved            -> mark leave dates as ON_LEAVE in attendance_records
@@ -31,7 +30,6 @@ public class RabbitConfig {
     public static final String EXCHANGE = "hrms.events";
 
     public static final String RK_ATTENDANCE_RECORDED       = "attendance.recorded";
-    public static final String RK_FRAUD_DETECTED            = "attendance.fraud.detected";
     public static final String RK_LEAVE_APPROVED            = "leave.approved";
 
     public static final String QUEUE_LEAVE_APPROVED         = "attendance.leave.approved";

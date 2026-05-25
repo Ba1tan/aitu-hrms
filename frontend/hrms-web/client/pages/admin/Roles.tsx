@@ -55,7 +55,6 @@ const FALLBACK_PERMISSIONS: PermissionEntry[] = [
   { code: "REPORT_LEAVE", module: "Reports" },
   { code: "REPORT_EXECUTIVE", module: "Reports" },
   { code: "REPORT_HR", module: "Reports" },
-  { code: "AI_DASHBOARD", module: "AI" },
   { code: "INTEGRATION_MANAGE", module: "Integration" },
   { code: "SYSTEM_USERS", module: "System" },
   { code: "SYSTEM_SETTINGS", module: "System" },

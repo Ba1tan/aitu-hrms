@@ -56,12 +56,7 @@ const CATALOG: SettingDef[] = [
     key: "attendance.check_in_methods",
     label: "Методы отметки",
     type: "array",
-    hint: "Список через запятую: WEB, FACE, MANUAL, MOBILE",
-  },
-  {
-    key: "attendance.require_face",
-    label: "Требовать распознавание лица",
-    type: "bool",
+    hint: "Список через запятую: WEB, MANUAL, MOBILE",
   },
   {
     key: "attendance.work_schedule_default_id",

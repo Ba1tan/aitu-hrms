@@ -123,31 +123,6 @@ export const useEmergencyContacts = (id: string | undefined) =>
     enabled: !!id,
   });
 
-export const useBiometricStatus = (id: string | undefined) =>
-  useQuery({
-    queryKey: ["employee", id, "biometric"],
-    queryFn: () => employeesApi.biometricStatus(id!).then((r) => r.data),
-    enabled: !!id,
-    retry: false,
-  });
-
-export const useEnrollBiometric = (id: string) => {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: (formData: FormData) =>
-      employeesApi.enrollBiometric(id, formData).then((r) => r.data),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["employee", id, "biometric"] }),
-  });
-};
-
-export const useDeleteBiometric = (id: string) => {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: () => employeesApi.deleteBiometric(id),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["employee", id, "biometric"] }),
-  });
-};
-
 export const useOrgChart = () =>
   useQuery({
     queryKey: ["employees", "org-chart"],

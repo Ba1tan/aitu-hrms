@@ -75,8 +75,6 @@ public class AttendanceDtos {
         private AttendanceStatus status;
         private CheckInMethod method;
         private BigDecimal workedHours;
-        private Double faceConfidence;
-        private BigDecimal fraudScore;
     }
 
     @Data
@@ -109,8 +107,6 @@ public class AttendanceDtos {
         private CheckInMethod checkOutMethod;
         private BigDecimal workedHours;
         private Integer overtimeMinutes;
-        private BigDecimal fraudScore;
-        private String fraudFlags;
         private String notes;
     }
 

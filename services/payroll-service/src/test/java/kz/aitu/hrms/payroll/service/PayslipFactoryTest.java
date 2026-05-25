@@ -51,7 +51,6 @@ class PayslipFactoryTest {
         ReflectionTestUtils.setField(calculator, "opvrRate", new BigDecimal("0.035"));
 
         factory = new PayslipFactory(calculator, attendanceClient, additionRepo);
-        ReflectionTestUtils.setField(factory, "anomalyFlagThreshold", new BigDecimal("0.65"));
     }
 
     @Test

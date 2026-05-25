@@ -4,7 +4,6 @@ import kz.aitu.hrms.common.security.JwtAuthenticationFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -27,15 +26,6 @@ public class SecurityConfig {
             "/swagger-ui.html"
     };
 
-    /**
-     * Kiosk endpoints — the face IS the auth, no JWT required.
-     * The captured photo is sent to ai-ml-service which resolves the employee.
-     */
-    private static final String[] KIOSK_ENDPOINTS = {
-            "/v1/attendance/check-in/face",
-            "/v1/attendance/check-out/face"
-    };
-
     private final JwtAuthenticationFilter jwtAuthFilter;
 
     @Bean
@@ -46,7 +36,6 @@ public class SecurityConfig {
                 .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(a -> a
                         .requestMatchers(PUBLIC_ENDPOINTS).permitAll()
-                        .requestMatchers(HttpMethod.POST, KIOSK_ENDPOINTS).permitAll()
                         .anyRequest().authenticated())
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
                 .build();

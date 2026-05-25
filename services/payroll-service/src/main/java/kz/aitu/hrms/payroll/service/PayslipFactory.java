@@ -12,22 +12,12 @@ import kz.aitu.hrms.payroll.entity.PayslipStatus;
 import kz.aitu.hrms.payroll.repository.PayrollAdditionRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.UUID;
 
-/**
- * Builds a {@link Payslip} for one (employee, period) tuple by:
- *   1. fetching worked days from attendance-service (falls back to full month)
- *   2. summing additions for the period (allowances vs. deductions)
- *   3. running {@link KazakhstanPayrollCalculator}
- *   4. composing the {@link Payslip} with an employee snapshot
- *
- * Does not persist or call the AI service — that is the orchestrator's job.
- */
 @Slf4j
 @Component
 @RequiredArgsConstructor
@@ -36,9 +26,6 @@ public class PayslipFactory {
     private final KazakhstanPayrollCalculator calculator;
     private final AttendanceClient attendanceClient;
     private final PayrollAdditionRepository additionRepo;
-
-    @Value("${app.payroll.anomaly-flag-threshold}")
-    private BigDecimal anomalyFlagThreshold;
 
     public Payslip build(EmployeePayrollProfile profile, PayrollPeriod period) {
         int workedDays = resolveWorkedDays(profile.getEmployeeId(), period);
@@ -119,10 +106,6 @@ public class PayslipFactory {
         payslip.setOpvrAmount(r.getOpvrAmount());
         payslip.setMrpUsed(r.getMrpUsed());
         return payslip;
-    }
-
-    public BigDecimal getAnomalyFlagThreshold() {
-        return anomalyFlagThreshold;
     }
 
     private int resolveWorkedDays(UUID employeeId, PayrollPeriod period) {

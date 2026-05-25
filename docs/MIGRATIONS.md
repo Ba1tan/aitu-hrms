@@ -91,8 +91,6 @@ Hibernate `create-drop` from JPA entities is sufficient for repository tests.
 | `hrms_notification` | notification-service (pending) | `V1__init_notification_schema.sql` (TBD) |
 | `hrms_integration` | integration-hub (pending) | `V1__init_integration_schema.sql` (TBD) |
 
-> **ai-ml-service has no schema** — it is stateless. Models and embeddings
-> live on disk under `/data/hrms/ai-models/`.
 
 ---
 

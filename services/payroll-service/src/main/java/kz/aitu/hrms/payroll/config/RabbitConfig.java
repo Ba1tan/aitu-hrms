@@ -20,7 +20,6 @@ import org.springframework.context.annotation.Configuration;
  * payroll-service publishes:
  *   - payroll.job.started        — when payslip generation begins
  *   - payroll.job.completed      — totals after generation
- *   - payroll.anomaly.detected   — per-payslip flag from AI
  *   - payroll.period.approved    — triggers integration-hub 1C sync
  *
  * Consumes:
@@ -35,7 +34,6 @@ public class RabbitConfig {
 
     public static final String RK_PAYROLL_JOB_STARTED      = "payroll.job.started";
     public static final String RK_PAYROLL_JOB_COMPLETED    = "payroll.job.completed";
-    public static final String RK_PAYROLL_ANOMALY          = "payroll.anomaly.detected";
     public static final String RK_PAYROLL_PERIOD_APPROVED  = "payroll.period.approved";
 
     public static final String RK_EMPLOYEE_CREATED         = "employee.created";

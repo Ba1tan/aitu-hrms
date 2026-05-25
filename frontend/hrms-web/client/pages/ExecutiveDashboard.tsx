@@ -15,7 +15,6 @@ import {
   Tooltip,
   Legend,
 } from "recharts";
-import { TrendingUp, AlertTriangle, Info } from "lucide-react";
 import DashboardLayout from "./DashboardLayout";
 import {
   Card,
@@ -24,7 +23,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   employeesApi,
@@ -34,7 +32,6 @@ import {
   type PayrollPeriod,
   type PageResponse,
 } from "../../shared/api";
-import { useAttritionRisk, useRecentAnomalies } from "../hooks/api/useAi";
 import { formatKZT, formatPeriodName, parseLocalDate } from "../lib/format";
 
 const PIE_COLORS = [
@@ -80,8 +77,6 @@ export default function ExecutiveDashboard() {
     queryKey: ["exec", "periods"],
     queryFn: () => payrollApi.listPeriods({ size: 24 }).then((r) => r.data),
   });
-  const attrition = useAttritionRisk();
-  const anomalies = useRecentAnomalies();
 
   const employees = unwrapPage<EmployeeListItem>(employeesQuery.data);
   const periods = unwrapPage<PayrollPeriod>(periodsQuery.data);
@@ -130,14 +125,6 @@ export default function ExecutiveDashboard() {
       .map(([name, value]) => ({ name, value }))
       .sort((a, b) => b.value - a.value);
   }, [employees]);
-
-  const topAttrition = useMemo(
-    () =>
-      [...(attrition.data?.items ?? [])]
-        .sort((a, b) => b.riskScore - a.riskScore)
-        .slice(0, 5),
-    [attrition.data],
-  );
 
   const loading = employeesQuery.isLoading || periodsQuery.isLoading;
 
@@ -254,89 +241,6 @@ export default function ExecutiveDashboard() {
                     <Tooltip />
                   </PieChart>
                 </ResponsiveContainer>
-              )}
-            </CardContent>
-          </Card>
-
-          <Card className="bg-white/60 backdrop-blur">
-            <CardHeader>
-              <CardTitle className="text-base flex items-center gap-2">
-                <AlertTriangle className="h-4 w-4 text-amber-500" />
-                Риск оттока — топ-5
-              </CardTitle>
-              <CardDescription>
-                Источник: ai-ml-service{" "}
-                {!attrition.data?.available && "(не развёрнут)"}
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {topAttrition.length === 0 ? (
-                <EmptyChart
-                  text={
-                    attrition.data?.available
-                      ? "Нет данных о риске оттока"
-                      : "AI-сервис ещё не развёрнут"
-                  }
-                />
-              ) : (
-                <div className="space-y-2">
-                  {topAttrition.map((a) => (
-                    <div
-                      key={a.employeeId}
-                      className="flex items-center justify-between rounded-lg border bg-white/70 px-3 py-2"
-                    >
-                      <div className="text-sm font-medium">
-                        {a.employeeName ?? a.employeeId}
-                        <span className="text-xs text-muted-foreground ml-2">
-                          {a.department ?? ""}
-                        </span>
-                      </div>
-                      <Badge
-                        variant="outline"
-                        style={{
-                          color:
-                            a.riskLevel === "HIGH"
-                              ? "#EF4444"
-                              : a.riskLevel === "MEDIUM"
-                                ? "#F59E0B"
-                                : "#10B981",
-                        }}
-                      >
-                        {Math.round(a.riskScore * 100)}%
-                      </Badge>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          <Card className="bg-white/60 backdrop-blur lg:col-span-2">
-            <CardHeader>
-              <CardTitle className="text-base flex items-center gap-2">
-                <TrendingUp className="h-4 w-4 text-primary" />
-                Аномалии расчёта (30 дней)
-              </CardTitle>
-              <CardDescription>
-                Источник: ai-ml-service{" "}
-                {!anomalies.data?.available && "(не развёрнут)"}
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {(anomalies.data?.items.length ?? 0) === 0 ? (
-                <div className="flex items-center gap-2 text-sm text-muted-foreground py-6">
-                  <Info className="h-4 w-4" />
-                  {anomalies.data?.available
-                    ? "Аномалий не обнаружено"
-                    : "AI-сервис ещё не развёрнут — данные появятся позже"}
-                </div>
-              ) : (
-                <div className="text-2xl font-bold">
-                  {anomalies.data?.items.length}
-                  <span className="text-sm font-normal text-muted-foreground ml-2">
-                    помеченных расчётных листов
-                  </span>
-                </div>
               )}
             </CardContent>
           </Card>

@@ -9,7 +9,6 @@ import {
   Download,
   Edit,
   Plus,
-  ShieldAlert,
   Trash2,
   Upload,
   UserMinus,
@@ -64,14 +63,11 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { RequirePermission } from "../providers/RequirePermission";
 import {
-  useBiometricStatus,
   useCreateAccountForEmployee,
-  useDeleteBiometric,
   useDeleteDocument,
   useEmergencyContacts,
   useEmployee,
   useEmployeeDocuments,
-  useEnrollBiometric,
   useSalaryChange,
   useSalaryHistory,
   useTerminateEmployee,
@@ -165,7 +161,6 @@ export default function EmployeeDetail() {
           <TabsTrigger value="salary">История ЗП</TabsTrigger>
           <TabsTrigger value="documents">Документы</TabsTrigger>
           <TabsTrigger value="emergency">Экстренные контакты</TabsTrigger>
-          <TabsTrigger value="biometric">Биометрия</TabsTrigger>
         </TabsList>
 
         <TabsContent value="profile">
@@ -179,9 +174,6 @@ export default function EmployeeDetail() {
         </TabsContent>
         <TabsContent value="emergency">
           <EmergencyTab employeeId={id} />
-        </TabsContent>
-        <TabsContent value="biometric">
-          <BiometricTab employeeId={id} status={employee.status} />
         </TabsContent>
       </Tabs>
 
@@ -602,134 +594,6 @@ function EmergencyTab({ employeeId }: { employeeId: string }) {
           </TableBody>
         </Table>
       </CardContent>
-    </Card>
-  );
-}
-
-function BiometricTab({
-  employeeId,
-  status: empStatus,
-}: {
-  employeeId: string;
-  status: string;
-}) {
-  const { data: status, isLoading } = useBiometricStatus(employeeId);
-  const enroll = useEnrollBiometric(employeeId);
-  const remove = useDeleteBiometric(employeeId);
-  const fileRef = useRef<HTMLInputElement>(null);
-  const [confirmRemove, setConfirmRemove] = useState(false);
-
-  const handleEnroll = async (files: FileList) => {
-    if (files.length < 3 || files.length > 5) {
-      toast.error("Выберите от 3 до 5 фото");
-      return;
-    }
-    const fd = new FormData();
-    Array.from(files).forEach((f) => fd.append("photos", f));
-    try {
-      await enroll.mutateAsync(fd);
-      toast.success("Биометрия зарегистрирована");
-    } catch (e: any) {
-      toast.error(e?.response?.data?.message || "Не удалось зарегистрировать");
-    }
-  };
-
-  if (isLoading) return <Skeleton className="h-32 w-full" />;
-
-  const isEnrolled = status?.enrolled ?? false;
-  const terminated = empStatus === "TERMINATED";
-
-  return (
-    <Card className="bg-white/60 backdrop-blur">
-      <CardHeader>
-        <CardTitle className="text-base">Лицевая биометрия</CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        {isEnrolled ? (
-          <>
-            <div className="flex items-center gap-2 text-emerald-600 text-sm font-medium">
-              ● Зарегистрировано · {status?.method ?? "FACE"} ·{" "}
-              {formatDateTime(status?.enrolledAt)}
-            </div>
-            {status?.photoUrls && status.photoUrls.length > 0 && (
-              <p className="text-xs text-muted-foreground">
-                Фото в каталоге: {status.photoUrls.length}
-              </p>
-            )}
-            <RequirePermission code="EMPLOYEE_BIOMETRIC">
-              <Button
-                variant="destructive"
-                onClick={() => setConfirmRemove(true)}
-                disabled={remove.isPending}
-              >
-                <Trash2 className="h-4 w-4 mr-2" /> Удалить регистрацию
-              </Button>
-            </RequirePermission>
-          </>
-        ) : (
-          <>
-            <p className="text-sm text-muted-foreground">
-              Сотрудник не зарегистрирован. Загрузите 3–5 фото лица под разными
-              углами. Требуется доступ к ai-ml-service.
-            </p>
-            {terminated && (
-              <p className="text-sm text-destructive flex items-center gap-2">
-                <ShieldAlert className="h-4 w-4" /> Уволенных сотрудников
-                регистрировать нельзя.
-              </p>
-            )}
-            <RequirePermission code="EMPLOYEE_BIOMETRIC">
-              <div>
-                <input
-                  ref={fileRef}
-                  type="file"
-                  multiple
-                  accept="image/jpeg,image/png"
-                  className="hidden"
-                  onChange={(e) => {
-                    if (e.target.files) handleEnroll(e.target.files);
-                    e.target.value = "";
-                  }}
-                />
-                <Button
-                  onClick={() => fileRef.current?.click()}
-                  disabled={enroll.isPending || terminated}
-                >
-                  <Upload className="h-4 w-4 mr-2" /> Зарегистрировать лицо
-                </Button>
-              </div>
-            </RequirePermission>
-          </>
-        )}
-      </CardContent>
-
-      <AlertDialog open={confirmRemove} onOpenChange={setConfirmRemove}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Удалить регистрацию лица?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Сотрудник больше не сможет отмечаться лицом до повторной регистрации.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Отмена</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={async () => {
-                try {
-                  await remove.mutateAsync();
-                  toast.success("Регистрация удалена");
-                } catch {
-                  toast.error("Не удалось удалить");
-                } finally {
-                  setConfirmRemove(false);
-                }
-              }}
-            >
-              Удалить
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </Card>
   );
 }

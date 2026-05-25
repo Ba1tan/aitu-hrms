@@ -1,6 +1,5 @@
 package kz.aitu.hrms.payroll.service;
 
-import kz.aitu.hrms.common.event.PayrollAnomalyDetectedEvent;
 import kz.aitu.hrms.common.event.PayrollJobCompletedEvent;
 import kz.aitu.hrms.common.event.PayrollJobStartedEvent;
 import kz.aitu.hrms.common.exception.BusinessException;
@@ -10,7 +9,6 @@ import kz.aitu.hrms.payroll.dto.PeriodDtos;
 import kz.aitu.hrms.payroll.entity.PayrollPeriod;
 import kz.aitu.hrms.payroll.entity.PayrollPeriodStatus;
 import kz.aitu.hrms.payroll.entity.Payslip;
-import kz.aitu.hrms.payroll.entity.PayslipStatus;
 import kz.aitu.hrms.payroll.repository.PayrollPeriodRepository;
 import kz.aitu.hrms.payroll.repository.PayslipRepository;
 import kz.aitu.hrms.payroll.security.CurrentUser;
@@ -43,7 +41,6 @@ public class PayslipGenerationService {
     private final PayrollPeriodRepository periodRepo;
     private final PayslipRepository payslipRepo;
     private final PayslipFactory payslipFactory;
-    private final AnomalyDetector anomalyDetector;
     private final EmployeeLookup employeeLookup;
     private final EventPublisher events;
 
@@ -97,7 +94,7 @@ public class PayslipGenerationService {
             periodRepo.save(period);
         }
 
-        int generated = 0, skipped = 0, errors = 0, flagged = 0;
+        int generated = 0, skipped = 0, errors = 0;
         BigDecimal totalGross = BigDecimal.ZERO;
         BigDecimal totalNet = BigDecimal.ZERO;
         List<String> errorDetails = new ArrayList<>();
@@ -109,7 +106,6 @@ public class PayslipGenerationService {
                     generated++;
                     totalGross = totalGross.add(outcome.gross());
                     totalNet = totalNet.add(outcome.net());
-                    if (outcome.flagged()) flagged++;
                 }
                 case SKIPPED -> skipped++;
                 case ERROR -> {
@@ -121,8 +117,8 @@ public class PayslipGenerationService {
 
         period.setStatus(PayrollPeriodStatus.COMPLETED);
         periodRepo.save(period);
-        log.info("Payslip generation finished for {}: generated={}, skipped={}, errors={}, flagged={}",
-                period.getName(), generated, skipped, errors, flagged);
+        log.info("Payslip generation finished for {}: generated={}, skipped={}, errors={}",
+                period.getName(), generated, skipped, errors);
 
         events.publishJobCompleted(PayrollJobCompletedEvent.builder()
                 .periodId(period.getId())
@@ -137,7 +133,6 @@ public class PayslipGenerationService {
                 .generated(generated)
                 .skipped(skipped)
                 .errors(errors)
-                .flagged(flagged)
                 .totalGrossPayout(totalGross)
                 .totalNetPayout(totalNet)
                 .errorDetails(errorDetails)
@@ -163,30 +158,7 @@ public class PayslipGenerationService {
 
             Payslip payslip = payslipFactory.build(profile, period);
             payslip = payslipRepo.save(payslip);
-
-            // AI anomaly detection — non-critical
-            AnomalyDetector.Result ai = anomalyDetector.detect(payslip, profile.getBaseSalary());
-            boolean flagged = false;
-            if (ai.available()) {
-                payslip.setAnomalyScore(ai.score());
-                if (ai.flags() != null && !ai.flags().isEmpty()) {
-                    payslip.setAnomalyFlags(String.join(",", ai.flags()));
-                }
-                if (ai.score() != null
-                        && ai.score().compareTo(payslipFactory.getAnomalyFlagThreshold()) > 0) {
-                    payslip.setStatus(PayslipStatus.FLAGGED);
-                    flagged = true;
-                    events.publishAnomaly(PayrollAnomalyDetectedEvent.builder()
-                            .payslipId(payslip.getId())
-                            .employeeId(payslip.getEmployeeId())
-                            .periodId(period.getId())
-                            .anomalyScore(ai.score())
-                            .flags(ai.flags())
-                            .build());
-                }
-                payslipRepo.save(payslip);
-            }
-            return GenerationOutcome.generated(payslip.getGrossSalary(), payslip.getNetSalary(), flagged);
+            return GenerationOutcome.generated(payslip.getGrossSalary(), payslip.getNetSalary());
         } catch (BusinessException be) {
             return GenerationOutcome.error("Skip " + displayName + ": " + be.getMessage());
         } catch (Exception ex) {
@@ -212,16 +184,15 @@ public class PayslipGenerationService {
     public record GenerationOutcome(Status status,
                                     BigDecimal gross,
                                     BigDecimal net,
-                                    boolean flagged,
                                     String errorMessage) {
-        public static GenerationOutcome generated(BigDecimal g, BigDecimal n, boolean flagged) {
-            return new GenerationOutcome(Status.GENERATED, g, n, flagged, null);
+        public static GenerationOutcome generated(BigDecimal g, BigDecimal n) {
+            return new GenerationOutcome(Status.GENERATED, g, n, null);
         }
         public static GenerationOutcome skipped() {
-            return new GenerationOutcome(Status.SKIPPED, BigDecimal.ZERO, BigDecimal.ZERO, false, null);
+            return new GenerationOutcome(Status.SKIPPED, BigDecimal.ZERO, BigDecimal.ZERO, null);
         }
         public static GenerationOutcome error(String message) {
-            return new GenerationOutcome(Status.ERROR, BigDecimal.ZERO, BigDecimal.ZERO, false, message);
+            return new GenerationOutcome(Status.ERROR, BigDecimal.ZERO, BigDecimal.ZERO, message);
         }
     }
 }

@@ -49,8 +49,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  *   create period → generate payslips → adjust one → approve → mark paid → lock.
  *
  * The HTTP layer is exercised via MockMvc; the persistence layer hits H2 via
- * the test profile; cross-service calls (employee-service, attendance-service,
- * ai-ml-service) are stubbed with WireMock so the test runs hermetically.
+ * the test profile; cross-service calls (employee-service, attendance-service)
+ * are stubbed with WireMock so the test runs hermetically.
  *
  * Spring Batch initialization is disabled in the test profile to keep startup
  * fast — the inline generation path is what matters for correctness.
@@ -95,7 +95,6 @@ class PayrollFlowIntegrationTest {
         wireMock.resetAll();
         stubEmployeeService();
         stubAttendanceService();
-        stubAiAnomalyDetectorAsUnavailable();
     }
 
     @AfterEach
@@ -290,11 +289,6 @@ class PayrollFlowIntegrationTest {
                                 """)));
     }
 
-    private void stubAiAnomalyDetectorAsUnavailable() {
-        wireMock.stubFor(WireMock.post(WireMock.urlPathEqualTo("/v1/ai/payroll/detect"))
-                .willReturn(aResponse().withStatus(503)));
-    }
-
     // ── WireMock lifecycle + dynamic property wiring ──────────────────────
 
     @TestConfiguration
@@ -317,7 +311,6 @@ class PayrollFlowIntegrationTest {
         registry.add("app.services.employee-service-uri",   () -> base);
         registry.add("app.services.attendance-service-uri", () -> base);
         registry.add("app.services.leave-service-uri",      () -> base);
-        registry.add("app.services.ai-ml-service-uri",      () -> base);
     }
 
     private static int findFreePort() {

@@ -36,8 +36,7 @@ class AttendanceSummaryXlsxTest {
         UUID empId = UUID.randomUUID();
         EmployeeSummaryDto emp = new EmployeeSummaryDto();
         emp.setId(empId);
-        emp.setFirstName("Сауле");
-        emp.setLastName("Жанова");
+        emp.setFullName("Сауле Жанова");
 
         PageResponse<EmployeeSummaryDto> empPage = new PageResponse<>();
         empPage.setContent(List.of(emp));
@@ -66,9 +65,9 @@ class AttendanceSummaryXlsxTest {
 
         try (XSSFWorkbook wb = new XSSFWorkbook(out)) {
             var sheet = wb.getSheetAt(0);
-            assertThat(sheet.getRow(1).getCell(0).getStringCellValue()).isEqualTo("Сауле");
+            assertThat(sheet.getRow(1).getCell(0).getStringCellValue()).isEqualTo("Сауле Жанова");
             // 1 PRESENT day
-            assertThat(sheet.getRow(1).getCell(2).getNumericCellValue()).isEqualTo(1.0);
+            assertThat(sheet.getRow(1).getCell(1).getNumericCellValue()).isEqualTo(1.0);
         }
     }
 

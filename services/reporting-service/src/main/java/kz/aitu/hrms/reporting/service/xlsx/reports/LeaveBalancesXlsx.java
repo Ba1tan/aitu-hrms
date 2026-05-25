@@ -23,7 +23,7 @@ public class LeaveBalancesXlsx {
     public void write(int year, OutputStream out) throws IOException {
         try (XlsxWriter w = new XlsxWriter()) {
             w.sheet("Остатки отпусков");
-            w.header("Сотрудник", "Фамилия", "Тип отпуска", "Всего дней", "Использовано", "Остаток");
+            w.header("Сотрудник", "Тип отпуска", "Всего дней", "Использовано", "Остаток");
 
             List<EmployeeSummaryDto> employees = employeeClient.list(null, "ACTIVE", 0, 500).getContent();
             if (employees == null) {
@@ -35,15 +35,15 @@ public class LeaveBalancesXlsx {
                 try {
                     List<LeaveBalanceDto> balances = leaveClient.balancesFor(e.getId(), year);
                     if (balances == null || balances.isEmpty()) {
-                        w.row(e.getFirstName(), e.getLastName(), "—", null, null, null);
+                        w.row(e.getFullName(), "—", null, null, null);
                     } else {
                         for (LeaveBalanceDto b : balances) {
-                            w.row(e.getFirstName(), e.getLastName(), b.getLeaveType(),
-                                    b.getTotalDays(), b.getUsedDays(), b.getRemainingDays());
+                            w.row(e.getFullName(), b.getLeaveTypeName(),
+                                    b.getEntitledDays(), b.getUsedDays(), b.getRemainingDays());
                         }
                     }
                 } catch (Exception ex) {
-                    w.row(e.getFirstName(), e.getLastName(), "Ошибка", null, null, null);
+                    w.row(e.getFullName(), "Ошибка", null, null, null);
                 }
             }
             w.writeTo(out);

@@ -19,7 +19,7 @@ public class EmployeeDirectoryXlsx {
     public void write(OutputStream out) throws IOException {
         try (XlsxWriter w = new XlsxWriter()) {
             w.sheet("Справочник сотрудников");
-            w.header("Имя", "Фамилия", "Должность", "Отдел", "Статус", "Дата приёма");
+            w.header("ФИО", "Должность", "Отдел", "Статус", "Дата приёма");
 
             int page = 0;
             PageResponse<EmployeeSummaryDto> resp;
@@ -27,7 +27,7 @@ public class EmployeeDirectoryXlsx {
                 resp = employeeClient.list(null, null, page++, 200);
                 if (resp == null || resp.getContent() == null) break;
                 for (EmployeeSummaryDto e : resp.getContent()) {
-                    w.row(e.getFirstName(), e.getLastName(),
+                    w.row(e.getFullName(),
                             e.getPosition(), e.getDepartment(),
                             e.getStatus(), e.getHireDate());
                 }

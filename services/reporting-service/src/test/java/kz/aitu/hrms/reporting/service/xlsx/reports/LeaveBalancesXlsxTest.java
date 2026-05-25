@@ -37,17 +37,18 @@ class LeaveBalancesXlsxTest {
         UUID empId = UUID.randomUUID();
         EmployeeSummaryDto emp = new EmployeeSummaryDto();
         emp.setId(empId);
-        emp.setFirstName("Данияр");
-        emp.setLastName("Нуров");
+        emp.setFullName("Данияр Нуров");
 
         PageResponse<EmployeeSummaryDto> empPage = new PageResponse<>();
         empPage.setContent(List.of(emp));
         empPage.setLast(true);
         when(employeeClient.list(isNull(), eq("ACTIVE"), eq(0), eq(500))).thenReturn(empPage);
 
+        LeaveBalanceDto.LeaveTypeInfo type = new LeaveBalanceDto.LeaveTypeInfo();
+        type.setName("ANNUAL");
         LeaveBalanceDto balance = new LeaveBalanceDto();
-        balance.setLeaveType("ANNUAL");
-        balance.setTotalDays(BigDecimal.valueOf(28));
+        balance.setLeaveType(type);
+        balance.setEntitledDays(BigDecimal.valueOf(28));
         balance.setUsedDays(BigDecimal.valueOf(10));
         balance.setRemainingDays(BigDecimal.valueOf(18));
         when(leaveClient.balancesFor(empId, 2026)).thenReturn(List.of(balance));
@@ -59,8 +60,8 @@ class LeaveBalancesXlsxTest {
 
         try (XSSFWorkbook wb = new XSSFWorkbook(out)) {
             var sheet = wb.getSheetAt(0);
-            assertThat(sheet.getRow(1).getCell(0).getStringCellValue()).isEqualTo("Данияр");
-            assertThat(sheet.getRow(1).getCell(2).getStringCellValue()).isEqualTo("ANNUAL");
+            assertThat(sheet.getRow(1).getCell(0).getStringCellValue()).isEqualTo("Данияр Нуров");
+            assertThat(sheet.getRow(1).getCell(1).getStringCellValue()).isEqualTo("ANNUAL");
         }
     }
 
@@ -69,8 +70,7 @@ class LeaveBalancesXlsxTest {
         UUID empId = UUID.randomUUID();
         EmployeeSummaryDto emp = new EmployeeSummaryDto();
         emp.setId(empId);
-        emp.setFirstName("Айна");
-        emp.setLastName("Сат");
+        emp.setFullName("Айна Сат");
 
         PageResponse<EmployeeSummaryDto> empPage = new PageResponse<>();
         empPage.setContent(List.of(emp));
@@ -85,7 +85,7 @@ class LeaveBalancesXlsxTest {
 
         try (XSSFWorkbook wb = new XSSFWorkbook(out)) {
             var sheet = wb.getSheetAt(0);
-            assertThat(sheet.getRow(1).getCell(2).getStringCellValue()).isEqualTo("—");
+            assertThat(sheet.getRow(1).getCell(1).getStringCellValue()).isEqualTo("—");
         }
     }
 
@@ -94,8 +94,7 @@ class LeaveBalancesXlsxTest {
         UUID empId = UUID.randomUUID();
         EmployeeSummaryDto emp = new EmployeeSummaryDto();
         emp.setId(empId);
-        emp.setFirstName("Тест");
-        emp.setLastName("Ошибка");
+        emp.setFullName("Тест Ошибка");
 
         PageResponse<EmployeeSummaryDto> empPage = new PageResponse<>();
         empPage.setContent(List.of(emp));
@@ -109,7 +108,7 @@ class LeaveBalancesXlsxTest {
         }
 
         try (XSSFWorkbook wb = new XSSFWorkbook(out)) {
-            assertThat(wb.getSheetAt(0).getRow(1).getCell(2).getStringCellValue()).isEqualTo("Ошибка");
+            assertThat(wb.getSheetAt(0).getRow(1).getCell(1).getStringCellValue()).isEqualTo("Ошибка");
         }
     }
 }

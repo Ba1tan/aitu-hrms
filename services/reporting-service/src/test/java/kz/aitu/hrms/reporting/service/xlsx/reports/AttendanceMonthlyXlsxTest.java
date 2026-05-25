@@ -14,7 +14,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.io.*;
 import java.nio.file.Path;
 import java.time.LocalDate;
-import java.time.LocalTime;
+import java.time.LocalDateTime;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -32,11 +32,10 @@ class AttendanceMonthlyXlsxTest {
     @Test
     void writesAttendanceRecordsForMonth() throws Exception {
         AttendanceRecordDto rec = new AttendanceRecordDto();
-        rec.setEmployeeFirstName("Айгерим");
-        rec.setEmployeeLastName("Бекова");
-        rec.setDate(LocalDate.of(2026, 2, 1));
-        rec.setCheckIn(LocalTime.of(9, 0));
-        rec.setCheckOut(LocalTime.of(18, 0));
+        rec.setEmployeeName("Айгерим Бекова");
+        rec.setWorkDate(LocalDate.of(2026, 2, 1));
+        rec.setCheckIn(LocalDateTime.of(2026, 2, 1, 9, 0));
+        rec.setCheckOut(LocalDateTime.of(2026, 2, 1, 18, 0));
         rec.setStatus("PRESENT");
 
         PageResponse<AttendanceRecordDto> page = new PageResponse<>();
@@ -58,8 +57,9 @@ class AttendanceMonthlyXlsxTest {
 
         try (XSSFWorkbook wb = new XSSFWorkbook(out)) {
             var sheet = wb.getSheetAt(0);
-            assertThat(sheet.getRow(1).getCell(1).getStringCellValue()).isEqualTo("Айгерим");
-            assertThat(sheet.getRow(1).getCell(5).getStringCellValue()).isEqualTo("PRESENT");
+            assertThat(sheet.getRow(1).getCell(1).getStringCellValue()).isEqualTo("Айгерим Бекова");
+            assertThat(sheet.getRow(1).getCell(2).getStringCellValue()).isEqualTo("09:00");
+            assertThat(sheet.getRow(1).getCell(4).getStringCellValue()).isEqualTo("PRESENT");
         }
     }
 

@@ -16,6 +16,7 @@ import java.lang.reflect.Type;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.List;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -39,7 +40,7 @@ class EnvelopeDecoderTest {
     void unwrapsEnvelopeIntoPageResponse() throws Exception {
         String body = """
             {"success":true,"message":"OK","data":{
-               "content":[{"firstName":"Нурлан","lastName":"Сейткали",
+               "content":[{"fullName":"Нурлан Сейткали",
                            "status":"ACTIVE","hireDate":"2023-03-01"}],
                "last":true,"number":0},
              "timestamp":"2026-05-25T10:00:00"}
@@ -51,7 +52,7 @@ class EnvelopeDecoderTest {
                         response(body), pageOf(EmployeeSummaryDto.class));
 
         assertThat(page.getContent()).hasSize(1);
-        assertThat(page.getContent().get(0).getFirstName()).isEqualTo("Нурлан");
+        assertThat(page.getContent().get(0).getFullName()).isEqualTo("Нурлан Сейткали");
         assertThat(page.getContent().get(0).getHireDate().toString()).isEqualTo("2023-03-01");
         assertThat(page.isLast()).isTrue();
     }
@@ -59,14 +60,15 @@ class EnvelopeDecoderTest {
     @Test
     void unwrapsEnvelopeIntoList() throws Exception {
         String body = """
-            {"success":true,"data":[{"leaveType":"Annual","balance":12}]}
-            """;
+            {"success":true,"data":[{"leaveType":{"id":"%s","name":"Annual"},"remainingDays":12}]}
+            """.formatted(UUID.randomUUID());
 
         @SuppressWarnings("unchecked")
         List<LeaveBalanceDto> balances =
                 (List<LeaveBalanceDto>) decoder.decode(response(body), listOf(LeaveBalanceDto.class));
 
         assertThat(balances).hasSize(1);
+        assertThat(balances.get(0).getLeaveTypeName()).isEqualTo("Annual");
     }
 
     @Test

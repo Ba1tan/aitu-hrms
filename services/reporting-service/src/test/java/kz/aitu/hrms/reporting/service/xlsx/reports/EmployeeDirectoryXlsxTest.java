@@ -31,8 +31,7 @@ class EmployeeDirectoryXlsxTest {
     @Test
     void writesEmployees() throws Exception {
         EmployeeSummaryDto emp = new EmployeeSummaryDto();
-        emp.setFirstName("Нурлан");
-        emp.setLastName("Сейткали");
+        emp.setFullName("Нурлан Сейткали");
         emp.setPosition("Инженер");
         emp.setDepartment("IT");
         emp.setStatus("ACTIVE");
@@ -51,9 +50,9 @@ class EmployeeDirectoryXlsxTest {
 
         try (XSSFWorkbook wb = new XSSFWorkbook(out)) {
             var sheet = wb.getSheetAt(0);
-            assertThat(sheet.getRow(1).getCell(0).getStringCellValue()).isEqualTo("Нурлан");
-            assertThat(sheet.getRow(1).getCell(1).getStringCellValue()).isEqualTo("Сейткали");
-            assertThat(sheet.getRow(1).getCell(4).getStringCellValue()).isEqualTo("ACTIVE");
+            assertThat(sheet.getRow(1).getCell(0).getStringCellValue()).isEqualTo("Нурлан Сейткали");
+            assertThat(sheet.getRow(1).getCell(1).getStringCellValue()).isEqualTo("Инженер");
+            assertThat(sheet.getRow(1).getCell(3).getStringCellValue()).isEqualTo("ACTIVE");
         }
     }
 }

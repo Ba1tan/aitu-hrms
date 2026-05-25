@@ -16,9 +16,9 @@ const unwrap = (
 };
 
 /**
- * 1C sync job history. integration-hub is not deployed yet, so we swallow
- * 502/503/404 and render an empty state instead of erroring — same pattern
- * as `useNotifications`.
+ * 1C sync job history. We swallow 502/503/404 and render an empty state instead
+ * of erroring, so a transient integration-hub outage degrades cleanly — same
+ * pattern as `useNotifications`.
  */
 export const useSyncHistory = (
   params: { target?: string; status?: string; page?: number; size?: number } = {},

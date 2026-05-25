@@ -184,7 +184,7 @@ export default function Notifications() {
         {!available ? (
           <EmptyState
             title="Сервис уведомлений временно недоступен"
-            message="Notification-service ещё не развёрнут. Попробуйте позднее."
+            message="Попробуйте позднее."
           />
         ) : listQuery.isLoading ? (
           <EmptyState title="Загрузка…" />

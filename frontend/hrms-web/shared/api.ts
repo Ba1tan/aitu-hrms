@@ -1303,8 +1303,7 @@ const BLOB = { responseType: "blob" as const };
 
 /**
  * Every report endpoint streams an XLSX/PDF blob. Callers save the blob via
- * `saveBlobResponse` in `client/hooks/api/useReports.ts`. reporting-service
- * is not deployed yet — these 502 until it ships; the UI degrades cleanly.
+ * `saveBlobResponse` in `client/hooks/api/useReports.ts`.
  */
 export const reportsApi = {
   payrollSummaryXlsx: (periodId: string) =>

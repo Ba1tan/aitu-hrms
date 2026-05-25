@@ -30,8 +30,8 @@ export function saveBlobResponse(
 
 /**
  * Drives report/bank-file downloads with a per-card pending key and toast
- * feedback. reporting-service / integration-hub are not deployed yet, so a
- * 502/503/404 is reported as "service unavailable" rather than a hard error.
+ * feedback. A 502/503/404 is reported as "service unavailable" rather than a
+ * hard error, so a transient outage degrades cleanly.
  */
 export function useBlobDownload() {
   const [pendingKey, setPendingKey] = useState<string | null>(null);
@@ -49,7 +49,7 @@ export function useBlobDownload() {
     } catch (err: any) {
       const status = err?.response?.status;
       if (status === 502 || status === 503 || status === 404) {
-        toast.error("Сервис ещё не развёрнут — попробуйте позже");
+        toast.error("Сервис временно недоступен — попробуйте позже");
       } else if (status === 403) {
         toast.error("Недостаточно прав для этого отчёта");
       } else {

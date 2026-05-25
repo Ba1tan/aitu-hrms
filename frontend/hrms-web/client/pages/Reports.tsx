@@ -215,9 +215,7 @@ export default function Reports() {
   return (
     <DashboardLayout title="Отчёты">
       <p className="text-sm text-muted-foreground mb-5 max-w-2xl">
-        Выберите отчёт, задайте параметры и скачайте файл. Отчёты формирует
-        reporting-service; пока он не развёрнут, кнопки активны, но вернут
-        сообщение о недоступности.
+        Выберите отчёт, задайте параметры и скачайте файл.
       </p>
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">

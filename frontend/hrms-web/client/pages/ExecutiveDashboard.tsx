@@ -130,11 +130,6 @@ export default function ExecutiveDashboard() {
 
   return (
     <DashboardLayout title="Сводка для руководства">
-      <p className="text-sm text-muted-foreground mb-5 max-w-2xl">
-        Агрегаты считаются на стороне клиента из существующих сервисов — это
-        временное решение, пока reporting-service не развёрнут.
-      </p>
-
       {loading ? (
         <div className="grid gap-4 lg:grid-cols-2">
           {Array.from({ length: 4 }).map((_, i) => (

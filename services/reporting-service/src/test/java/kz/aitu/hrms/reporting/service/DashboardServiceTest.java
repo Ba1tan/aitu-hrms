@@ -176,9 +176,11 @@ class DashboardServiceTest {
     }
 
     private void stubPersonal() {
+        PayslipDto.PeriodInfo per = new PayslipDto.PeriodInfo();
+        per.setName("Май 2026");
         PayslipDto slip = new PayslipDto();
         slip.setNetSalary(BigDecimal.valueOf(350000));
-        slip.setPeriodName("Май 2026");
+        slip.setPeriod(per);
         when(payrollClient.myPayslips(1)).thenReturn(List.of(slip));
 
         LeaveBalanceDto bal = new LeaveBalanceDto();

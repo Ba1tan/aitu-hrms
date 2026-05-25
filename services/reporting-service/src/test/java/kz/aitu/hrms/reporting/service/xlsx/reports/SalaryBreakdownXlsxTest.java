@@ -37,14 +37,17 @@ class SalaryBreakdownXlsxTest {
         period.setName("Май 2026");
         when(payrollClient.getLatestPeriod()).thenReturn(period);
 
+        PayslipDto.EmployeeInfo emp = new PayslipDto.EmployeeInfo();
+        emp.setFullName("Нурлан Сейткали");
+        PayslipDto.PeriodInfo per = new PayslipDto.PeriodInfo();
+        per.setName("Май 2026");
         PayslipDto slip = new PayslipDto();
-        slip.setEmployeeFirstName("Нурлан");
-        slip.setEmployeeLastName("Сейткали");
-        slip.setPeriodName("Май 2026");
+        slip.setEmployee(emp);
+        slip.setPeriod(per);
         slip.setGrossSalary(BigDecimal.valueOf(400000));
-        slip.setOpv(BigDecimal.valueOf(40000));
-        slip.setVosms(BigDecimal.valueOf(2000));
-        slip.setIpn(BigDecimal.valueOf(25000));
+        slip.setOpvAmount(BigDecimal.valueOf(40000));
+        slip.setVosmsAmount(BigDecimal.valueOf(2000));
+        slip.setIpnAmount(BigDecimal.valueOf(25000));
         slip.setNetSalary(BigDecimal.valueOf(333000));
 
         PageResponse<PayslipDto> page = new PageResponse<>();
@@ -59,7 +62,8 @@ class SalaryBreakdownXlsxTest {
 
         try (XSSFWorkbook wb = new XSSFWorkbook(out)) {
             var sheet = wb.getSheetAt(0);
-            assertThat(sheet.getRow(1).getCell(0).getStringCellValue()).isEqualTo("Нурлан");
+            assertThat(sheet.getRow(1).getCell(0).getStringCellValue()).isEqualTo("Нурлан Сейткали");
+            assertThat(sheet.getRow(1).getCell(1).getStringCellValue()).isEqualTo("Май 2026");
         }
     }
 

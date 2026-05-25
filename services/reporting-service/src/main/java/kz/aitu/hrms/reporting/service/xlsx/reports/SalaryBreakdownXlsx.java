@@ -21,7 +21,7 @@ public class SalaryBreakdownXlsx {
     public void write(UUID departmentId, OutputStream out) throws IOException {
         try (XlsxWriter w = new XlsxWriter()) {
             w.sheet("Зарплатная ведомость");
-            w.header("Сотрудник", "Фамилия", "Период", "Брутто", "ОПВ", "ВОСМС", "ИПН", "Нетто");
+            w.header("Сотрудник", "Период", "Брутто", "ОПВ", "ВОСМС", "ИПН", "Нетто");
 
             PayrollPeriodDto period = null;
             try { period = payrollClient.getLatestPeriod(); } catch (Exception ignored) {}
@@ -42,8 +42,9 @@ public class SalaryBreakdownXlsx {
                 resp = payrollClient.listPayslips(period.getId(), page++, 200);
                 if (resp == null || resp.getContent() == null) break;
                 for (PayslipDto s : resp.getContent()) {
-                    w.row(s.getEmployeeFirstName(), s.getEmployeeLastName(), s.getPeriodName(),
-                            s.getGrossSalary(), s.getOpv(), s.getVosms(), s.getIpn(), s.getNetSalary());
+                    w.row(s.getEmployeeName(), s.getPeriodName(),
+                            s.getGrossSalary(), s.getOpvAmount(), s.getVosmsAmount(),
+                            s.getIpnAmount(), s.getNetSalary());
                 }
             } while (!resp.isLast());
             w.writeTo(out);

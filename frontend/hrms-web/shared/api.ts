@@ -221,12 +221,12 @@ export interface EmergencyContact {
 
 export interface OrgChartNode {
   id: string;
+  employeeNumber?: string;
   fullName: string;
-  position?: { id: string; title: string } | null;
-  department?: { id: string; name: string } | null;
-  photoUrl?: string | null;
   email?: string;
-  children?: OrgChartNode[];
+  position?: string | null;
+  department?: string | null;
+  reports?: OrgChartNode[];
 }
 
 /** Non-sensitive colleague row for the "my team" directory (no salary/IIN). */

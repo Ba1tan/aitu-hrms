@@ -36,28 +36,13 @@ export default function OrgChart() {
 }
 
 function normalize(data: OrgChartNode[] | undefined): OrgChartNode[] {
-  if (!data) return [];
-  // Backend may return either a flat list with parent ids or a nested tree.
-  // If items have `children` array, assume tree. Otherwise build from `managerId`.
-  if (data.some((n) => Array.isArray((n as any).children))) {
-    return data;
-  }
-  const map = new Map<string, OrgChartNode & { children: OrgChartNode[] }>();
-  data.forEach((n) => map.set(n.id, { ...n, children: [] }));
-  const roots: OrgChartNode[] = [];
-  data.forEach((n) => {
-    const parentId = (n as any).managerId ?? (n as any).manager?.id ?? null;
-    if (parentId && map.has(parentId)) {
-      map.get(parentId)!.children.push(map.get(n.id)!);
-    } else {
-      roots.push(map.get(n.id)!);
-    }
-  });
-  return roots;
+  // employee-service returns the already-nested tree: a list of root nodes,
+  // each with its subtree under `reports`.
+  return data ?? [];
 }
 
 function Branch({ node }: { node: OrgChartNode }) {
-  const children = node.children ?? [];
+  const children = node.reports ?? [];
   return (
     <div className="flex flex-col items-center">
       <NodeCard node={node} />
@@ -105,10 +90,10 @@ function NodeCard({ node }: { node: OrgChartNode }) {
         <div className="min-w-0">
           <p className="text-sm font-semibold truncate">{node.fullName}</p>
           <p className="text-xs text-muted-foreground truncate">
-            {node.position?.title ?? "—"}
+            {node.position ?? "—"}
           </p>
           <p className="text-xs text-muted-foreground truncate">
-            {node.department?.name ?? ""}
+            {node.department ?? ""}
           </p>
         </div>
       </div>

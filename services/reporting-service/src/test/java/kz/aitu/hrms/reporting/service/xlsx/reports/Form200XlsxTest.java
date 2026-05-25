@@ -42,12 +42,13 @@ class Form200XlsxTest {
         periods.setLast(true);
         when(payrollClient.listPeriods(0, 50)).thenReturn(periods);
 
+        PayslipDto.EmployeeInfo emp = new PayslipDto.EmployeeInfo();
+        emp.setFullName("Алия Тест");
         PayslipDto slip = new PayslipDto();
-        slip.setEmployeeFirstName("Алия");
-        slip.setEmployeeLastName("Тест");
+        slip.setEmployee(emp);
         slip.setGrossSalary(BigDecimal.valueOf(500000));
-        slip.setOpv(BigDecimal.valueOf(50000));
-        slip.setIpn(BigDecimal.valueOf(30000));
+        slip.setOpvAmount(BigDecimal.valueOf(50000));
+        slip.setIpnAmount(BigDecimal.valueOf(30000));
         slip.setNetSalary(BigDecimal.valueOf(420000));
 
         PageResponse<PayslipDto> slips = new PageResponse<>();
@@ -62,7 +63,7 @@ class Form200XlsxTest {
 
         try (XSSFWorkbook wb = new XSSFWorkbook(out)) {
             var sheet = wb.getSheetAt(0);
-            assertThat(sheet.getRow(1).getCell(2).getStringCellValue()).isEqualTo("Алия");
+            assertThat(sheet.getRow(1).getCell(2).getStringCellValue()).isEqualTo("Алия Тест");
         }
     }
 

@@ -8,17 +8,22 @@ import lombok.Setter;
 import java.time.LocalDate;
 import java.util.UUID;
 
+/**
+ * Mirrors employee-service {@code EmployeeDtos.EmployeeSummary} (the list-row
+ * shape): a single {@code fullName}, with {@code department}/{@code position}
+ * already flattened to their names.
+ */
 @Getter
 @Setter
 @NoArgsConstructor
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class EmployeeSummaryDto {
     private UUID id;
-    private String firstName;
-    private String lastName;
-    private String position;
+    private String employeeNumber;
+    private String fullName;
+    private String email;
     private String department;
-    private UUID departmentId;
+    private String position;
     private String status;
     private LocalDate hireDate;
 }

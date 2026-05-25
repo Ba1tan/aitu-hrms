@@ -8,19 +8,55 @@ import lombok.Setter;
 import java.math.BigDecimal;
 import java.util.UUID;
 
+/**
+ * Mirrors payroll-service {@code PayslipDtos.Response}: employee and period are
+ * nested objects, the employee carries a single {@code fullName}, and the tax
+ * amounts use the {@code *Amount} suffix. The convenience accessors
+ * ({@link #getEmployeeName()}, {@link #getPeriodName()}, {@link #getEmployeeId()})
+ * flatten those for report writers.
+ */
 @Getter
 @Setter
 @NoArgsConstructor
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class PayslipDto {
     private UUID id;
-    private UUID employeeId;
-    private String employeeFirstName;
-    private String employeeLastName;
-    private String periodName;
+    private EmployeeInfo employee;
+    private PeriodInfo period;
+
     private BigDecimal grossSalary;
-    private BigDecimal opv;
-    private BigDecimal vosms;
-    private BigDecimal ipn;
+    private BigDecimal opvAmount;
+    private BigDecimal vosmsAmount;
+    private BigDecimal ipnAmount;
     private BigDecimal netSalary;
+
+    public String getEmployeeName() {
+        return employee != null ? employee.getFullName() : null;
+    }
+
+    public UUID getEmployeeId() {
+        return employee != null ? employee.getId() : null;
+    }
+
+    public String getPeriodName() {
+        return period != null ? period.getName() : null;
+    }
+
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public static class EmployeeInfo {
+        private UUID id;
+        private String fullName;
+    }
+
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public static class PeriodInfo {
+        private UUID id;
+        private String name;
+    }
 }

@@ -21,7 +21,7 @@ public class Form200Xlsx {
     public void write(int year, int quarter, OutputStream out) throws IOException {
         try (XlsxWriter w = new XlsxWriter()) {
             w.sheet("Форма 200.00");
-            w.header("Год", "Квартал", "Сотрудник", "Фамилия", "Оклад брутто", "ОПВ", "ИПН", "Нетто");
+            w.header("Год", "Квартал", "Сотрудник", "Оклад брутто", "ОПВ", "ИПН", "Нетто");
 
             PageResponse<PayrollPeriodDto> periods = payrollClient.listPeriods(0, 50);
             if (periods == null || periods.getContent() == null) {
@@ -45,9 +45,8 @@ public class Form200Xlsx {
                     slips = payrollClient.listPayslips(period.getId(), page++, 200);
                     if (slips == null || slips.getContent() == null) break;
                     for (PayslipDto s : slips.getContent()) {
-                        w.row(year, quarter,
-                                s.getEmployeeFirstName(), s.getEmployeeLastName(),
-                                s.getGrossSalary(), s.getOpv(), s.getIpn(), s.getNetSalary());
+                        w.row(year, quarter, s.getEmployeeName(),
+                                s.getGrossSalary(), s.getOpvAmount(), s.getIpnAmount(), s.getNetSalary());
                     }
                 } while (!slips.isLast());
             }

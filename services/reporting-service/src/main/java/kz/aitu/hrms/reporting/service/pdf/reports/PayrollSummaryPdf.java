@@ -24,20 +24,19 @@ public class PayrollSummaryPdf {
     public void write(UUID periodId, OutputStream out) throws DocumentException, IOException {
         Document doc = pdfWriter.open(out);
         pdfWriter.addTitle(doc, "Сводка по зарплате");
-        PdfPTable table = pdfWriter.createTable(7,
-                "Имя", "Фамилия", "Брутто", "ОПВ", "ВОСМС", "ИПН", "Нетто");
+        PdfPTable table = pdfWriter.createTable(6,
+                "Сотрудник", "Брутто", "ОПВ", "ВОСМС", "ИПН", "Нетто");
         int page = 0;
         PageResponse<PayslipDto> resp;
         do {
             resp = payrollClient.listPayslips(periodId, page++, 200);
             if (resp == null || resp.getContent() == null) break;
             for (PayslipDto s : resp.getContent()) {
-                pdfWriter.addCell(table, s.getEmployeeFirstName());
-                pdfWriter.addCell(table, s.getEmployeeLastName());
+                pdfWriter.addCell(table, s.getEmployeeName());
                 pdfWriter.addCell(table, s.getGrossSalary() != null ? s.getGrossSalary().toPlainString() : "");
-                pdfWriter.addCell(table, s.getOpv() != null ? s.getOpv().toPlainString() : "");
-                pdfWriter.addCell(table, s.getVosms() != null ? s.getVosms().toPlainString() : "");
-                pdfWriter.addCell(table, s.getIpn() != null ? s.getIpn().toPlainString() : "");
+                pdfWriter.addCell(table, s.getOpvAmount() != null ? s.getOpvAmount().toPlainString() : "");
+                pdfWriter.addCell(table, s.getVosmsAmount() != null ? s.getVosmsAmount().toPlainString() : "");
+                pdfWriter.addCell(table, s.getIpnAmount() != null ? s.getIpnAmount().toPlainString() : "");
                 pdfWriter.addCell(table, s.getNetSalary() != null ? s.getNetSalary().toPlainString() : "");
             }
         } while (!resp.isLast());

@@ -20,15 +20,16 @@ public class PayrollSummaryXlsx {
     public void write(UUID periodId, OutputStream out) throws IOException {
         try (XlsxWriter w = new XlsxWriter()) {
             w.sheet("Payroll Summary");
-            w.header("Сотрудник", "Фамилия", "Оклад брутто", "ОПВ", "ВОСМС", "ИПН", "Оклад нетто");
+            w.header("Сотрудник", "Оклад брутто", "ОПВ", "ВОСМС", "ИПН", "Оклад нетто");
             int page = 0;
             PageResponse<PayslipDto> resp;
             do {
                 resp = payrollClient.listPayslips(periodId, page++, 200);
                 if (resp == null || resp.getContent() == null) break;
                 for (PayslipDto s : resp.getContent()) {
-                    w.row(s.getEmployeeFirstName(), s.getEmployeeLastName(),
-                            s.getGrossSalary(), s.getOpv(), s.getVosms(), s.getIpn(), s.getNetSalary());
+                    w.row(s.getEmployeeName(),
+                            s.getGrossSalary(), s.getOpvAmount(), s.getVosmsAmount(),
+                            s.getIpnAmount(), s.getNetSalary());
                 }
             } while (!resp.isLast());
             w.writeTo(out);

@@ -206,8 +206,8 @@ export default function Settings() {
       {data && !data.available && (
         <div className="mb-4 flex items-center gap-2 rounded-xl border bg-amber-50 px-4 py-3 text-sm text-amber-800">
           <Plug className="h-4 w-4" />
-          integration-hub ещё не развёрнут — настройки нельзя загрузить или
-          сохранить, пока сервис не запущен.
+          Сервис интеграции временно недоступен — настройки нельзя загрузить или
+          сохранить.
         </div>
       )}
 

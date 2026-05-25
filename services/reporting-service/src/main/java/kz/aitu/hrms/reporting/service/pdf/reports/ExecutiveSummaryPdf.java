@@ -11,6 +11,7 @@ import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.math.BigDecimal;
 
 @Component
 @RequiredArgsConstructor
@@ -34,22 +35,45 @@ public class ExecutiveSummaryPdf {
         }
 
         try {
-            PayrollPeriodDto period = payrollClient.getLatestPeriod();
+            PayrollPeriodDto period = latestPeriod();
             if (period != null) {
                 doc.add(new Paragraph("Последний период: " + period.getName(), pdfWriter.bodyFont()));
                 doc.add(new Paragraph("Статус: " + period.getStatus(), pdfWriter.bodyFont()));
-                try {
-                    PayrollTotalsDto totals = payrollClient.getPeriodTotals(period.getId());
-                    if (totals != null) {
-                        doc.add(new Paragraph("Брутто итого: " + totals.getTotalGross(), pdfWriter.bodyFont()));
-                        doc.add(new Paragraph("Нетто итого: " + totals.getTotalNet(), pdfWriter.bodyFont()));
+
+                BigDecimal gross = BigDecimal.ZERO;
+                BigDecimal net = BigDecimal.ZERO;
+                int page = 0;
+                PageResponse<PayslipDto> slips;
+                do {
+                    slips = payrollClient.listPayslips(period.getId(), page++, 200);
+                    if (slips == null || slips.getContent() == null) break;
+                    for (PayslipDto s : slips.getContent()) {
+                        if (s.getGrossSalary() != null) gross = gross.add(s.getGrossSalary());
+                        if (s.getNetSalary() != null) net = net.add(s.getNetSalary());
                     }
-                } catch (Exception ignored) {}
+                } while (!slips.isLast());
+
+                doc.add(new Paragraph("Брутто итого: " + gross, pdfWriter.bodyFont()));
+                doc.add(new Paragraph("Нетто итого: " + net, pdfWriter.bodyFont()));
             }
         } catch (Exception e) {
             doc.add(new Paragraph("Данные по зарплате недоступны.", pdfWriter.bodyFont()));
         }
 
         doc.close();
+    }
+
+    /**
+     * Latest period via the paginated list (sorted year/month desc upstream),
+     * preferring the newest non-locked one. payroll-service exposes no
+     * dedicated "latest period" endpoint.
+     */
+    private PayrollPeriodDto latestPeriod() {
+        PageResponse<PayrollPeriodDto> page = payrollClient.listPeriods(0, 5);
+        if (page == null || page.getContent() == null || page.getContent().isEmpty()) return null;
+        return page.getContent().stream()
+                .filter(p -> !p.isLocked())
+                .findFirst()
+                .orElse(page.getContent().get(0));
     }
 }

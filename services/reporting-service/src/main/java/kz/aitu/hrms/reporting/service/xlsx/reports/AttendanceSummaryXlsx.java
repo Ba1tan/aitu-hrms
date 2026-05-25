@@ -28,7 +28,7 @@ public class AttendanceSummaryXlsx {
     public void write(int year, int month, OutputStream out) throws IOException {
         try (XlsxWriter w = new XlsxWriter()) {
             w.sheet("Сводка посещаемости");
-            w.header("Сотрудник", "Фамилия", "Присутствие", "Отсутствие", "Опоздание");
+            w.header("Сотрудник", "Присутствие", "Отсутствие", "Опоздание");
 
             List<EmployeeSummaryDto> employees = employeeClient.list(null, "ACTIVE", 0, 500).getContent();
             if (employees == null || employees.isEmpty()) {
@@ -61,7 +61,7 @@ public class AttendanceSummaryXlsx {
 
             for (EmployeeSummaryDto e : employees) {
                 long[] c = counts.getOrDefault(e.getId(), new long[3]);
-                w.row(e.getFirstName(), e.getLastName(), c[0], c[1], c[2]);
+                w.row(e.getFullName(), c[0], c[1], c[2]);
             }
             w.writeTo(out);
         }

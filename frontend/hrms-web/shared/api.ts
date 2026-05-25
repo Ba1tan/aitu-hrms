@@ -221,12 +221,12 @@ export interface EmergencyContact {
 
 export interface OrgChartNode {
   id: string;
+  employeeNumber?: string;
   fullName: string;
-  position?: { id: string; title: string } | null;
-  department?: { id: string; name: string } | null;
-  photoUrl?: string | null;
   email?: string;
-  children?: OrgChartNode[];
+  position?: string | null;
+  department?: string | null;
+  reports?: OrgChartNode[];
 }
 
 /** Non-sensitive colleague row for the "my team" directory (no salary/IIN). */
@@ -1303,8 +1303,7 @@ const BLOB = { responseType: "blob" as const };
 
 /**
  * Every report endpoint streams an XLSX/PDF blob. Callers save the blob via
- * `saveBlobResponse` in `client/hooks/api/useReports.ts`. reporting-service
- * is not deployed yet — these 502 until it ships; the UI degrades cleanly.
+ * `saveBlobResponse` in `client/hooks/api/useReports.ts`.
  */
 export const reportsApi = {
   payrollSummaryXlsx: (periodId: string) =>

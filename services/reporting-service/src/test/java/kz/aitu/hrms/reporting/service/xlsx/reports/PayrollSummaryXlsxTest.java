@@ -31,13 +31,14 @@ class PayrollSummaryXlsxTest {
 
     @Test
     void writesPayslipsToXlsx() throws Exception {
+        PayslipDto.EmployeeInfo emp = new PayslipDto.EmployeeInfo();
+        emp.setFullName("Алия Иванова");
         PayslipDto slip = new PayslipDto();
-        slip.setEmployeeFirstName("Алия");
-        slip.setEmployeeLastName("Иванова");
+        slip.setEmployee(emp);
         slip.setGrossSalary(BigDecimal.valueOf(500000));
-        slip.setOpv(BigDecimal.valueOf(50000));
-        slip.setVosms(BigDecimal.valueOf(2000));
-        slip.setIpn(BigDecimal.valueOf(30000));
+        slip.setOpvAmount(BigDecimal.valueOf(50000));
+        slip.setVosmsAmount(BigDecimal.valueOf(2000));
+        slip.setIpnAmount(BigDecimal.valueOf(30000));
         slip.setNetSalary(BigDecimal.valueOf(418000));
 
         PageResponse<PayslipDto> page = new PageResponse<>();
@@ -54,8 +55,8 @@ class PayrollSummaryXlsxTest {
         try (XSSFWorkbook wb = new XSSFWorkbook(out)) {
             var sheet = wb.getSheetAt(0);
             assertThat(sheet.getRow(0).getCell(0).getStringCellValue()).isEqualTo("Сотрудник");
-            assertThat(sheet.getRow(1).getCell(0).getStringCellValue()).isEqualTo("Алия");
-            assertThat(sheet.getRow(1).getCell(2).getNumericCellValue()).isEqualTo(500000.0);
+            assertThat(sheet.getRow(1).getCell(0).getStringCellValue()).isEqualTo("Алия Иванова");
+            assertThat(sheet.getRow(1).getCell(1).getNumericCellValue()).isEqualTo(500000.0);
         }
     }
 

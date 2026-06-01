@@ -19,7 +19,9 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -46,17 +48,9 @@ class AttendanceSummaryXlsxTest {
         rec.setEmployeeId(empId);
         rec.setStatus("PRESENT");
 
-        PageResponse<AttendanceRecordDto> attPage = new PageResponse<>();
-        attPage.setContent(List.of(rec));
-        attPage.setLast(true);
-
-        PageResponse<AttendanceRecordDto> empty = new PageResponse<>();
-        empty.setContent(List.of());
-        empty.setLast(true);
-
-        // Feb 2026 = 28 days; stub first day with record, rest empty
-        when(attendanceClient.daily(any(), anyInt(), anyInt())).thenReturn(empty);
-        when(attendanceClient.daily(eq("2026-02-01"), eq(0), eq(200))).thenReturn(attPage);
+        // Feb 2026 = 28 days; stub first day with record, rest empty.
+        when(attendanceClient.daily(any())).thenReturn(List.of());
+        when(attendanceClient.daily(eq("2026-02-01"))).thenReturn(List.of(rec));
 
         File out = tmp.resolve("summary.xlsx").toFile();
         try (OutputStream os = new FileOutputStream(out)) {

@@ -131,7 +131,7 @@ export default function Attendance() {
   return (
     <DashboardLayout title={t("attendance.title")}>
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6 mb-6">
-        <div className="rounded-2xl border bg-white/60 backdrop-blur p-5">
+        <div className="rounded-2xl border bg-card/60 backdrop-blur p-5">
           <Tabs value={tab} onValueChange={setTab}>
             <TabsList>
               <TabsTrigger value="my">{t("attendance.tabMy")}</TabsTrigger>
@@ -452,7 +452,7 @@ function StatTile({
 }) {
   return (
     <div
-      className="rounded-xl border p-4 bg-white/60"
+      className="rounded-xl border p-4 bg-card/60"
       style={{ borderColor: `${accent}44` }}
     >
       <div className="text-xs text-muted-foreground">{label}</div>

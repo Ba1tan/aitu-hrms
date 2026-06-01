@@ -192,7 +192,7 @@ export default function AdjustmentsPanel({
       )}
 
       {adding && canEdit && (
-        <div className="rounded-xl border bg-white/80 p-3 mb-3">
+        <div className="rounded-xl border bg-card/80 p-3 mb-3">
           <Form {...form}>
             <form
               onSubmit={form.handleSubmit(onSubmit)}

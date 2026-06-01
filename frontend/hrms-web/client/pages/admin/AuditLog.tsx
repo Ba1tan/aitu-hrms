@@ -148,7 +148,7 @@ export default function AdminAuditLog() {
         </Button>
       </div>
 
-      <div className="rounded-2xl border bg-white/60 backdrop-blur overflow-hidden">
+      <div className="rounded-2xl border bg-card/60 backdrop-blur overflow-hidden">
         <Table>
           <TableHeader>
             <TableRow>

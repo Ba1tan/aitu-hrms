@@ -102,7 +102,7 @@ export default function Profile() {
       >
         <div
           style={{
-            background: "rgba(255,255,255,0.6)",
+            background: "hsl(var(--card) / 0.6)",
             border: "1px solid rgba(255,255,255,0.4)",
             borderRadius: 20,
             padding: 28,
@@ -131,7 +131,7 @@ export default function Profile() {
         <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
           <div
             style={{
-              background: "rgba(255,255,255,0.6)",
+              background: "hsl(var(--card) / 0.6)",
               border: "1px solid rgba(255,255,255,0.4)",
               borderRadius: 20,
               padding: 20,
@@ -166,7 +166,7 @@ export default function Profile() {
           {me?.employee && (
             <div
               style={{
-                background: "rgba(255,255,255,0.6)",
+                background: "hsl(var(--card) / 0.6)",
                 border: "1px solid rgba(255,255,255,0.4)",
                 borderRadius: 20,
                 padding: 20,

@@ -89,7 +89,7 @@ export default function PayrollYtd() {
       </div>
 
       {!employeeId ? (
-        <div className="rounded-2xl border bg-white/60 backdrop-blur p-10 text-center text-muted-foreground">
+        <div className="rounded-2xl border bg-card/60 backdrop-blur p-10 text-center text-muted-foreground">
           У вашей учётной записи не привязан сотрудник.
         </div>
       ) : isLoading || !ytd ? (
@@ -125,16 +125,23 @@ export default function PayrollYtd() {
             />
           </div>
 
-          <div className="rounded-2xl border bg-white/60 backdrop-blur p-5">
+          <div className="rounded-2xl border bg-card/60 backdrop-blur p-5">
             <div className="text-sm font-semibold mb-3">
               Распределение начислений и налогов
             </div>
             <ResponsiveContainer width="100%" height={320}>
               <BarChart data={chartData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#E2E8F0" />
-                <XAxis dataKey="name" stroke="#64748B" fontSize={12} />
+                <CartesianGrid
+                  strokeDasharray="3 3"
+                  stroke="hsl(var(--border))"
+                />
+                <XAxis
+                  dataKey="name"
+                  stroke="hsl(var(--muted-foreground))"
+                  fontSize={12}
+                />
                 <YAxis
-                  stroke="#64748B"
+                  stroke="hsl(var(--muted-foreground))"
                   fontSize={12}
                   tickFormatter={(v: number) =>
                     new Intl.NumberFormat("ru-KZ", {
@@ -144,7 +151,12 @@ export default function PayrollYtd() {
                 />
                 <Tooltip
                   formatter={(v: number) => formatKZT(v)}
-                  cursor={{ fill: "rgba(59,130,246,0.08)" }}
+                  cursor={{ fill: "hsl(var(--primary) / 0.08)" }}
+                  contentStyle={{
+                    background: "hsl(var(--popover))",
+                    border: "1px solid hsl(var(--border))",
+                    color: "hsl(var(--popover-foreground))",
+                  }}
                 />
                 <Bar dataKey="value" radius={[6, 6, 0, 0]}>
                   {chartData.map((_, i) => (
@@ -173,7 +185,7 @@ function Card({
   highlight?: boolean;
 }) {
   return (
-    <div className="rounded-xl border bg-white/80 backdrop-blur p-4">
+    <div className="rounded-xl border bg-card/80 backdrop-blur p-4">
       <div className="text-xs text-muted-foreground">{label}</div>
       <div
         className={

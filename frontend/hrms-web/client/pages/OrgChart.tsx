@@ -81,7 +81,7 @@ function NodeCard({ node }: { node: OrgChartNode }) {
   return (
     <Link
       to={`/employees/${node.id}`}
-      className="block rounded-2xl border bg-white/80 backdrop-blur p-4 min-w-[200px] max-w-[240px] hover:shadow-lg transition-shadow"
+      className="block rounded-2xl border bg-card/80 backdrop-blur p-4 min-w-[200px] max-w-[240px] hover:shadow-lg transition-shadow"
     >
       <div className="flex items-center gap-3">
         <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-400 to-emerald-400 flex items-center justify-center text-white text-sm font-bold shrink-0">

@@ -313,40 +313,22 @@ interface StatCardProps {
 
 function StatCard({ label, value, sub, icon: Icon, color, href }: StatCardProps) {
   const body = (
-    <div
-      style={{
-        background: "rgba(255,255,255,0.55)",
-        backdropFilter: "blur(10px)",
-        border: "1px solid rgba(255,255,255,0.3)",
-        padding: 20,
-        borderRadius: 20,
-        height: "100%",
-        transition: "transform 0.15s ease",
-      }}
-    >
+    <div className="rounded-2xl border border-border/40 bg-card/60 p-5 backdrop-blur h-full transition-transform hover:-translate-y-0.5">
       <div
-        style={{
-          width: 36,
-          height: 36,
-          borderRadius: 10,
-          background: `${color}1A`,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          marginBottom: 12,
-        }}
+        className="mb-3 flex h-9 w-9 items-center justify-center rounded-lg"
+        style={{ background: `${color}1A` }}
       >
         <Icon size={18} color={color} />
       </div>
-      <div style={{ fontSize: 22, fontWeight: 800, color: "#1E293B" }}>{value}</div>
-      <div style={{ fontSize: 12, color: "#64748B", marginTop: 4 }}>{label}</div>
+      <div className="text-[22px] font-extrabold text-foreground">{value}</div>
+      <div className="mt-1 text-xs text-muted-foreground">{label}</div>
       {sub && (
-        <div style={{ fontSize: 11, color: "#94A3B8", marginTop: 2 }}>{sub}</div>
+        <div className="mt-0.5 text-[11px] text-muted-foreground/70">{sub}</div>
       )}
     </div>
   );
   return href ? (
-    <Link to={href} style={{ textDecoration: "none" }}>
+    <Link to={href} className="no-underline text-inherit">
       {body}
     </Link>
   ) : (

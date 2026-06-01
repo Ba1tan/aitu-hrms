@@ -112,7 +112,7 @@ export default function Departments() {
         </RequirePermission>
       </div>
 
-      <div className="rounded-2xl border bg-white/60 backdrop-blur">
+      <div className="rounded-2xl border bg-card/60 backdrop-blur">
         <Table>
           <TableHeader>
             <TableRow>

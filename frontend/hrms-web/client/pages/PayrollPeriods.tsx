@@ -126,7 +126,7 @@ export default function PayrollPeriods() {
         </RequirePermission>
       </div>
 
-      <div className="rounded-2xl border bg-white/60 backdrop-blur">
+      <div className="rounded-2xl border bg-card/60 backdrop-blur">
         <Table>
           <TableHeader>
             <TableRow>
@@ -161,7 +161,7 @@ export default function PayrollPeriods() {
               periods.map((p) => (
                 <TableRow
                   key={p.id}
-                  className="cursor-pointer hover:bg-white/80"
+                  className="cursor-pointer hover:bg-card/80"
                   onClick={() => navigate(`/payroll/periods/${p.id}`)}
                 >
                   <TableCell className="font-medium">

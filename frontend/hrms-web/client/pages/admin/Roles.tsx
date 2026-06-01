@@ -190,7 +190,7 @@ export default function AdminRoles() {
       {isLoading ? (
         <Skeleton className="h-96 w-full" />
       ) : (
-        <Card className="bg-white/60 backdrop-blur">
+        <Card className="bg-card/60 backdrop-blur">
           <CardContent className="overflow-x-auto p-0">
             <table className="w-full text-sm">
               <thead className="bg-muted/40">
@@ -268,7 +268,7 @@ function ModuleSection({
       </tr>
       {items.map((p) => (
         <tr key={p.code} className="border-t">
-          <td className="p-3 sticky left-0 bg-white/80 z-10 font-mono text-xs">
+          <td className="p-3 sticky left-0 bg-card/80 z-10 font-mono text-xs">
             {p.code}
           </td>
           {roles.map((r) => {

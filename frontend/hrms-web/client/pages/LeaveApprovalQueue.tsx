@@ -86,7 +86,7 @@ export default function LeaveApprovalQueue() {
           ))}
         </div>
       ) : requests.length === 0 ? (
-        <div className="rounded-2xl border bg-white/60 backdrop-blur p-10 text-center text-muted-foreground">
+        <div className="rounded-2xl border bg-card/60 backdrop-blur p-10 text-center text-muted-foreground">
           Нет ожидающих заявок
         </div>
       ) : (
@@ -94,7 +94,7 @@ export default function LeaveApprovalQueue() {
           {requests.map((r) => (
             <div
               key={r.id}
-              className="rounded-2xl border bg-white/60 backdrop-blur p-5"
+              className="rounded-2xl border bg-card/60 backdrop-blur p-5"
             >
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div className="min-w-0">

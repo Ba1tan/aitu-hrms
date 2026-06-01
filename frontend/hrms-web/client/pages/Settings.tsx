@@ -222,7 +222,7 @@ export default function Settings() {
           {CATEGORY_ORDER.filter((c) => grouped[c]?.length).map((c) => {
             const meta = CATEGORY_META[c];
             return (
-              <Card key={c} className="bg-white/60 backdrop-blur">
+              <Card key={c} className="bg-card/60 backdrop-blur">
                 <CardHeader>
                   <CardTitle className="text-base flex items-center gap-2">
                     <meta.icon className="h-4 w-4 text-primary" />

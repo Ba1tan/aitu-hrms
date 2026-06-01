@@ -146,7 +146,7 @@ function MyRequestsTab() {
         </Button>
       </div>
 
-      <div className="rounded-2xl border bg-white/60 backdrop-blur">
+      <div className="rounded-2xl border bg-card/60 backdrop-blur">
         <Table>
           <TableHeader>
             <TableRow>
@@ -427,7 +427,7 @@ function MyBalancesTab() {
         </div>
       </div>
 
-      <div className="rounded-2xl border bg-white/60 backdrop-blur">
+      <div className="rounded-2xl border bg-card/60 backdrop-blur">
         <Table>
           <TableHeader>
             <TableRow>
@@ -490,7 +490,7 @@ function TeamCalendarTab() {
         <CalIcon className="h-4 w-4" />
         {t("leave.period")} {formatDate(from)} – {formatDate(to)}
       </div>
-      <div className="rounded-2xl border bg-white/60 backdrop-blur">
+      <div className="rounded-2xl border bg-card/60 backdrop-blur">
         <Table>
           <TableHeader>
             <TableRow>

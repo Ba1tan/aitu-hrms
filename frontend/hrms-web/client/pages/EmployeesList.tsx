@@ -162,7 +162,7 @@ export default function EmployeesList() {
         </RequirePermission>
       </div>
 
-      <div className="rounded-2xl border bg-white/60 backdrop-blur overflow-hidden">
+      <div className="rounded-2xl border bg-card/60 backdrop-blur overflow-hidden">
         <Table>
           <TableHeader>
             <TableRow>

@@ -65,7 +65,7 @@ export default function SetupShell() {
 
         <div
           style={{
-            background: "rgba(255,255,255,0.7)",
+            background: "hsl(var(--card) / 0.7)",
             border: "1px solid rgba(255,255,255,0.5)",
             backdropFilter: "blur(10px)",
             borderRadius: 24,

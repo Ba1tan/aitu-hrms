@@ -40,7 +40,7 @@ export default function Directory() {
             </span>
           </div>
 
-          <div className="rounded-2xl border bg-white/60 backdrop-blur p-4">
+          <div className="rounded-2xl border bg-card/60 backdrop-blur p-4">
             <div className="text-xs text-muted-foreground mb-2">
               {t("directory.managerLabel")}
             </div>
@@ -61,7 +61,7 @@ export default function Directory() {
             )}
           </div>
 
-          <div className="rounded-2xl border bg-white/60 backdrop-blur">
+          <div className="rounded-2xl border bg-card/60 backdrop-blur">
             <Table>
               <TableHeader>
                 <TableRow>

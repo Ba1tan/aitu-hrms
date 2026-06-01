@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { UserCog } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import DashboardLayout from "./DashboardLayout";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -19,28 +20,29 @@ import { formatDate } from "../lib/format";
  * department; carries no salary/IIN.
  */
 export default function Directory() {
+  const { t } = useTranslation();
   const { data, isLoading, isError } = useDirectory();
 
   return (
-    <DashboardLayout title="Моя команда">
+    <DashboardLayout title={t("directory.title")}>
       {isLoading ? (
         <Skeleton className="h-64 w-full" />
       ) : isError ? (
         <p className="text-destructive text-center py-10">
-          Не удалось загрузить данные команды.
+          {t("directory.loadError")}
         </p>
       ) : (
         <div className="space-y-6">
           <div className="text-sm text-muted-foreground">
-            Отдел:{" "}
+            {t("directory.departmentLabel")}{" "}
             <span className="font-medium text-foreground">
-              {data?.department ?? "Не назначен"}
+              {data?.department ?? t("directory.departmentNone")}
             </span>
           </div>
 
           <div className="rounded-2xl border bg-white/60 backdrop-blur p-4">
             <div className="text-xs text-muted-foreground mb-2">
-              Ваш руководитель
+              {t("directory.managerLabel")}
             </div>
             {data?.manager ? (
               <Link
@@ -54,7 +56,7 @@ export default function Directory() {
               </Link>
             ) : (
               <span className="text-muted-foreground italic">
-                Руководитель не назначен
+                {t("directory.managerNone")}
               </span>
             )}
           </div>
@@ -63,10 +65,10 @@ export default function Directory() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Сотрудник</TableHead>
-                  <TableHead>Должность</TableHead>
-                  <TableHead>Email</TableHead>
-                  <TableHead>В компании с</TableHead>
+                  <TableHead>{t("directory.columns.employee")}</TableHead>
+                  <TableHead>{t("directory.columns.position")}</TableHead>
+                  <TableHead>{t("directory.columns.email")}</TableHead>
+                  <TableHead>{t("directory.columns.hiredAt")}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -76,7 +78,7 @@ export default function Directory() {
                       colSpan={4}
                       className="text-center py-8 text-muted-foreground"
                     >
-                      В вашем отделе пока нет сотрудников
+                      {t("directory.empty")}
                     </TableCell>
                   </TableRow>
                 ) : (

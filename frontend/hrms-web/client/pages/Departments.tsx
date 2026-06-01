@@ -3,6 +3,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 import { MoreHorizontal, Plus, Search } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import DashboardLayout from "./DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -72,6 +73,7 @@ import {
 const NONE = "__none__";
 
 export default function Departments() {
+  const { t } = useTranslation();
   const [search, setSearch] = useState("");
   const [editing, setEditing] = useState<Department | null>(null);
   const [creating, setCreating] = useState(false);
@@ -92,20 +94,20 @@ export default function Departments() {
   }, [departments, search]);
 
   return (
-    <DashboardLayout title="Отделы">
+    <DashboardLayout title={t("departments.title")}>
       <div className="flex items-center justify-between mb-6 gap-3">
         <div className="relative flex-1 max-w-md">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground h-4 w-4" />
           <Input
             className="pl-9"
-            placeholder="Поиск по названию или коду"
+            placeholder={t("departments.searchPlaceholder")}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
         </div>
         <RequirePermission code="DEPT_MANAGE">
           <Button onClick={() => setCreating(true)}>
-            <Plus className="h-4 w-4 mr-2" /> Добавить отдел
+            <Plus className="h-4 w-4 mr-2" /> {t("departments.addDept")}
           </Button>
         </RequirePermission>
       </div>
@@ -114,11 +116,11 @@ export default function Departments() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Название</TableHead>
-              <TableHead>Код</TableHead>
-              <TableHead>Руководитель</TableHead>
-              <TableHead>Сотрудников</TableHead>
-              <TableHead>Родительский отдел</TableHead>
+              <TableHead>{t("departments.columns.name")}</TableHead>
+              <TableHead>{t("departments.columns.code")}</TableHead>
+              <TableHead>{t("departments.columns.manager")}</TableHead>
+              <TableHead>{t("departments.columns.employees")}</TableHead>
+              <TableHead>{t("departments.columns.parent")}</TableHead>
               <TableHead className="w-[60px]" />
             </TableRow>
           </TableHeader>
@@ -134,7 +136,7 @@ export default function Departments() {
             ) : filtered.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
-                  Отделы не найдены
+                  {t("departments.noneFound")}
                 </TableCell>
               </TableRow>
             ) : (
@@ -155,13 +157,13 @@ export default function Departments() {
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                           <DropdownMenuItem onClick={() => setEditing(d)}>
-                            Редактировать
+                            {t("departments.edit")}
                           </DropdownMenuItem>
                           <DropdownMenuItem
                             onClick={() => setDeleting(d)}
                             className="text-destructive focus:text-destructive"
                           >
-                            Удалить
+                            {t("departments.delete")}
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
@@ -188,15 +190,15 @@ export default function Departments() {
       <AlertDialog open={!!deleting} onOpenChange={(o) => !o && setDeleting(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Удалить отдел?</AlertDialogTitle>
+            <AlertDialogTitle>{t("departments.deleteTitle")}</AlertDialogTitle>
             <AlertDialogDescription>
               {deleting
-                ? `Отдел "${deleting.name}" будет удалён. Сотрудники этого отдела останутся, но потеряют привязку.`
+                ? t("departments.deleteDescription", { name: deleting.name })
                 : ""}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Отмена</AlertDialogCancel>
+            <AlertDialogCancel>{t("departments.cancel")}</AlertDialogCancel>
             <DeleteAction department={deleting} onDone={() => setDeleting(null)} />
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -212,6 +214,7 @@ function DeleteAction({
   department: Department | null;
   onDone: () => void;
 }) {
+  const { t } = useTranslation();
   const deleteMutation = useDeleteDepartment();
   return (
     <AlertDialogAction
@@ -219,15 +222,17 @@ function DeleteAction({
         if (!department) return;
         try {
           await deleteMutation.mutateAsync(department.id);
-          toast.success("Отдел удалён");
+          toast.success(t("departments.deleted"));
         } catch (e: any) {
-          toast.error(e?.response?.data?.message || "Не удалось удалить");
+          toast.error(
+            e?.response?.data?.message || t("departments.deleteError"),
+          );
         } finally {
           onDone();
         }
       }}
     >
-      Удалить
+      {t("departments.delete")}
     </AlertDialogAction>
   );
 }
@@ -246,6 +251,7 @@ function DepartmentDialog({
   employees: { id: string; fullName: string }[];
 }) {
   const isEdit = !!department;
+  const { t } = useTranslation();
   const createMutation = useCreateDepartment();
   const updateMutation = useUpdateDepartment();
 
@@ -271,14 +277,14 @@ function DepartmentDialog({
     try {
       if (isEdit && department) {
         await updateMutation.mutateAsync({ id: department.id, data: payload });
-        toast.success("Отдел обновлён");
+        toast.success(t("departments.updated"));
       } else {
         await createMutation.mutateAsync(payload);
-        toast.success("Отдел создан");
+        toast.success(t("departments.created"));
       }
       onClose();
     } catch (e: any) {
-      toast.error(e?.response?.data?.message || "Ошибка при сохранении");
+      toast.error(e?.response?.data?.message || t("departments.saveError"));
     }
   };
 
@@ -286,9 +292,13 @@ function DepartmentDialog({
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="max-w-lg">
         <DialogHeader>
-          <DialogTitle>{isEdit ? "Редактировать отдел" : "Новый отдел"}</DialogTitle>
+          <DialogTitle>
+            {isEdit
+              ? t("departments.dialogTitleEdit")
+              : t("departments.dialogTitleNew")}
+          </DialogTitle>
           <DialogDescription>
-            Поля помеченные * обязательны.
+            {t("departments.dialogDescription")}
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
@@ -298,7 +308,7 @@ function DepartmentDialog({
               name="name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Название *</FormLabel>
+                  <FormLabel>{t("departments.formName")} *</FormLabel>
                   <FormControl>
                     <Input placeholder="Engineering" {...field} />
                   </FormControl>
@@ -311,7 +321,7 @@ function DepartmentDialog({
               name="code"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Код</FormLabel>
+                  <FormLabel>{t("departments.formCode")}</FormLabel>
                   <FormControl>
                     <Input placeholder="ENG" {...field} value={field.value ?? ""} />
                   </FormControl>
@@ -324,7 +334,7 @@ function DepartmentDialog({
               name="parentId"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Родительский отдел</FormLabel>
+                  <FormLabel>{t("departments.formParent")}</FormLabel>
                   <Select
                     onValueChange={(v) => field.onChange(v === NONE ? "" : v)}
                     value={field.value || NONE}
@@ -335,7 +345,9 @@ function DepartmentDialog({
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value={NONE}>— Без родительского</SelectItem>
+                      <SelectItem value={NONE}>
+                        {t("departments.noneParent")}
+                      </SelectItem>
                       {departments
                         .filter((d) => !department || d.id !== department.id)
                         .map((d) => (
@@ -354,7 +366,7 @@ function DepartmentDialog({
               name="managerId"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Руководитель</FormLabel>
+                  <FormLabel>{t("departments.formManager")}</FormLabel>
                   <Select
                     onValueChange={(v) => field.onChange(v === NONE ? "" : v)}
                     value={field.value || NONE}
@@ -365,7 +377,9 @@ function DepartmentDialog({
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value={NONE}>— Не указан</SelectItem>
+                      <SelectItem value={NONE}>
+                        {t("departments.noneManager")}
+                      </SelectItem>
                       {employees.map((e) => (
                         <SelectItem key={e.id} value={e.id}>
                           {e.fullName}
@@ -382,7 +396,7 @@ function DepartmentDialog({
               name="description"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Описание</FormLabel>
+                  <FormLabel>{t("departments.formDescription")}</FormLabel>
                   <FormControl>
                     <Textarea rows={3} {...field} value={field.value ?? ""} />
                   </FormControl>
@@ -392,13 +406,13 @@ function DepartmentDialog({
             />
             <DialogFooter>
               <Button type="button" variant="outline" onClick={onClose}>
-                Отмена
+                {t("departments.cancel")}
               </Button>
               <Button
                 type="submit"
                 disabled={createMutation.isPending || updateMutation.isPending}
               >
-                {isEdit ? "Сохранить" : "Создать"}
+                {isEdit ? t("departments.save") : t("departments.create")}
               </Button>
             </DialogFooter>
           </form>

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { MoreHorizontal, Plus, Search } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import DashboardLayout from "./DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -39,18 +40,13 @@ import { RequirePermission } from "../providers/RequirePermission";
 import { useDepartments } from "../hooks/api/useDepartments";
 import { useEmployees } from "../hooks/api/useEmployees";
 import { employeeRefLabel } from "../../shared/api";
-import { formatDate, statusColor, statusLabel } from "../lib/format";
+import { formatDate, statusColor } from "../lib/format";
 
 const ANY = "__any__";
 const PAGE_SIZE = 20;
 
 const STATUSES = ["ACTIVE", "ON_LEAVE", "PROBATION", "SUSPENDED", "TERMINATED"];
-const TYPES = [
-  { value: "FULL_TIME", label: "Полный день" },
-  { value: "PART_TIME", label: "Неполный день" },
-  { value: "CONTRACT", label: "Договор" },
-  { value: "INTERN", label: "Стажировка" },
-];
+const TYPES = ["FULL_TIME", "PART_TIME", "CONTRACT", "INTERN"];
 
 function useDebounced<T>(value: T, ms = 300): T {
   const [debounced, setDebounced] = useState(value);
@@ -63,6 +59,7 @@ function useDebounced<T>(value: T, ms = 300): T {
 
 export default function EmployeesList() {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [search, setSearch] = useState("");
   const [departmentId, setDepartmentId] = useState("");
   const [status, setStatus] = useState("");
@@ -97,14 +94,14 @@ export default function EmployeesList() {
   }, [page, totalPages]);
 
   return (
-    <DashboardLayout title="Сотрудники">
+    <DashboardLayout title={t("employees.title")}>
       <div className="flex flex-wrap items-center justify-between mb-6 gap-3">
         <div className="flex flex-wrap gap-3 flex-1">
           <div className="relative max-w-md flex-1 min-w-[240px]">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground h-4 w-4" />
             <Input
               className="pl-9"
-              placeholder="Поиск по имени или email"
+              placeholder={t("employees.searchPlaceholder")}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
@@ -114,10 +111,10 @@ export default function EmployeesList() {
             onValueChange={(v) => setDepartmentId(v === ANY ? "" : v)}
           >
             <SelectTrigger className="w-[200px]">
-              <SelectValue placeholder="Все отделы" />
+              <SelectValue placeholder={t("employees.allDepartments")} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value={ANY}>Все отделы</SelectItem>
+              <SelectItem value={ANY}>{t("employees.allDepartments")}</SelectItem>
               {departments.map((d) => (
                 <SelectItem key={d.id} value={d.id}>
                   {d.name}
@@ -130,13 +127,13 @@ export default function EmployeesList() {
             onValueChange={(v) => setStatus(v === ANY ? "" : v)}
           >
             <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Все статусы" />
+              <SelectValue placeholder={t("employees.allStatuses")} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value={ANY}>Все статусы</SelectItem>
+              <SelectItem value={ANY}>{t("employees.allStatuses")}</SelectItem>
               {STATUSES.map((s) => (
                 <SelectItem key={s} value={s}>
-                  {statusLabel[s] ?? s}
+                  {t(`common.statuses.${s}`, { defaultValue: s })}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -146,13 +143,13 @@ export default function EmployeesList() {
             onValueChange={(v) => setEmploymentType(v === ANY ? "" : v)}
           >
             <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Тип занятости" />
+              <SelectValue placeholder={t("employees.typePlaceholder")} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value={ANY}>Все типы</SelectItem>
-              {TYPES.map((t) => (
-                <SelectItem key={t.value} value={t.value}>
-                  {t.label}
+              <SelectItem value={ANY}>{t("employees.allTypes")}</SelectItem>
+              {TYPES.map((code) => (
+                <SelectItem key={code} value={code}>
+                  {t(`common.employmentTypes.${code}`, { defaultValue: code })}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -160,7 +157,7 @@ export default function EmployeesList() {
         </div>
         <RequirePermission code="EMPLOYEE_CREATE">
           <Button onClick={() => navigate("/employees/new")}>
-            <Plus className="h-4 w-4 mr-2" /> Добавить сотрудника
+            <Plus className="h-4 w-4 mr-2" /> {t("employees.addEmployee")}
           </Button>
         </RequirePermission>
       </div>
@@ -169,12 +166,12 @@ export default function EmployeesList() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Сотрудник</TableHead>
-              <TableHead>Таб. номер</TableHead>
-              <TableHead>Отдел</TableHead>
-              <TableHead>Должность</TableHead>
-              <TableHead>Статус</TableHead>
-              <TableHead>Дата найма</TableHead>
+              <TableHead>{t("employees.columns.employee")}</TableHead>
+              <TableHead>{t("employees.columns.employeeNumber")}</TableHead>
+              <TableHead>{t("employees.columns.department")}</TableHead>
+              <TableHead>{t("employees.columns.position")}</TableHead>
+              <TableHead>{t("employees.columns.status")}</TableHead>
+              <TableHead>{t("employees.columns.hireDate")}</TableHead>
               <TableHead className="w-[60px]" />
             </TableRow>
           </TableHeader>
@@ -190,9 +187,9 @@ export default function EmployeesList() {
             ) : isError ? (
               <TableRow>
                 <TableCell colSpan={7} className="text-center py-10">
-                  <p className="text-destructive mb-3">Не удалось загрузить список сотрудников</p>
+                  <p className="text-destructive mb-3">{t("employees.loadError")}</p>
                   <Button variant="outline" onClick={() => refetch()}>
-                    Повторить
+                    {t("common.retry")}
                   </Button>
                 </TableCell>
               </TableRow>
@@ -200,11 +197,11 @@ export default function EmployeesList() {
               <TableRow>
                 <TableCell colSpan={7} className="text-center py-10">
                   <p className="text-muted-foreground mb-3">
-                    Сотрудники не найдены
+                    {t("employees.noneFound")}
                   </p>
                   <RequirePermission code="EMPLOYEE_CREATE">
                     <Button onClick={() => navigate("/employees/new")}>
-                      <Plus className="h-4 w-4 mr-2" /> Добавить первого
+                      <Plus className="h-4 w-4 mr-2" /> {t("employees.addFirst")}
                     </Button>
                   </RequirePermission>
                 </TableCell>
@@ -240,7 +237,7 @@ export default function EmployeesList() {
                         borderColor: (statusColor[emp.status] ?? "#94A3B8") + "55",
                       }}
                     >
-                      {statusLabel[emp.status] ?? emp.status}
+                      {t(`common.statuses.${emp.status}`, { defaultValue: emp.status })}
                     </Badge>
                   </TableCell>
                   <TableCell>{formatDate(emp.hireDate)}</TableCell>
@@ -253,11 +250,13 @@ export default function EmployeesList() {
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem asChild>
-                          <Link to={`/employees/${emp.id}`}>Открыть</Link>
+                          <Link to={`/employees/${emp.id}`}>{t("employees.rowOpen")}</Link>
                         </DropdownMenuItem>
                         <RequirePermission code="EMPLOYEE_UPDATE">
                           <DropdownMenuItem asChild>
-                            <Link to={`/employees/${emp.id}/edit`}>Редактировать</Link>
+                            <Link to={`/employees/${emp.id}/edit`}>
+                              {t("employees.rowEdit")}
+                            </Link>
                           </DropdownMenuItem>
                         </RequirePermission>
                       </DropdownMenuContent>
@@ -273,8 +272,11 @@ export default function EmployeesList() {
       {totalPages > 1 && (
         <div className="mt-6 flex items-center justify-between">
           <p className="text-sm text-muted-foreground">
-            {totalElements} сотрудник{totalElements % 10 === 1 ? "" : "ов"} — стр.{" "}
-            {page + 1} из {totalPages}
+            {t("employees.paginationSummary", {
+              count: totalElements,
+              page: page + 1,
+              total: totalPages,
+            })}
           </p>
           <Pagination className="m-0 w-auto justify-end">
             <PaginationContent>

@@ -3,6 +3,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 import { Calendar as CalIcon, Plus, X } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import DashboardLayout from "./DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -71,15 +72,11 @@ const STATUS_COLOR: Record<string, string> = {
   CANCELLED: "#94A3B8",
 };
 
-const STATUS_LABEL: Record<string, string> = {
-  PENDING: "На рассмотрении",
-  APPROVED: "Одобрено",
-  REJECTED: "Отклонено",
-  CANCELLED: "Отменено",
-};
+const STATUS_KEYS = ["PENDING", "APPROVED", "REJECTED", "CANCELLED"] as const;
 
 export default function Leave() {
   const { hasPermission, user } = useAuthContext();
+  const { t } = useTranslation();
   const isSuper = user?.role === "SUPER_ADMIN";
   const canSeeTeam =
     isSuper ||
@@ -87,12 +84,14 @@ export default function Leave() {
     hasPermission("LEAVE_APPROVE_ALL");
 
   return (
-    <DashboardLayout title="Отпуска">
+    <DashboardLayout title={t("leave.title")}>
       <Tabs defaultValue="requests">
         <TabsList>
-          <TabsTrigger value="requests">Мои заявки</TabsTrigger>
-          <TabsTrigger value="balances">Мои балансы</TabsTrigger>
-          {canSeeTeam && <TabsTrigger value="calendar">Календарь команды</TabsTrigger>}
+          <TabsTrigger value="requests">{t("leave.tabRequests")}</TabsTrigger>
+          <TabsTrigger value="balances">{t("leave.tabBalances")}</TabsTrigger>
+          {canSeeTeam && (
+            <TabsTrigger value="calendar">{t("leave.tabCalendar")}</TabsTrigger>
+          )}
         </TabsList>
         <TabsContent value="requests" className="pt-6">
           <MyRequestsTab />
@@ -113,6 +112,7 @@ export default function Leave() {
 // ── My requests ──────────────────────────────────────────────────────────────
 
 function MyRequestsTab() {
+  const { t } = useTranslation();
   const [status, setStatus] = useState("");
   const [creating, setCreating] = useState(false);
   const { data: requests = [], isLoading } = useMyLeaveRequests({
@@ -124,23 +124,25 @@ function MyRequestsTab() {
     <div>
       <div className="flex flex-wrap items-end gap-3 mb-4">
         <div>
-          <label className="text-xs text-muted-foreground block mb-1">Статус</label>
+          <label className="text-xs text-muted-foreground block mb-1">
+            {t("leave.statusLabel")}
+          </label>
           <Select value={status || ANY} onValueChange={(v) => setStatus(v === ANY ? "" : v)}>
             <SelectTrigger className="w-[200px]">
-              <SelectValue placeholder="Все статусы" />
+              <SelectValue placeholder={t("leave.allStatuses")} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value={ANY}>Все статусы</SelectItem>
-              {Object.keys(STATUS_LABEL).map((s) => (
+              <SelectItem value={ANY}>{t("leave.allStatuses")}</SelectItem>
+              {STATUS_KEYS.map((s) => (
                 <SelectItem key={s} value={s}>
-                  {STATUS_LABEL[s]}
+                  {t(`leave.statuses.${s}`)}
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
         </div>
         <Button className="ml-auto" onClick={() => setCreating(true)}>
-          <Plus className="h-4 w-4 mr-2" /> Подать заявку
+          <Plus className="h-4 w-4 mr-2" /> {t("leave.submitRequest")}
         </Button>
       </div>
 
@@ -148,12 +150,12 @@ function MyRequestsTab() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Тип</TableHead>
-              <TableHead>Период</TableHead>
-              <TableHead>Дней</TableHead>
-              <TableHead>Причина</TableHead>
-              <TableHead>Статус</TableHead>
-              <TableHead>Согласующий</TableHead>
+              <TableHead>{t("leave.columns.type")}</TableHead>
+              <TableHead>{t("leave.columns.period")}</TableHead>
+              <TableHead>{t("leave.columns.days")}</TableHead>
+              <TableHead>{t("leave.columns.reason")}</TableHead>
+              <TableHead>{t("leave.columns.status")}</TableHead>
+              <TableHead>{t("leave.columns.approver")}</TableHead>
               <TableHead className="w-[100px]" />
             </TableRow>
           </TableHeader>
@@ -169,7 +171,7 @@ function MyRequestsTab() {
             ) : requests.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
-                  Заявок нет
+                  {t("leave.noRequests")}
                 </TableCell>
               </TableRow>
             ) : (
@@ -191,7 +193,7 @@ function MyRequestsTab() {
                         borderColor: (STATUS_COLOR[r.status] ?? "#94A3B8") + "55",
                       }}
                     >
-                      {STATUS_LABEL[r.status] ?? r.status}
+                      {t(`leave.statuses.${r.status}`, { defaultValue: r.status })}
                     </Badge>
                   </TableCell>
                   <TableCell>
@@ -199,7 +201,7 @@ function MyRequestsTab() {
                       r.approver.fullName
                     ) : (
                       <span className="text-muted-foreground italic">
-                        Руководитель не назначен
+                        {t("leave.noManager")}
                       </span>
                     )}
                   </TableCell>
@@ -211,15 +213,15 @@ function MyRequestsTab() {
                         onClick={async () => {
                           try {
                             await cancel.mutateAsync(r.id);
-                            toast.success("Заявка отменена");
+                            toast.success(t("leave.cancelled"));
                           } catch (e: any) {
                             toast.error(
-                              e?.response?.data?.message || "Не удалось отменить",
+                              e?.response?.data?.message || t("leave.cancelError"),
                             );
                           }
                         }}
                       >
-                        <X className="h-4 w-4 mr-1" /> Отменить
+                        <X className="h-4 w-4 mr-1" /> {t("leave.cancelRow")}
                       </Button>
                     )}
                   </TableCell>
@@ -242,6 +244,7 @@ function NewLeaveDialog({
   open: boolean;
   onClose: () => void;
 }) {
+  const { t } = useTranslation();
   const { data: types = [] } = useLeaveTypes();
   const { data: balances = [] } = useMyLeaveBalances();
   const create = useCreateLeaveRequest();
@@ -280,7 +283,7 @@ function NewLeaveDialog({
         endDate: data.endDate,
         reason: data.reason || undefined,
       });
-      toast.success("Заявка отправлена");
+      toast.success(t("leave.sent"));
       onClose();
       form.reset({
         leaveTypeId: "",
@@ -289,7 +292,7 @@ function NewLeaveDialog({
         reason: "",
       });
     } catch (e: any) {
-      toast.error(e?.response?.data?.message || "Не удалось отправить заявку");
+      toast.error(e?.response?.data?.message || t("leave.sendError"));
     }
   };
 
@@ -297,11 +300,8 @@ function NewLeaveDialog({
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="max-w-lg">
         <DialogHeader>
-          <DialogTitle>Новая заявка на отпуск</DialogTitle>
-          <DialogDescription>
-            Баланс проверяется на стороне сервера. Перекрывающиеся периоды
-            отклоняются.
-          </DialogDescription>
+          <DialogTitle>{t("leave.form.title")}</DialogTitle>
+          <DialogDescription>{t("leave.form.description")}</DialogDescription>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -310,18 +310,18 @@ function NewLeaveDialog({
               name="leaveTypeId"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Тип отпуска *</FormLabel>
+                  <FormLabel>{t("leave.form.leaveType")} *</FormLabel>
                   <Select value={field.value} onValueChange={field.onChange}>
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="Выберите тип" />
+                        <SelectValue placeholder={t("leave.form.pickType")} />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {types.map((t) => (
-                        <SelectItem key={t.id} value={t.id}>
-                          {t.name}
-                          {t.isPaid ? "" : " (без оплаты)"}
+                      {types.map((lt) => (
+                        <SelectItem key={lt.id} value={lt.id}>
+                          {lt.name}
+                          {lt.isPaid ? "" : ` ${t("leave.form.unpaid")}`}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -336,7 +336,7 @@ function NewLeaveDialog({
                 name="startDate"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>С *</FormLabel>
+                    <FormLabel>{t("leave.form.startDate")} *</FormLabel>
                     <FormControl>
                       <Input type="date" {...field} />
                     </FormControl>
@@ -349,7 +349,7 @@ function NewLeaveDialog({
                 name="endDate"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>По *</FormLabel>
+                    <FormLabel>{t("leave.form.endDate")} *</FormLabel>
                     <FormControl>
                       <Input type="date" {...field} />
                     </FormControl>
@@ -361,12 +361,14 @@ function NewLeaveDialog({
             {requestedDays > 0 && (
               <div className="text-sm bg-muted/50 rounded-lg p-3">
                 <div>
-                  Запрашиваемые дни:{" "}
+                  {t("leave.form.requestedDays")}{" "}
                   <span className="font-semibold">{requestedDays}</span>
                 </div>
                 {matchingBalance && (
                   <div className="text-muted-foreground mt-1">
-                    Остаток по типу: {matchingBalance.remainingDays} дн.
+                    {t("leave.form.balanceRemaining", {
+                      days: matchingBalance.remainingDays,
+                    })}
                   </div>
                 )}
               </div>
@@ -376,7 +378,7 @@ function NewLeaveDialog({
               name="reason"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Причина</FormLabel>
+                  <FormLabel>{t("leave.form.reason")}</FormLabel>
                   <FormControl>
                     <Textarea rows={3} {...field} value={field.value ?? ""} />
                   </FormControl>
@@ -386,10 +388,10 @@ function NewLeaveDialog({
             />
             <DialogFooter>
               <Button type="button" variant="outline" onClick={onClose}>
-                Отмена
+                {t("leave.cancel")}
               </Button>
               <Button type="submit" disabled={create.isPending}>
-                Отправить
+                {t("leave.send")}
               </Button>
             </DialogFooter>
           </form>
@@ -402,6 +404,7 @@ function NewLeaveDialog({
 // ── My balances ──────────────────────────────────────────────────────────────
 
 function MyBalancesTab() {
+  const { t } = useTranslation();
   const currentYear = new Date().getFullYear();
   const [year, setYear] = useState(currentYear);
   const { data: balances = [], isLoading } = useMyLeaveBalances(year);
@@ -410,7 +413,9 @@ function MyBalancesTab() {
     <div>
       <div className="flex items-end gap-3 mb-4">
         <div>
-          <label className="text-xs text-muted-foreground block mb-1">Год</label>
+          <label className="text-xs text-muted-foreground block mb-1">
+            {t("leave.year")}
+          </label>
           <Input
             type="number"
             min={2000}
@@ -426,12 +431,12 @@ function MyBalancesTab() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Тип</TableHead>
-              <TableHead>Всего</TableHead>
-              <TableHead>Перенесено</TableHead>
-              <TableHead>Использовано</TableHead>
-              <TableHead>Корректировка</TableHead>
-              <TableHead>Остаток</TableHead>
+              <TableHead>{t("leave.columns.type")}</TableHead>
+              <TableHead>{t("leave.columns.total")}</TableHead>
+              <TableHead>{t("leave.columns.carried")}</TableHead>
+              <TableHead>{t("leave.columns.used")}</TableHead>
+              <TableHead>{t("leave.columns.adjusted")}</TableHead>
+              <TableHead>{t("leave.columns.remaining")}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -446,7 +451,7 @@ function MyBalancesTab() {
             ) : balances.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
-                  Балансов нет
+                  {t("leave.noBalances")}
                 </TableCell>
               </TableRow>
             ) : (
@@ -471,6 +476,7 @@ function MyBalancesTab() {
 // ── Team calendar ────────────────────────────────────────────────────────────
 
 function TeamCalendarTab() {
+  const { t } = useTranslation();
   const today = new Date();
   const inSixty = new Date();
   inSixty.setDate(inSixty.getDate() + 60);
@@ -482,17 +488,17 @@ function TeamCalendarTab() {
     <div>
       <div className="text-sm text-muted-foreground mb-3 flex items-center gap-2">
         <CalIcon className="h-4 w-4" />
-        Период: {formatDate(from)} – {formatDate(to)}
+        {t("leave.period")} {formatDate(from)} – {formatDate(to)}
       </div>
       <div className="rounded-2xl border bg-white/60 backdrop-blur">
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Сотрудник</TableHead>
-              <TableHead>Тип</TableHead>
-              <TableHead>С</TableHead>
-              <TableHead>По</TableHead>
-              <TableHead>Статус</TableHead>
+              <TableHead>{t("leave.columns.employee")}</TableHead>
+              <TableHead>{t("leave.columns.type")}</TableHead>
+              <TableHead>{t("leave.columns.from")}</TableHead>
+              <TableHead>{t("leave.columns.to")}</TableHead>
+              <TableHead>{t("leave.columns.status")}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -507,7 +513,7 @@ function TeamCalendarTab() {
             ) : entries.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
-                  Никто не уходит в отпуск в ближайшие 60 дней
+                  {t("leave.noEntries")}
                 </TableCell>
               </TableRow>
             ) : (
@@ -525,7 +531,7 @@ function TeamCalendarTab() {
                         borderColor: (STATUS_COLOR[e.status] ?? "#94A3B8") + "55",
                       }}
                     >
-                      {STATUS_LABEL[e.status] ?? e.status}
+                      {t(`leave.statuses.${e.status}`, { defaultValue: e.status })}
                     </Badge>
                   </TableCell>
                 </TableRow>

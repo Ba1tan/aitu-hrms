@@ -243,6 +243,127 @@
       "hiredAt": "At company since"
     }
   },
+  "attendance": {
+    "title": "Time tracking",
+    "tabMy": "My month",
+    "tabTeam": "Team",
+    "tabCompany": "Company",
+    "today": "Today",
+    "refresh": "Refresh",
+    "manualEntry": "Manual entry",
+    "bulkAbsent": "Mark absentees",
+    "department": "Department",
+    "date": "Date",
+    "summaryMonth": "Summary month",
+    "noRecords": "No records for the selected period",
+    "pickDepartment": "Pick a department",
+    "noDepartment": "— None —",
+    "pickEmployee": "Pick an employee",
+    "searchEmployee": "Search by name or email",
+    "stats": {
+      "present": "Present",
+      "late": "Late",
+      "absent": "Absent",
+      "hoursMonth": "Hours this month"
+    },
+    "weekdays": ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
+    "statuses": {
+      "PRESENT": "Present",
+      "LATE": "Late",
+      "ABSENT": "Absent",
+      "HALF_DAY": "Half-day",
+      "ON_LEAVE": "On leave",
+      "HOLIDAY": "Holiday",
+      "WEEKEND": "Weekend"
+    },
+    "columns": {
+      "employee": "Employee",
+      "date": "Date",
+      "checkIn": "Check-in",
+      "checkOut": "Check-out",
+      "hours": "Hours",
+      "status": "Status"
+    },
+    "manual": {
+      "title": "Manual entry",
+      "description": "Create an attendance record manually. Used for corrections and back-dated entries.",
+      "employee": "Employee",
+      "date": "Date",
+      "status": "Status",
+      "checkIn": "Check-in",
+      "checkOut": "Check-out",
+      "notes": "Notes",
+      "cancel": "Cancel",
+      "create": "Create",
+      "created": "Record created",
+      "saveError": "Could not save"
+    },
+    "bulk": {
+      "title": "Mark absentees in bulk",
+      "description": "Every employee with no record for the selected day will be marked ABSENT.",
+      "date": "Date",
+      "cancel": "Cancel",
+      "apply": "Apply",
+      "markedCount": "Marked absent: {{count}}",
+      "actionError": "Could not apply"
+    }
+  },
+  "leave": {
+    "title": "Leave",
+    "tabRequests": "My requests",
+    "tabBalances": "My balances",
+    "tabCalendar": "Team calendar",
+    "statusLabel": "Status",
+    "allStatuses": "All statuses",
+    "submitRequest": "Submit request",
+    "cancel": "Cancel",
+    "cancelRow": "Cancel",
+    "send": "Send",
+    "noRequests": "No requests",
+    "noBalances": "No balances",
+    "noManager": "No manager assigned",
+    "noEntries": "Nobody is going on leave in the next 60 days",
+    "cancelled": "Request cancelled",
+    "cancelError": "Could not cancel",
+    "sent": "Request sent",
+    "sendError": "Could not send request",
+    "statuses": {
+      "PENDING": "Pending",
+      "APPROVED": "Approved",
+      "REJECTED": "Rejected",
+      "CANCELLED": "Cancelled"
+    },
+    "columns": {
+      "type": "Type",
+      "period": "Period",
+      "days": "Days",
+      "reason": "Reason",
+      "status": "Status",
+      "approver": "Approver",
+      "employee": "Employee",
+      "from": "From",
+      "to": "To",
+      "total": "Total",
+      "carried": "Carried over",
+      "used": "Used",
+      "adjusted": "Adjusted",
+      "remaining": "Remaining"
+    },
+    "form": {
+      "title": "New leave request",
+      "description": "Balance is verified server-side. Overlapping periods are rejected.",
+      "leaveType": "Leave type",
+      "pickType": "Pick a type",
+      "unpaid": "(unpaid)",
+      "startDate": "From",
+      "endDate": "To",
+      "requestedDays": "Requested days:",
+      "balanceRemaining": "Balance: {{days}} days",
+      "reason": "Reason"
+    },
+    "year": "Year",
+    "period": "Period:"
+  },
   "dashboard": {
     "title": "Dashboard",
     "stats": {

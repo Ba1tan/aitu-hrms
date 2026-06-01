@@ -83,19 +83,11 @@ export default function StepReview() {
       />
 
       {missing.length > 0 && (
-        <div
-          style={{
-            background: "rgba(239,68,68,0.06)",
-            border: "1px solid rgba(239,68,68,0.3)",
-            padding: 14,
-            borderRadius: 12,
-            marginBottom: 20,
-          }}
-        >
-          <div style={{ fontWeight: 600, color: "#B91C1C", marginBottom: 6 }}>
+        <div className="mb-5 rounded-xl border border-destructive/30 bg-destructive/10 p-3.5">
+          <div className="mb-1.5 font-semibold text-destructive">
             Не хватает обязательных полей:
           </div>
-          <ul style={{ margin: 0, paddingLeft: 18, color: "#7F1D1D", fontSize: 13 }}>
+          <ul className="m-0 pl-4 text-[13px] text-destructive/80">
             {missing.map((k) => {
               const meta = REQUIRED_KEY_LABELS[k];
               return (
@@ -105,14 +97,7 @@ export default function StepReview() {
                     onClick={() =>
                       navigate(`/setup/${meta?.step ?? SETUP_STEPS[1].path}`)
                     }
-                    style={{
-                      background: "none",
-                      border: "none",
-                      color: "#B91C1C",
-                      textDecoration: "underline",
-                      cursor: "pointer",
-                      padding: 0,
-                    }}
+                    className="cursor-pointer border-0 bg-transparent p-0 text-destructive underline"
                   >
                     {meta?.label ?? k}
                   </button>
@@ -123,14 +108,7 @@ export default function StepReview() {
         </div>
       )}
 
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "1fr 1fr",
-          gap: 14,
-          marginBottom: 20,
-        }}
-      >
+      <div className="mb-5 grid grid-cols-1 gap-3.5 md:grid-cols-2">
         <ReviewBlock
           title="Компания"
           rows={[
@@ -179,25 +157,24 @@ export default function StepReview() {
       </div>
 
       <div
-        style={{
-          padding: 18,
-          background: isReady
-            ? "linear-gradient(135deg, #10B981 0%, #3B82F6 100%)"
-            : "rgba(0,0,0,0.04)",
-          color: isReady ? "#fff" : "#64748B",
-          borderRadius: 16,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-        }}
+        className={
+          isReady
+            ? "flex items-center justify-between rounded-2xl p-[18px] text-white"
+            : "flex items-center justify-between rounded-2xl bg-muted/40 p-[18px] text-muted-foreground"
+        }
+        style={
+          isReady
+            ? { background: "linear-gradient(135deg, #10B981 0%, #3B82F6 100%)" }
+            : undefined
+        }
       >
-        <div style={{ display: "flex", gap: 14, alignItems: "center" }}>
+        <div className="flex items-center gap-3.5">
           <PartyPopper size={28} />
           <div>
-            <div style={{ fontWeight: 700, fontSize: 16 }}>
+            <div className="text-base font-bold">
               {isReady ? "Всё готово!" : "Ещё не готово"}
             </div>
-            <div style={{ fontSize: 13, opacity: 0.9 }}>
+            <div className="text-[13px] opacity-90">
               {isReady
                 ? "Нажмите «Завершить настройку», чтобы перейти в систему."
                 : "Заполните обязательные поля в указанных выше шагах."}
@@ -234,39 +211,15 @@ function ReviewBlock({
   rows: [string, string | undefined][];
 }) {
   return (
-    <div
-      style={{
-        background: "rgba(0,0,0,0.02)",
-        border: "1px solid #E2E8F0",
-        padding: 16,
-        borderRadius: 12,
-      }}
-    >
-      <div style={{ fontWeight: 700, marginBottom: 10, fontSize: 14 }}>
-        {title}
-      </div>
+    <div className="rounded-xl border border-border/60 bg-muted/30 p-4">
+      <div className="mb-2.5 text-sm font-bold text-foreground">{title}</div>
       {rows.map(([label, value]) => (
         <div
           key={label}
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            fontSize: 13,
-            padding: "4px 0",
-            color: "#475569",
-            borderBottom: "1px dashed rgba(0,0,0,0.05)",
-          }}
+          className="flex justify-between border-b border-dashed border-border/40 py-1 text-[13px] last:border-b-0"
         >
-          <span style={{ color: "#64748B" }}>{label}</span>
-          <span
-            style={{
-              fontWeight: 500,
-              maxWidth: 200,
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-              whiteSpace: "nowrap",
-            }}
-          >
+          <span className="text-muted-foreground">{label}</span>
+          <span className="max-w-[200px] overflow-hidden text-ellipsis whitespace-nowrap font-medium text-foreground">
             {value ?? "—"}
           </span>
         </div>

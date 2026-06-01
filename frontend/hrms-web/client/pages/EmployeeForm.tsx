@@ -3,8 +3,6 @@ import { useNavigate, useParams } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
-import { format } from "date-fns";
-import { CalendarIcon } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import DashboardLayout from "./DashboardLayout";
 import { Button } from "@/components/ui/button";
@@ -18,8 +16,6 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -29,8 +25,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { cn } from "@/lib/utils";
-import { parseLocalDate, toLocalIsoDate } from "../lib/format";
 import { CreateEmployeeRequest } from "../../shared/api";
 import {
   useCreateEmployee,
@@ -298,43 +292,17 @@ export default function EmployeeForm() {
                     control={form.control}
                     name="dateOfBirth"
                     render={({ field }) => (
-                      <FormItem className="flex flex-col">
+                      <FormItem>
                         <FormLabel>{t("employees.form.dateOfBirth")}</FormLabel>
-                        <Popover>
-                          <PopoverTrigger asChild>
-                            <FormControl>
-                              <Button
-                                variant="outline"
-                                className={cn(
-                                  "w-full pl-3 text-left font-normal",
-                                  !field.value && "text-muted-foreground",
-                                )}
-                              >
-                                {field.value
-                                  ? format(parseLocalDate(field.value)!, "dd.MM.yyyy")
-                                  : t("employees.form.pickDate")}
-                                <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                              </Button>
-                            </FormControl>
-                          </PopoverTrigger>
-                          <PopoverContent className="w-auto p-0" align="start">
-                            <Calendar
-                              mode="single"
-                              selected={parseLocalDate(field.value)}
-                              onSelect={(date) =>
-                                field.onChange(date ? toLocalIsoDate(date) : "")
-                              }
-                              disabled={(date) =>
-                                date > new Date() || date < new Date("1940-01-01")
-                              }
-                              defaultMonth={
-                                parseLocalDate(field.value) ??
-                                new Date(1995, 0, 1)
-                              }
-                              initialFocus
-                            />
-                          </PopoverContent>
-                        </Popover>
+                        <FormControl>
+                          <Input
+                            type="date"
+                            max={new Date().toISOString().slice(0, 10)}
+                            min="1940-01-01"
+                            {...field}
+                            value={field.value ?? ""}
+                          />
+                        </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -350,39 +318,17 @@ export default function EmployeeForm() {
                     control={form.control}
                     name="hireDate"
                     render={({ field }) => (
-                      <FormItem className="flex flex-col">
+                      <FormItem>
                         <FormLabel>{t("employees.form.hireDate")} *</FormLabel>
-                        <Popover>
-                          <PopoverTrigger asChild>
-                            <FormControl>
-                              <Button
-                                variant="outline"
-                                className={cn(
-                                  "w-full pl-3 text-left font-normal",
-                                  !field.value && "text-muted-foreground",
-                                )}
-                              >
-                                {field.value
-                                  ? format(parseLocalDate(field.value)!, "dd.MM.yyyy")
-                                  : t("employees.form.pickDate")}
-                                <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                              </Button>
-                            </FormControl>
-                          </PopoverTrigger>
-                          <PopoverContent className="w-auto p-0" align="start">
-                            <Calendar
-                              mode="single"
-                              selected={parseLocalDate(field.value)}
-                              onSelect={(date) =>
-                                field.onChange(date ? toLocalIsoDate(date) : "")
-                              }
-                              disabled={(date) =>
-                                date > new Date() || date < new Date("1900-01-01")
-                              }
-                              initialFocus
-                            />
-                          </PopoverContent>
-                        </Popover>
+                        <FormControl>
+                          <Input
+                            type="date"
+                            max={new Date().toISOString().slice(0, 10)}
+                            min="1900-01-01"
+                            {...field}
+                            value={field.value ?? ""}
+                          />
+                        </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}

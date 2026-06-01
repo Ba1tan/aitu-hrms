@@ -172,8 +172,11 @@ public class AttendanceServiceImpl implements AttendanceService {
     @Override
     @Transactional(readOnly = true)
     public AttendanceDtos.TodayResponse today(UUID employeeId) {
+        // Admins / service accounts can hit this endpoint via shared UI (the
+        // dashboard's AttendanceWidget). They have no employee record, so
+        // return the same shape as "not checked in yet" instead of 400.
         if (employeeId == null) {
-            throw new BusinessException("Caller has no associated employee profile");
+            return mapper.toToday(null);
         }
         AttendanceRecord r = recordRepo
                 .findByEmployeeIdAndWorkDateAndDeletedFalse(employeeId, LocalDate.now(zone()))
@@ -184,8 +187,10 @@ public class AttendanceServiceImpl implements AttendanceService {
     @Override
     @Transactional(readOnly = true)
     public Page<AttendanceDtos.RecordResponse> ownRecords(UUID employeeId, LocalDate from, LocalDate to, Pageable pageable) {
+        // Same rationale as today(): admins without an employeeId get an
+        // empty page rather than a 400, so shared UI doesn't blow up.
         if (employeeId == null) {
-            throw new BusinessException("Caller has no associated employee profile");
+            return Page.empty(pageable);
         }
         return recordRepo.search(employeeId, from, to, pageable)
                 .map(r -> mapper.toRecord(r, null));

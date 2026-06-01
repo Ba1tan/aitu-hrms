@@ -23,4 +23,7 @@ public interface LeaveClient {
 
     @GetMapping("/api/v1/leave/balances/employee/{id}")
     List<LeaveBalanceDto> balancesFor(@PathVariable UUID id, @RequestParam int year);
+
+    @GetMapping("/api/v1/leave/active/count")
+    LeaveActiveCountDto activeCount();
 }

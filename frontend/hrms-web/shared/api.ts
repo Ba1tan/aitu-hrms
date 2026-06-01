@@ -268,6 +268,12 @@ export interface Employee {
   baseSalary: string;
   status: string;
   hireDate: string;
+  /**
+   * Derived from leave-service: end date of an APPROVED leave covering
+   * today, or null/absent if the employee isn't currently on leave.
+   * Used by the UI to render an ON_LEAVE badge while the leave is active.
+   */
+  onLeaveUntil?: string | null;
 }
 
 export interface EmployeeListItem {
@@ -299,6 +305,8 @@ export interface EmployeeListItem {
   hasDisability: boolean;
   pensioner: boolean;
   status: string;
+  /** See {@link Employee.onLeaveUntil}. */
+  onLeaveUntil?: string | null;
 }
 
 /**

@@ -54,6 +54,36 @@ public class LeaveRequestService {
         return LocalDate.now(ZoneId.of(zoneId));
     }
 
+    /**
+     * Approved leaves intersecting today — one row per leave (an employee
+     * with two overlapping leaves would appear twice; callers that need
+     * distinct employees should dedupe). Filters to the given employee IDs
+     * if provided, returns everyone otherwise.
+     */
+    @Transactional(readOnly = true)
+    public List<kz.aitu.hrms.leave.dto.ActiveLeaveDtos.ActiveLeaveDto> activeToday(
+            List<UUID> employeeIds) {
+        LocalDate today = today();
+        List<UUID> filter = (employeeIds == null || employeeIds.isEmpty()) ? null : employeeIds;
+        return requestRepo.findApprovedInRange(filter, today, today).stream()
+                .map(r -> kz.aitu.hrms.leave.dto.ActiveLeaveDtos.ActiveLeaveDto.builder()
+                        .employeeId(r.getEmployeeId())
+                        .leaveType(r.getLeaveType() == null ? null : r.getLeaveType().getName())
+                        .startDate(r.getStartDate())
+                        .endDate(r.getEndDate())
+                        .build())
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public long activeTodayCount() {
+        LocalDate today = today();
+        return requestRepo.findApprovedInRange(null, today, today).stream()
+                .map(LeaveRequest::getEmployeeId)
+                .distinct()
+                .count();
+    }
+
     @Transactional
     public LeaveRequestDtos.Response create(LeaveRequestDtos.CreateRequest req) {
         UUID employeeId = CurrentUser.employeeId();

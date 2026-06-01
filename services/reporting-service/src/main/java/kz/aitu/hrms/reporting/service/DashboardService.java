@@ -81,8 +81,15 @@ public class DashboardService {
         dto.setTotal(page.getTotalElements());
         PageResponse<EmployeeSummaryDto> active = employeeClient.list(null, "ACTIVE", 0, 1);
         dto.setActive(active.getTotalElements());
-        PageResponse<EmployeeSummaryDto> onLeave = employeeClient.list(null, "ON_LEAVE", 0, 1);
-        dto.setOnLeave(onLeave.getTotalElements());
+        // employees.status is never written to ON_LEAVE by the leave flow —
+        // the badge is derived from active leave-service rows. Ask leave-service
+        // for the actual count instead of relying on the dead status column.
+        try {
+            dto.setOnLeave(leaveClient.activeCount().getCount());
+        } catch (Exception e) {
+            log.debug("leave-service activeCount unavailable: {}", e.getMessage());
+            dto.setOnLeave(0L);
+        }
         return dto;
     }
 

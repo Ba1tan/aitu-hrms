@@ -230,15 +230,28 @@ export default function EmployeesList() {
                   <TableCell>{employeeRefLabel(emp.department)}</TableCell>
                   <TableCell>{employeeRefLabel(emp.position)}</TableCell>
                   <TableCell>
-                    <Badge
-                      variant="outline"
-                      style={{
-                        color: statusColor[emp.status] ?? "#64748B",
-                        borderColor: (statusColor[emp.status] ?? "#94A3B8") + "55",
-                      }}
-                    >
-                      {t(`common.statuses.${emp.status}`, { defaultValue: emp.status })}
-                    </Badge>
+                    {(() => {
+                      const displayStatus = emp.onLeaveUntil ? "ON_LEAVE" : emp.status;
+                      return (
+                        <Badge
+                          variant="outline"
+                          title={
+                            emp.onLeaveUntil
+                              ? `до ${emp.onLeaveUntil}`
+                              : undefined
+                          }
+                          style={{
+                            color: statusColor[displayStatus] ?? "#64748B",
+                            borderColor:
+                              (statusColor[displayStatus] ?? "#94A3B8") + "55",
+                          }}
+                        >
+                          {t(`common.statuses.${displayStatus}`, {
+                            defaultValue: displayStatus,
+                          })}
+                        </Badge>
+                      );
+                    })()}
                   </TableCell>
                   <TableCell>{formatDate(emp.hireDate)}</TableCell>
                   <TableCell onClick={(e) => e.stopPropagation()}>

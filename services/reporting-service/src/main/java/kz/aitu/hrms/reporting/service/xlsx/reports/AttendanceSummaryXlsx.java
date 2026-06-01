@@ -4,7 +4,6 @@ import kz.aitu.hrms.reporting.client.AttendanceClient;
 import kz.aitu.hrms.reporting.client.EmployeeClient;
 import kz.aitu.hrms.reporting.client.dto.AttendanceRecordDto;
 import kz.aitu.hrms.reporting.client.dto.EmployeeSummaryDto;
-import kz.aitu.hrms.reporting.client.dto.PageResponse;
 import kz.aitu.hrms.reporting.service.xlsx.XlsxWriter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -43,19 +42,16 @@ public class AttendanceSummaryXlsx {
             Map<UUID, long[]> counts = new HashMap<>();
             LocalDate current = start;
             while (!current.isAfter(end)) {
-                String dateStr = current.format(fmt);
-                int page = 0;
-                PageResponse<AttendanceRecordDto> resp;
-                do {
-                    resp = attendanceClient.daily(dateStr, page++, 200);
-                    if (resp == null || resp.getContent() == null) break;
-                    for (AttendanceRecordDto r : resp.getContent()) {
+                List<AttendanceRecordDto> records =
+                        attendanceClient.daily(current.format(fmt));
+                if (records != null) {
+                    for (AttendanceRecordDto r : records) {
                         long[] c = counts.computeIfAbsent(r.getEmployeeId(), k -> new long[3]);
                         if ("PRESENT".equals(r.getStatus())) c[0]++;
                         else if ("ABSENT".equals(r.getStatus())) c[1]++;
                         else if ("LATE".equals(r.getStatus())) c[2]++;
                     }
-                } while (!resp.isLast());
+                }
                 current = current.plusDays(1);
             }
 

@@ -83,12 +83,25 @@ public class LeaveRequestService {
                     "Overlapping leave request exists for these dates");
         }
 
-        // Balance check.
+        // Balance check. If the balance row is missing (employee seeded via
+        // SQL bypassing EmployeeCreatedEvent, or new leave type added after
+        // the employee was created, or RMQ message lost), auto-create it
+        // with the type's default entitlement so the employee isn't blocked.
+        // The unique index on (employee_id, leave_type_id, year) keeps this
+        // safe under concurrent requests — duplicate inserts fail and the
+        // retry finds the existing row.
         int year = req.getStartDate().getYear();
         LeaveBalance balance = balanceRepo.findOne(employeeId, type.getId(), year)
-                .orElseThrow(() -> new BusinessException(
-                        "No leave balance for type '" + type.getName() + "' in year " + year
-                                + ". Ask HR to initialize balances."));
+                .orElseGet(() -> {
+                    log.info("Auto-initializing missing balance for employee={} type={} year={}",
+                            employeeId, type.getName(), year);
+                    return balanceRepo.save(LeaveBalance.builder()
+                            .employeeId(employeeId)
+                            .leaveType(type)
+                            .year(year)
+                            .entitledDays(type.getDaysAllowed())
+                            .build());
+                });
         if (balance.getRemainingDays() < days) {
             throw new BusinessException("Insufficient balance: requested " + days
                     + " day(s), remaining " + balance.getRemainingDays());

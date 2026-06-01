@@ -30,12 +30,22 @@ public interface AttendanceRecordRepository extends JpaRepository<AttendanceReco
     List<AttendanceRecord> findAllByEmployeeIdAndWorkDateBetweenAndDeletedFalse(
             UUID employeeId, LocalDate from, LocalDate to);
 
+    /*
+     * COALESCE(:param, r.<col>) instead of the older `:param IS NULL OR …`
+     * idiom: the PG JDBC driver can't infer the type of a bare `?` against
+     * `IS NULL` for LocalDate parameters (PSQLException 42P18 — "could not
+     * determine data type of parameter $N"). Placing the param inside a
+     * COALESCE next to a typed column gives PG the type context it needs,
+     * and the boolean semantics are identical:
+     *   :from = null  → r.workDate >= r.workDate  (always true → no filter)
+     *   :from = value → r.workDate >= value       (normal filter)
+     */
     @Query("""
         SELECT r FROM AttendanceRecord r
         WHERE r.deleted = false
-          AND (:employeeId IS NULL OR r.employeeId = :employeeId)
-          AND (:from IS NULL OR r.workDate >= :from)
-          AND (:to   IS NULL OR r.workDate <= :to)
+          AND r.employeeId = COALESCE(:employeeId, r.employeeId)
+          AND r.workDate  >= COALESCE(:from, r.workDate)
+          AND r.workDate  <= COALESCE(:to,   r.workDate)
         """)
     Page<AttendanceRecord> search(@Param("employeeId") UUID employeeId,
                                   @Param("from") LocalDate from,

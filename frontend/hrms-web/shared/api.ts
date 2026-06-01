@@ -1020,11 +1020,28 @@ export const settingsApi = {
    * `category` filters server-side (company.*, payroll.*, …). The backend
    * returns a list of {key, value, …}; flatten it into a key→value map since
    * every caller indexes settings by key.
+   *
+   * Requires `SYSTEM_SETTINGS` — use {@link getPublic} for the non-admin
+   * widgets (dashboard, notification prefs).
    */
   get: async (category?: string) => {
     const res = await apiClient.get<SettingValue[]>("/v1/settings", {
       params: category ? { category } : {},
     });
+    const list = Array.isArray(res.data) ? res.data : [];
+    const values = list.reduce<Record<string, string>>((acc, s) => {
+      acc[s.key] = s.value;
+      return acc;
+    }, {});
+    return { ...res, data: values };
+  },
+  /**
+   * Non-sensitive keys readable by any authenticated user. Backend
+   * whitelists `company.*`, `attendance.check_in_methods`,
+   * `attendance.require_face`, `notification.sms_provider`, etc.
+   */
+  getPublic: async () => {
+    const res = await apiClient.get<SettingValue[]>("/v1/settings/public");
     const list = Array.isArray(res.data) ? res.data : [];
     const values = list.reduce<Record<string, string>>((acc, s) => {
       acc[s.key] = s.value;

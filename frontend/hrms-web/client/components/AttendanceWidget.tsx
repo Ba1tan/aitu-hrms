@@ -49,8 +49,18 @@ export default function AttendanceWidget() {
   const checkOut = useCheckOut();
 
   const { withinHours, methodsAllowed } = useMemo(() => {
-    const methodsRaw = settings?.["attendance.check_in_methods"] ?? "WEB";
-    const methods = methodsRaw.split(",").map((s) => s.trim().toUpperCase());
+    // Backend stores this as a JSON array string (e.g. '["WEB","MANUAL"]').
+    // Fall back to CSV parsing for any legacy/manually-edited values.
+    const methodsRaw = settings?.["attendance.check_in_methods"] ?? '["WEB"]';
+    let methods: string[];
+    try {
+      const parsed = JSON.parse(methodsRaw);
+      methods = Array.isArray(parsed)
+        ? parsed.map((s) => String(s).trim().toUpperCase())
+        : [];
+    } catch {
+      methods = methodsRaw.split(",").map((s) => s.trim().toUpperCase());
+    }
 
     // Soft check against schedule.work_start/end if exposed; otherwise window
     // is wide (06:00–23:59) so we don't accidentally block in dev.

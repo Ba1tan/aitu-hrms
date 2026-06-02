@@ -127,7 +127,7 @@ resumed (the wizard re-reads `GET /v1/settings` on entry to prefill).
 | 2 | `/setup/company` | `company.name`, `company.bin` (validate 12 digits), `company.legal_address`, `company.timezone`, `company.currency`, `company.locale_default`, `company.tax_resident` |
 | 3 | `/setup/work-schedule` | `POST /v1/attendance/schedules` (start/end/late threshold/working days) → take returned `id` and `PUT /v1/settings/attendance.work_schedule_default_id` |
 | 4 | `/setup/holidays` | KZ holidays are pre-seeded — show as a read-only review with "Add custom" + "Remove" buttons calling `POST /v1/attendance/holidays` and `DELETE /v1/attendance/holidays/{id}` |
-| 5 | `/setup/attendance-methods` | `attendance.check_in_methods` (multi-select), `attendance.require_face` (toggle, disabled unless `FACE` is in methods) |
+| 5 | `/setup/attendance-methods` | `attendance.check_in_methods` (multi-select: `WEB`, `MANUAL`, `MOBILE`) |
 | 6 | `/setup/department` | First department — `POST /v1/departments` with `name` + optional manager. Skippable. |
 | 7 | `/setup/integrations` (optional) | `integration.1c_base_url`, `integration.1c_username`, `integration.1c_password`, `integration.bank_default_format`. All skippable; "Configure later" button. |
 | 8 | `/setup/review` | Read-only summary of every value set. "Finish setup" button → `POST /v1/settings/complete-setup`. On 409 with `missingRequired[]`, jump back to the relevant step. |

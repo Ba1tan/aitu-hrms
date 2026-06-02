@@ -1,12 +1,10 @@
 import {
-  AlertTriangle,
   Bell,
   CheckCircle2,
   ClipboardCheck,
   KeyRound,
   Palmtree,
   Receipt,
-  ShieldAlert,
   UserPlus,
   UserMinus,
   Wallet,
@@ -25,14 +23,10 @@ export function notificationIcon(type: string) {
     case "PAYROLL_JOB_STARTED":
     case "PAYROLL_JOB_COMPLETED":
       return Wallet;
-    case "PAYROLL_ANOMALY":
-      return AlertTriangle;
     case "EMPLOYEE_CREATED":
       return UserPlus;
     case "EMPLOYEE_TERMINATED":
       return UserMinus;
-    case "FRAUD_ALERT":
-      return ShieldAlert;
     case "ACCOUNT_CREATED":
       return CheckCircle2;
     case "PASSWORD_RESET":
@@ -91,10 +85,8 @@ export const NOTIFICATION_TYPES: { value: string; label: string }[] = [
   { value: "PAYSLIP_READY", label: "Расчётный лист готов" },
   { value: "PAYROLL_JOB_STARTED", label: "Расчёт ЗП начат" },
   { value: "PAYROLL_JOB_COMPLETED", label: "Расчёт ЗП завершён" },
-  { value: "PAYROLL_ANOMALY", label: "Аномалия в расчёте" },
   { value: "EMPLOYEE_CREATED", label: "Новый сотрудник" },
   { value: "EMPLOYEE_TERMINATED", label: "Увольнение" },
-  { value: "FRAUD_ALERT", label: "Подозрение на фрод" },
   { value: "ACCOUNT_CREATED", label: "Аккаунт создан" },
   { value: "PASSWORD_RESET", label: "Сброс пароля" },
   { value: "INTEGRATION_SYNC_FAILED", label: "Сбой синхронизации 1С" },
@@ -104,6 +96,5 @@ export const PREFERENCE_EVENT_TYPES: { value: string; label: string }[] = [
   { value: "LEAVE_REQUEST_CREATED", label: "Заявка на отпуск (новая)" },
   { value: "LEAVE_APPROVED", label: "Отпуск одобрен/отклонён" },
   { value: "PAYSLIP_READY", label: "Расчётный лист готов" },
-  { value: "PAYROLL_ANOMALY", label: "Аномалия в расчёте (HR)" },
   { value: "ACCOUNT_CREATED", label: "Аккаунт / пароль" },
 ];

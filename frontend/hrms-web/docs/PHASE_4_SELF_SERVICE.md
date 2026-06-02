@@ -64,7 +64,7 @@ the latest 5 notifications + a "See all" link to `/notifications`.
 
 **2. Inbox page (`client/pages/Notifications.tsx`)**
 
-- Table: timestamp, type icon (leave / payroll / employee / fraud /
+- Table: timestamp, type icon (leave / payroll / employee /
   payslip-ready / etc.), title, channel pill (IN_APP/EMAIL/PUSH/SMS),
   read/unread indicator, actions.
 - Toolbar: search, type filter, channel filter, "Unread only" toggle,
@@ -86,7 +86,6 @@ Per-event-type × per-channel matrix:
 | Leave request submitted  | ☑      | ☐     | ☐    | ☐   |
 | Leave approved/rejected  | ☑      | ☑     | ☐    | ☐   |
 | Payslip ready            | ☑      | ☑     | ☐    | ☐   |
-| Payroll anomaly (HR)     | ☑      | ☑     | ☐    | ☐   |
 | Account / password event | ☑      | ☑     | ☐    | ☐   |
 
 Backend contract is in `NOTIFICATION_SERVICE.md`. Endpoint `GET/PUT

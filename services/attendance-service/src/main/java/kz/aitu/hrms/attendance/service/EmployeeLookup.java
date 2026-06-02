@@ -27,11 +27,21 @@ public class EmployeeLookup {
     private final EmployeeClient employeeClient;
 
     public String fullName(UUID employeeId) {
+        EmployeeClient.EmployeeSummary s = summary(employeeId);
+        return s == null ? null : s.fullName();
+    }
+
+    /**
+     * Fetches the employee summary (name + departmentId) in one call. Returns
+     * {@code null} when employee-service is unreachable so the attendance
+     * flow can fall back gracefully (no name decoration, default schedule).
+     */
+    public EmployeeClient.EmployeeSummary summary(UUID employeeId) {
         if (employeeId == null) return null;
         try {
             EmployeeClient.Envelope<EmployeeClient.EmployeeSummary> resp = employeeClient.get(employeeId);
             if (resp != null && resp.data() != null) {
-                return resp.data().fullName();
+                return resp.data();
             }
         } catch (FeignException e) {
             log.debug("employee-service lookup failed for {}: {}", employeeId, e.getMessage());

@@ -82,7 +82,13 @@ public class AttendanceServiceImpl implements AttendanceService {
             throw new BusinessException("Today is a weekend");
         }
 
-        WorkSchedule schedule = resolveSchedule(null);
+        // Fetch the employee summary once and reuse it for both schedule
+        // resolution (department override) and response decoration (name).
+        // employee-service unreachable → null → falls back to the
+        // company-wide default schedule, same as the legacy behaviour.
+        var employee = employeeLookup.summary(employeeId);
+        UUID departmentId = employee == null ? null : employee.departmentId();
+        WorkSchedule schedule = resolveSchedule(departmentId);
         AttendanceStatus status = computeStatus(now.toLocalTime(), schedule);
 
         AttendanceRecord record = AttendanceRecord.builder()
@@ -106,7 +112,7 @@ public class AttendanceServiceImpl implements AttendanceService {
                 .checkIn(now)
                 .build());
 
-        String name = employeeLookup.fullName(employeeId);
+        String name = employee == null ? null : employee.fullName();
         return mapper.toCheckIn(record, name);
     }
 
@@ -137,7 +143,11 @@ public class AttendanceServiceImpl implements AttendanceService {
         record.setCheckOut(now);
         record.setCheckOutMethod(resolvedMethod);
 
-        WorkSchedule schedule = resolveSchedule(null);
+        // Same department override as check-in. Falls back to the default
+        // schedule if employee-service is unreachable.
+        var employee = employeeLookup.summary(employeeId);
+        UUID departmentId = employee == null ? null : employee.departmentId();
+        WorkSchedule schedule = resolveSchedule(departmentId);
         int workedMinutes = (int) Duration.between(record.getCheckIn(), now).toMinutes();
         if (workedMinutes < 0) workedMinutes = 0;
         record.setWorkedMinutes(workedMinutes);
@@ -165,7 +175,7 @@ public class AttendanceServiceImpl implements AttendanceService {
                 .workedHours(mapper.toHours(workedMinutes))
                 .build());
 
-        String name = employeeLookup.fullName(employeeId);
+        String name = employee == null ? null : employee.fullName();
         return mapper.toCheckIn(record, name);
     }
 

@@ -77,11 +77,6 @@ public class AttendanceServiceImpl implements AttendanceService {
             throw new BusinessException("Today is a holiday: " + holiday.get().getName());
         }
 
-        DayOfWeek dow = today.getDayOfWeek();
-        if (dow == DayOfWeek.SATURDAY || dow == DayOfWeek.SUNDAY) {
-            throw new BusinessException("Today is a weekend");
-        }
-
         // Fetch the employee summary once and reuse it for both schedule
         // resolution (department override) and response decoration (name).
         // employee-service unreachable → null → falls back to the
@@ -89,6 +84,13 @@ public class AttendanceServiceImpl implements AttendanceService {
         var employee = employeeLookup.summary(employeeId);
         UUID departmentId = employee == null ? null : employee.departmentId();
         WorkSchedule schedule = resolveSchedule(departmentId);
+
+        // "Weekend" is now whichever days the resolved schedule doesn't
+        // mark as working. Falls back to Mon–Fri if the column is empty.
+        if (!isWorkingDay(today.getDayOfWeek(), schedule)) {
+            throw new BusinessException("Today is not a working day under the active schedule");
+        }
+
         AttendanceStatus status = computeStatus(now.toLocalTime(), schedule);
 
         AttendanceRecord record = AttendanceRecord.builder()
@@ -369,5 +371,26 @@ public class AttendanceServiceImpl implements AttendanceService {
     private AttendanceStatus computeStatus(LocalTime now, WorkSchedule schedule) {
         LocalTime threshold = schedule.getWorkStartTime().plusMinutes(schedule.getLateThresholdMin());
         return now.isAfter(threshold) ? AttendanceStatus.LATE : AttendanceStatus.PRESENT;
+    }
+
+    /** Working-day lookup against the schedule's stored CSV (MON,TUE,…). */
+    private boolean isWorkingDay(DayOfWeek dow, WorkSchedule schedule) {
+        String csv = schedule.getWorkingDays();
+        if (csv == null || csv.isBlank()) {
+            return dow != DayOfWeek.SATURDAY && dow != DayOfWeek.SUNDAY;
+        }
+        String code = switch (dow) {
+            case MONDAY    -> "MON";
+            case TUESDAY   -> "TUE";
+            case WEDNESDAY -> "WED";
+            case THURSDAY  -> "THU";
+            case FRIDAY    -> "FRI";
+            case SATURDAY  -> "SAT";
+            case SUNDAY    -> "SUN";
+        };
+        for (String token : csv.split(",")) {
+            if (token.trim().equalsIgnoreCase(code)) return true;
+        }
+        return false;
     }
 }

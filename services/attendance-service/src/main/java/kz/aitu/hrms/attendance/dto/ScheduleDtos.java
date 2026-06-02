@@ -28,6 +28,9 @@ public class ScheduleDtos {
         private Integer halfDayThresholdMin;
         private UUID departmentId;
         private Boolean isDefault;
+        /** Day codes (MON..SUN). Empty / null means use the company default. */
+        private java.util.List<String> workingDays;
+        private String description;
     }
 
     @Data
@@ -42,6 +45,8 @@ public class ScheduleDtos {
         private Integer halfDayThresholdMin;
         private UUID departmentId;
         private Boolean isDefault;
+        private java.util.List<String> workingDays;
+        private String description;
     }
 
     @Data
@@ -57,5 +62,8 @@ public class ScheduleDtos {
         private Integer halfDayThresholdMin;
         private UUID departmentId;
         private boolean isDefault;
+        /** Returned as a list so the frontend can render checkboxes directly. */
+        private java.util.List<String> workingDays;
+        private String description;
     }
 }

@@ -469,9 +469,11 @@ export interface WorkSchedule {
   workStartTime: string;
   workEndTime: string;
   lateThresholdMin: number;
+  halfDayThresholdMin?: number;
   workingDays?: string[] | string;
   isDefault?: boolean;
   description?: string | null;
+  departmentId?: string | null;
 }
 
 export interface WorkScheduleRequest {
@@ -482,6 +484,7 @@ export interface WorkScheduleRequest {
   workingDays?: string[];
   isDefault?: boolean;
   description?: string;
+  departmentId?: string;
 }
 
 export interface ManualAttendanceRequest {

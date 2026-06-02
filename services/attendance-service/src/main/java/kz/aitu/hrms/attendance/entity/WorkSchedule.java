@@ -45,6 +45,14 @@ public class WorkSchedule extends BaseEntity {
     @Builder.Default
     private boolean isDefault = false;
 
+    /** CSV of three-letter day codes: MON,TUE,WED,THU,FRI,SAT,SUN. */
+    @Column(name = "working_days", nullable = false, length = 40)
+    @Builder.Default
+    private String workingDays = "MON,TUE,WED,THU,FRI";
+
+    @Column(name = "description", columnDefinition = "TEXT")
+    private String description;
+
     /**
      * In-memory fallback used when no schedule row exists in the DB.
      * Matches the seed default in V1__init_attendance_schema.sql.
@@ -56,6 +64,7 @@ public class WorkSchedule extends BaseEntity {
                 .workEndTime(LocalTime.of(18, 0))
                 .lateThresholdMin(15)
                 .halfDayThresholdMin(240)
+                .workingDays("MON,TUE,WED,THU,FRI")
                 .isDefault(true)
                 .build();
     }

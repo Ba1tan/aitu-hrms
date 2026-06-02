@@ -49,6 +49,8 @@ public class WorkScheduleServiceImpl implements WorkScheduleService {
                 .lateThresholdMin(req.getLateThresholdMin() == null ? 15 : req.getLateThresholdMin())
                 .halfDayThresholdMin(req.getHalfDayThresholdMin() == null ? 240 : req.getHalfDayThresholdMin())
                 .departmentId(req.getDepartmentId())
+                .workingDays(joinWorkingDays(req.getWorkingDays()))
+                .description(req.getDescription())
                 .isDefault(wantDefault)
                 .build();
         return mapper.toSchedule(scheduleRepo.save(s));
@@ -66,6 +68,8 @@ public class WorkScheduleServiceImpl implements WorkScheduleService {
         if (req.getLateThresholdMin() != null) s.setLateThresholdMin(req.getLateThresholdMin());
         if (req.getHalfDayThresholdMin() != null) s.setHalfDayThresholdMin(req.getHalfDayThresholdMin());
         if (req.getDepartmentId() != null) s.setDepartmentId(req.getDepartmentId());
+        if (req.getWorkingDays() != null) s.setWorkingDays(joinWorkingDays(req.getWorkingDays()));
+        if (req.getDescription() != null) s.setDescription(req.getDescription());
         if (Boolean.TRUE.equals(req.getIsDefault()) && !s.isDefault()) {
             clearExistingDefault();
             s.setDefault(true);
@@ -81,6 +85,18 @@ public class WorkScheduleServiceImpl implements WorkScheduleService {
         if (start != null && end != null && !end.isAfter(start)) {
             throw new BusinessException("workEndTime must be after workStartTime");
         }
+    }
+
+    /**
+     * Normalises a list of day codes into the persisted CSV form. Empty /
+     * null falls back to Mon–Fri so the column never holds a blank row.
+     */
+    private String joinWorkingDays(java.util.List<String> days) {
+        if (days == null || days.isEmpty()) return "MON,TUE,WED,THU,FRI";
+        return String.join(",", days.stream()
+                .map(d -> d == null ? "" : d.trim().toUpperCase())
+                .filter(d -> !d.isBlank())
+                .toList());
     }
 
     private void clearExistingDefault() {

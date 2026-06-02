@@ -83,11 +83,7 @@ export default function PayrollPeriodDetail() {
             toast.info(`Запущена фоновая задача #${resp.jobId}`);
             setJobId(Number(resp.jobId));
           } else {
-            toast.success(
-              `Сгенерировано: ${resp.generated ?? 0}, помечено AI: ${
-                resp.flagged ?? 0
-              }`,
-            );
+            toast.success(`Сгенерировано: ${resp.generated ?? 0}`);
           }
         },
         onError: (e: any) =>
@@ -241,8 +237,8 @@ export default function PayrollPeriodDetail() {
                       value={String(period.summary.payslipCount ?? 0)}
                     />
                     <SummaryCard
-                      label="Помечено AI"
-                      value={String(period.summary.flaggedCount ?? 0)}
+                      label="Утверждено"
+                      value={String(period.summary.approvedCount ?? 0)}
                     />
                     <SummaryCard
                       label="Брутто"

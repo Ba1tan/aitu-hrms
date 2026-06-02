@@ -82,8 +82,7 @@ required key keeps `GET /v1/settings/setup-status` returning `configured:false`.
 | `company.currency` | string | `KZT` | ISO 4217 — only `KZT` supported in v1 |
 | `company.locale_default` | enum | `ru` | `ru` \| `kk` \| `en` |
 | `company.tax_resident` | bool | `true` | Affects IPN rate (10% vs 20%) for the company itself |
-| `attendance.check_in_methods` | array | `["WEB","FACE"]` | Subset of `WEB`, `FACE`, `MANUAL`, `MOBILE` |
-| `attendance.require_face` | bool | `false` | If true, manual/web check-in disabled |
+| `attendance.check_in_methods` | array | `["WEB"]` | Subset of `WEB`, `MANUAL`, `MOBILE` |
 | `attendance.work_schedule_default_id` | UUID | — | FK into `hrms_attendance.work_schedules` (created in step 3) |
 
 ### Optional setting keys (skippable in wizard, editable later)

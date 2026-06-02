@@ -685,10 +685,8 @@ export type NotificationType =
   | "PAYSLIP_READY"
   | "PAYROLL_JOB_STARTED"
   | "PAYROLL_JOB_COMPLETED"
-  | "PAYROLL_ANOMALY"
   | "EMPLOYEE_CREATED"
   | "EMPLOYEE_TERMINATED"
-  | "FRAUD_ALERT"
   | "ACCOUNT_CREATED"
   | "PASSWORD_RESET"
   | "INTEGRATION_SYNC_FAILED"
@@ -1093,7 +1091,6 @@ export type AdditionCategory =
 export interface PayrollPeriodSummary {
   payslipCount: number;
   approvedCount: number;
-  flaggedCount: number;
   totalGrossSalary: string;
   totalNetSalary: string;
   totalIpn: string;
@@ -1140,7 +1137,6 @@ export interface GeneratePayslipsResponse {
   generated?: number | null;
   skipped?: number | null;
   errors?: number | null;
-  flagged?: number | null;
   totalGrossPayout?: string | null;
   totalNetPayout?: string | null;
   errorDetails?: string[] | null;

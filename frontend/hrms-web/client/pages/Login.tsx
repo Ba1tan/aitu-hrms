@@ -1,4 +1,4 @@
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { ArrowLeft } from "lucide-react";
 import { useTranslation } from "react-i18next";
@@ -6,13 +6,15 @@ import { useAuth } from "../hooks/useAuth";
 import { useAuthContext } from "../providers/AuthProvider";
 import "./css/login.css";
 
-interface LocationState {
-  from?: { pathname: string };
-}
+// After login (or when an already-authenticated user lands on /login by hand)
+// always send them to /dashboard. We deliberately ignore location.state.from
+// — it was carrying the *previous* user's last route across logout/relogin,
+// so account A logging out and account B logging back in would dump B on
+// A's old page.
+const DEFAULT_REDIRECT = "/dashboard";
 
 export default function Login() {
   const navigate = useNavigate();
-  const location = useLocation();
   const { login } = useAuth();
   const { isAuthenticated } = useAuthContext();
   const { t } = useTranslation();
@@ -20,15 +22,12 @@ export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  const redirectAfterLogin =
-    (location.state as LocationState)?.from?.pathname || "/dashboard";
-
   // If already authenticated (e.g. user typed /login by hand), skip the form.
   useEffect(() => {
     if (isAuthenticated) {
-      navigate(redirectAfterLogin, { replace: true });
+      navigate(DEFAULT_REDIRECT, { replace: true });
     }
-  }, [isAuthenticated, navigate, redirectAfterLogin]);
+  }, [isAuthenticated, navigate]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -36,7 +35,7 @@ export default function Login() {
     login.mutate(
       { email, password },
       {
-        onSuccess: () => navigate(redirectAfterLogin, { replace: true }),
+        onSuccess: () => navigate(DEFAULT_REDIRECT, { replace: true }),
       },
     );
   };
@@ -61,7 +60,7 @@ export default function Login() {
         </div>
 
         <div className="auth-right">
-          <Link to="/" className="auth-back">
+          <Link to="/index" className="auth-back">
             <ArrowLeft size={14} />
             {t("auth.backToHome")}
           </Link>

@@ -136,6 +136,13 @@ public class EmployeeDtos {
         private ManagerSummary manager;
         private LocalDateTime createdAt;
         private LocalDateTime updatedAt;
+        /**
+         * Derived from leave-service: end date of an APPROVED leave covering
+         * today, or null if the employee isn't on leave right now. Frontend
+         * uses this to render an ON_LEAVE badge instead of the stored
+         * employment status while the leave is active.
+         */
+        private LocalDate onLeaveUntil;
     }
 
     @Data
@@ -151,6 +158,8 @@ public class EmployeeDtos {
         private String position;
         private EmploymentStatus status;
         private LocalDate hireDate;
+        /** See {@link EmployeeResponse#onLeaveUntil}. */
+        private LocalDate onLeaveUntil;
     }
 
     @Data

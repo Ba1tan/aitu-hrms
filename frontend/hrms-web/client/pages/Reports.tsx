@@ -221,7 +221,7 @@ export default function Reports() {
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
         {REPORTS.map((r) => (
           <RequirePermission key={r.key} code={r.permission}>
-            <Card className="bg-white/60 backdrop-blur flex flex-col">
+            <Card className="bg-card/60 backdrop-blur flex flex-col">
               <CardHeader className="flex-1">
                 <div className="flex items-start gap-3">
                   <div className="w-11 h-11 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">

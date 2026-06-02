@@ -3,6 +3,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 import { CalendarDays, ListChecks, Plus, RefreshCw, Users2 } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import DashboardLayout from "./DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -79,15 +80,15 @@ const STATUS_COLOR: Record<string, string> = {
   WEEKEND: "#CBD5E1",
 };
 
-const STATUS_LABEL: Record<string, string> = {
-  PRESENT: "На месте",
-  LATE: "Опоздание",
-  ABSENT: "Отсутствие",
-  HALF_DAY: "Половина дня",
-  ON_LEAVE: "В отпуске",
-  HOLIDAY: "Праздник",
-  WEEKEND: "Выходной",
-};
+const STATUS_KEYS = [
+  "PRESENT",
+  "LATE",
+  "ABSENT",
+  "HALF_DAY",
+  "ON_LEAVE",
+  "HOLIDAY",
+  "WEEKEND",
+] as const;
 
 function pad(n: number): string {
   return String(n).padStart(2, "0");
@@ -114,6 +115,7 @@ function formatHm(iso: string | null | undefined): string {
 
 export default function Attendance() {
   const { hasPermission, user } = useAuthContext();
+  const { t } = useTranslation();
   const isSuper = user?.role === "SUPER_ADMIN";
   const canViewTeam = isSuper || hasPermission("ATTENDANCE_VIEW_TEAM");
   const canViewAll = isSuper || hasPermission("ATTENDANCE_VIEW_ALL");
@@ -127,20 +129,21 @@ export default function Attendance() {
   const [tab, setTab] = useState(defaultTab);
 
   return (
-    <DashboardLayout title="Учёт времени">
+    <DashboardLayout title={t("attendance.title")}>
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6 mb-6">
-        <div className="rounded-2xl border bg-white/60 backdrop-blur p-5">
+        <div className="rounded-2xl border bg-card/60 backdrop-blur p-5">
           <Tabs value={tab} onValueChange={setTab}>
             <TabsList>
-              <TabsTrigger value="my">Мой месяц</TabsTrigger>
+              <TabsTrigger value="my">{t("attendance.tabMy")}</TabsTrigger>
               {canViewTeam && (
                 <TabsTrigger value="team">
-                  <Users2 className="h-4 w-4 mr-1" /> Команда
+                  <Users2 className="h-4 w-4 mr-1" /> {t("attendance.tabTeam")}
                 </TabsTrigger>
               )}
               {canViewAll && (
                 <TabsTrigger value="company">
-                  <ListChecks className="h-4 w-4 mr-1" /> Компания
+                  <ListChecks className="h-4 w-4 mr-1" />{" "}
+                  {t("attendance.tabCompany")}
                 </TabsTrigger>
               )}
             </TabsList>
@@ -168,6 +171,7 @@ export default function Attendance() {
 // ── My Month ─────────────────────────────────────────────────────────────────
 
 function MyMonthGrid() {
+  const { t, i18n } = useTranslation();
   const [cursor, setCursor] = useState(() => new Date());
   const from = useMemo(() => startOfMonth(cursor), [cursor]);
   const to = useMemo(() => endOfMonth(cursor), [cursor]);
@@ -187,10 +191,12 @@ function MyMonthGrid() {
   const firstDay = new Date(cursor.getFullYear(), cursor.getMonth(), 1).getDay();
   const shift = firstDay === 0 ? 6 : firstDay - 1;
 
-  const monthLabel = cursor.toLocaleString("ru-RU", {
+  const monthLabel = cursor.toLocaleString(i18n.resolvedLanguage || "ru", {
     month: "long",
     year: "numeric",
   });
+
+  const weekdays = t("attendance.weekdays", { returnObjects: true }) as string[];
 
   return (
     <div>
@@ -212,7 +218,7 @@ function MyMonthGrid() {
             size="sm"
             onClick={() => setCursor(new Date())}
           >
-            Сегодня
+            {t("attendance.today")}
           </Button>
           <Button
             variant="outline"
@@ -230,7 +236,7 @@ function MyMonthGrid() {
       </div>
 
       <div className="grid grid-cols-7 gap-2 text-xs text-muted-foreground mb-2">
-        {["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"].map((d) => (
+        {weekdays.map((d) => (
           <div key={d} className="text-center">
             {d}
           </div>
@@ -267,7 +273,9 @@ function MyMonthGrid() {
                   className="text-[10px] mt-1 font-medium"
                   style={{ color: STATUS_COLOR[rec.status] }}
                 >
-                  {STATUS_LABEL[rec.status] ?? rec.status}
+                  {t(`attendance.statuses.${rec.status}`, {
+                    defaultValue: rec.status,
+                  })}
                 </div>
               )}
             </div>
@@ -287,6 +295,7 @@ function MyMonthGrid() {
 // ── Team view (managers) ─────────────────────────────────────────────────────
 
 function TeamView({ canManage }: { canManage: boolean }) {
+  const { t } = useTranslation();
   const [departmentId, setDepartmentId] = useState<string>("");
   const [date, setDate] = useState(() => todayIso());
   const { data: departments = [] } = useDepartments();
@@ -298,16 +307,18 @@ function TeamView({ canManage }: { canManage: boolean }) {
     <div>
       <div className="flex flex-wrap items-end gap-3 mb-4">
         <div>
-          <label className="text-xs text-muted-foreground block mb-1">Отдел</label>
+          <label className="text-xs text-muted-foreground block mb-1">
+            {t("attendance.department")}
+          </label>
           <Select
             value={departmentId || ANY}
             onValueChange={(v) => setDepartmentId(v === ANY ? "" : v)}
           >
             <SelectTrigger className="w-[240px]">
-              <SelectValue placeholder="Выберите отдел" />
+              <SelectValue placeholder={t("attendance.pickDepartment")} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value={ANY}>— Не выбран —</SelectItem>
+              <SelectItem value={ANY}>{t("attendance.noDepartment")}</SelectItem>
               {departments.map((d) => (
                 <SelectItem key={d.id} value={d.id}>
                   {d.name}
@@ -317,7 +328,9 @@ function TeamView({ canManage }: { canManage: boolean }) {
           </Select>
         </div>
         <div>
-          <label className="text-xs text-muted-foreground block mb-1">Дата</label>
+          <label className="text-xs text-muted-foreground block mb-1">
+            {t("attendance.date")}
+          </label>
           <Input
             type="date"
             value={date}
@@ -326,7 +339,7 @@ function TeamView({ canManage }: { canManage: boolean }) {
           />
         </div>
         <Button variant="outline" size="sm" onClick={() => refetch()}>
-          <RefreshCw className="h-4 w-4 mr-1" /> Обновить
+          <RefreshCw className="h-4 w-4 mr-1" /> {t("attendance.refresh")}
         </Button>
         {canManage && (
           <div className="ml-auto flex gap-2">
@@ -343,6 +356,7 @@ function TeamView({ canManage }: { canManage: boolean }) {
 // ── Company view (HR) ────────────────────────────────────────────────────────
 
 function CompanyView({ canManage }: { canManage: boolean }) {
+  const { t } = useTranslation();
   const today = new Date();
   const [date, setDate] = useState(() => todayIso());
   const [summaryMonth, setSummaryMonth] = useState(() => ({
@@ -359,7 +373,9 @@ function CompanyView({ canManage }: { canManage: boolean }) {
     <div>
       <div className="flex flex-wrap items-end gap-3 mb-4">
         <div>
-          <label className="text-xs text-muted-foreground block mb-1">Дата</label>
+          <label className="text-xs text-muted-foreground block mb-1">
+            {t("attendance.date")}
+          </label>
           <Input
             type="date"
             value={date}
@@ -368,7 +384,7 @@ function CompanyView({ canManage }: { canManage: boolean }) {
           />
         </div>
         <Button variant="outline" size="sm" onClick={() => refetch()}>
-          <RefreshCw className="h-4 w-4 mr-1" /> Обновить
+          <RefreshCw className="h-4 w-4 mr-1" /> {t("attendance.refresh")}
         </Button>
         {canManage && (
           <div className="ml-auto flex gap-2">
@@ -380,11 +396,23 @@ function CompanyView({ canManage }: { canManage: boolean }) {
 
       {summary && (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
-          <StatTile label="Присутствие" value={summary.presentDays} accent="#10B981" />
-          <StatTile label="Опоздания" value={summary.lateDays} accent="#F59E0B" />
-          <StatTile label="Отсутствия" value={summary.absentDays} accent="#EF4444" />
           <StatTile
-            label="Часы за месяц"
+            label={t("attendance.stats.present")}
+            value={summary.presentDays}
+            accent="#10B981"
+          />
+          <StatTile
+            label={t("attendance.stats.late")}
+            value={summary.lateDays}
+            accent="#F59E0B"
+          />
+          <StatTile
+            label={t("attendance.stats.absent")}
+            value={summary.absentDays}
+            accent="#EF4444"
+          />
+          <StatTile
+            label={t("attendance.stats.hoursMonth")}
             value={summary.totalWorkedHours}
             accent="#3B82F6"
           />
@@ -393,7 +421,9 @@ function CompanyView({ canManage }: { canManage: boolean }) {
 
       <div className="flex justify-end mb-2">
         <div>
-          <label className="text-xs text-muted-foreground block mb-1">Месяц сводки</label>
+          <label className="text-xs text-muted-foreground block mb-1">
+            {t("attendance.summaryMonth")}
+          </label>
           <Input
             type="month"
             value={`${summaryMonth.year}-${pad(summaryMonth.month)}`}
@@ -422,7 +452,7 @@ function StatTile({
 }) {
   return (
     <div
-      className="rounded-xl border p-4 bg-white/60"
+      className="rounded-xl border p-4 bg-card/60"
       style={{ borderColor: `${accent}44` }}
     >
       <div className="text-xs text-muted-foreground">{label}</div>
@@ -451,17 +481,18 @@ interface RecordsTableProps {
 }
 
 function RecordsTable({ records, isLoading, showEmployee }: RecordsTableProps) {
+  const { t } = useTranslation();
   return (
     <div className="rounded-xl border overflow-hidden">
       <Table>
         <TableHeader>
           <TableRow>
-            {showEmployee && <TableHead>Сотрудник</TableHead>}
-            <TableHead>Дата</TableHead>
-            <TableHead>Приход</TableHead>
-            <TableHead>Уход</TableHead>
-            <TableHead>Часы</TableHead>
-            <TableHead>Статус</TableHead>
+            {showEmployee && <TableHead>{t("attendance.columns.employee")}</TableHead>}
+            <TableHead>{t("attendance.columns.date")}</TableHead>
+            <TableHead>{t("attendance.columns.checkIn")}</TableHead>
+            <TableHead>{t("attendance.columns.checkOut")}</TableHead>
+            <TableHead>{t("attendance.columns.hours")}</TableHead>
+            <TableHead>{t("attendance.columns.status")}</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -479,7 +510,7 @@ function RecordsTable({ records, isLoading, showEmployee }: RecordsTableProps) {
                 colSpan={showEmployee ? 6 : 5}
                 className="text-center py-8 text-muted-foreground"
               >
-                Нет записей за выбранный период
+                {t("attendance.noRecords")}
               </TableCell>
             </TableRow>
           ) : (
@@ -502,7 +533,9 @@ function RecordsTable({ records, isLoading, showEmployee }: RecordsTableProps) {
                       borderColor: (STATUS_COLOR[r.status] ?? "#94A3B8") + "55",
                     }}
                   >
-                    {STATUS_LABEL[r.status] ?? r.status}
+                    {t(`attendance.statuses.${r.status}`, {
+                      defaultValue: r.status,
+                    })}
                   </Badge>
                 </TableCell>
               </TableRow>
@@ -517,11 +550,12 @@ function RecordsTable({ records, isLoading, showEmployee }: RecordsTableProps) {
 // ── Manual entry dialog ──────────────────────────────────────────────────────
 
 function ManualEntryButton() {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   return (
     <RequirePermission code="ATTENDANCE_MANAGE">
       <Button onClick={() => setOpen(true)} variant="outline" size="sm">
-        <Plus className="h-4 w-4 mr-1" /> Ручная отметка
+        <Plus className="h-4 w-4 mr-1" /> {t("attendance.manualEntry")}
       </Button>
       <ManualEntryDialog open={open} onClose={() => setOpen(false)} />
     </RequirePermission>
@@ -535,6 +569,7 @@ function ManualEntryDialog({
   open: boolean;
   onClose: () => void;
 }) {
+  const { t } = useTranslation();
   const [search, setSearch] = useState("");
   const { data: employeesPage } = useEmployees({
     search: search || undefined,
@@ -583,10 +618,12 @@ function ManualEntryDialog({
         status: data.status,
         notes: data.notes || undefined,
       });
-      toast.success("Запись создана");
+      toast.success(t("attendance.manual.created"));
       onClose();
     } catch (e: any) {
-      toast.error(e?.response?.data?.message || "Не удалось сохранить");
+      toast.error(
+        e?.response?.data?.message || t("attendance.manual.saveError"),
+      );
     }
   };
 
@@ -594,10 +631,9 @@ function ManualEntryDialog({
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="max-w-lg">
         <DialogHeader>
-          <DialogTitle>Ручная отметка</DialogTitle>
+          <DialogTitle>{t("attendance.manual.title")}</DialogTitle>
           <DialogDescription>
-            Создать запись посещаемости вручную. Используется для коррекций и
-            записей задним числом.
+            {t("attendance.manual.description")}
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
@@ -607,9 +643,9 @@ function ManualEntryDialog({
               name="employeeId"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Сотрудник *</FormLabel>
+                  <FormLabel>{t("attendance.manual.employee")} *</FormLabel>
                   <Input
-                    placeholder="Поиск по имени или email"
+                    placeholder={t("attendance.searchEmployee")}
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
                     className="mb-2"
@@ -617,7 +653,7 @@ function ManualEntryDialog({
                   <Select value={field.value} onValueChange={field.onChange}>
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="Выберите сотрудника" />
+                        <SelectValue placeholder={t("attendance.pickEmployee")} />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
@@ -638,7 +674,7 @@ function ManualEntryDialog({
                 name="workDate"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Дата *</FormLabel>
+                    <FormLabel>{t("attendance.manual.date")} *</FormLabel>
                     <FormControl>
                       <Input type="date" {...field} />
                     </FormControl>
@@ -651,7 +687,7 @@ function ManualEntryDialog({
                 name="status"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Статус *</FormLabel>
+                    <FormLabel>{t("attendance.manual.status")} *</FormLabel>
                     <Select value={field.value} onValueChange={field.onChange}>
                       <FormControl>
                         <SelectTrigger>
@@ -659,9 +695,9 @@ function ManualEntryDialog({
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {(Object.keys(STATUS_LABEL) as string[]).map((s) => (
+                        {STATUS_KEYS.map((s) => (
                           <SelectItem key={s} value={s}>
-                            {STATUS_LABEL[s]}
+                            {t(`attendance.statuses.${s}`)}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -677,7 +713,7 @@ function ManualEntryDialog({
                 name="checkIn"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Приход</FormLabel>
+                    <FormLabel>{t("attendance.manual.checkIn")}</FormLabel>
                     <FormControl>
                       <Input type="time" {...field} value={field.value ?? ""} />
                     </FormControl>
@@ -690,7 +726,7 @@ function ManualEntryDialog({
                 name="checkOut"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Уход</FormLabel>
+                    <FormLabel>{t("attendance.manual.checkOut")}</FormLabel>
                     <FormControl>
                       <Input type="time" {...field} value={field.value ?? ""} />
                     </FormControl>
@@ -704,7 +740,7 @@ function ManualEntryDialog({
               name="notes"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Комментарий</FormLabel>
+                  <FormLabel>{t("attendance.manual.notes")}</FormLabel>
                   <FormControl>
                     <Textarea rows={2} {...field} value={field.value ?? ""} />
                   </FormControl>
@@ -714,10 +750,10 @@ function ManualEntryDialog({
             />
             <DialogFooter>
               <Button type="button" variant="outline" onClick={onClose}>
-                Отмена
+                {t("attendance.manual.cancel")}
               </Button>
               <Button type="submit" disabled={createRecord.isPending}>
-                Создать
+                {t("attendance.manual.create")}
               </Button>
             </DialogFooter>
           </form>
@@ -730,11 +766,12 @@ function ManualEntryDialog({
 // ── Bulk no-show ─────────────────────────────────────────────────────────────
 
 function BulkAbsentButton() {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   return (
     <RequirePermission code="ATTENDANCE_MANAGE">
       <Button onClick={() => setOpen(true)} variant="outline" size="sm">
-        <CalendarDays className="h-4 w-4 mr-1" /> Отметить отсутствующих
+        <CalendarDays className="h-4 w-4 mr-1" /> {t("attendance.bulkAbsent")}
       </Button>
       <BulkAbsentDialog open={open} onClose={() => setOpen(false)} />
     </RequirePermission>
@@ -748,6 +785,7 @@ function BulkAbsentDialog({
   open: boolean;
   onClose: () => void;
 }) {
+  const { t } = useTranslation();
   const form = useForm<BulkAbsentFormValues>({
     resolver: zodResolver(bulkAbsentSchema),
     defaultValues: { date: todayIso() },
@@ -759,10 +797,12 @@ function BulkAbsentDialog({
     try {
       const res = await bulkAbsent.mutateAsync({ date: data.date });
       const count = res?.markedCount ?? 0;
-      toast.success(`Отмечено отсутствующих: ${count}`);
+      toast.success(t("attendance.bulk.markedCount", { count }));
       onClose();
     } catch (e: any) {
-      toast.error(e?.response?.data?.message || "Не удалось выполнить");
+      toast.error(
+        e?.response?.data?.message || t("attendance.bulk.actionError"),
+      );
     }
   };
 
@@ -770,10 +810,9 @@ function BulkAbsentDialog({
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle>Массовая отметка отсутствующих</DialogTitle>
+          <DialogTitle>{t("attendance.bulk.title")}</DialogTitle>
           <DialogDescription>
-            Всем сотрудникам без отметки за выбранный день будет проставлен
-            статус ABSENT.
+            {t("attendance.bulk.description")}
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
@@ -783,7 +822,7 @@ function BulkAbsentDialog({
               name="date"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Дата *</FormLabel>
+                  <FormLabel>{t("attendance.bulk.date")} *</FormLabel>
                   <FormControl>
                     <Input type="date" {...field} />
                   </FormControl>
@@ -793,10 +832,10 @@ function BulkAbsentDialog({
             />
             <DialogFooter>
               <Button type="button" variant="outline" onClick={onClose}>
-                Отмена
+                {t("attendance.bulk.cancel")}
               </Button>
               <Button type="submit" disabled={bulkAbsent.isPending}>
-                Применить
+                {t("attendance.bulk.apply")}
               </Button>
             </DialogFooter>
           </form>

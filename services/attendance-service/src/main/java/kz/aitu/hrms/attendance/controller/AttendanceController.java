@@ -9,7 +9,6 @@ import kz.aitu.hrms.attendance.security.CurrentUser;
 import kz.aitu.hrms.attendance.service.AttendanceService;
 import kz.aitu.hrms.attendance.service.SummaryService;
 import kz.aitu.hrms.common.dto.ApiResponse;
-import kz.aitu.hrms.common.exception.BusinessException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -90,10 +89,9 @@ public class AttendanceController {
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
             @PageableDefault(size = 30, sort = "workDate") Pageable pageable) {
+        // Don't 400 admins/service accounts without an employee record —
+        // the service returns Page.empty in that case.
         UUID employeeId = CurrentUser.employeeId();
-        if (employeeId == null) {
-            throw new BusinessException("Caller has no associated employee profile");
-        }
         return ResponseEntity.ok(ApiResponse.ok(
                 attendanceService.ownRecords(employeeId, from, to, pageable)));
     }

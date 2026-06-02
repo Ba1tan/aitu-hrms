@@ -68,6 +68,7 @@ app:
 
   services:
     user-service-uri: ${USER_SERVICE_URI:http://localhost:8081}
+    leave-service-uri: ${LEAVE_SERVICE_URI:http://localhost:8084}
 
 management:
   endpoints:

@@ -5,6 +5,8 @@ import kz.aitu.hrms.common.event.EmployeeTerminatedEvent;
 import kz.aitu.hrms.common.exception.BusinessException;
 import kz.aitu.hrms.common.exception.ResourceNotFoundException;
 import kz.aitu.hrms.common.types.DisabilityGroup;
+import kz.aitu.hrms.employee.client.LeaveClient;
+import kz.aitu.hrms.employee.client.dto.ActiveLeaveDto;
 import kz.aitu.hrms.employee.dto.EmployeeDtos;
 import kz.aitu.hrms.employee.entity.Department;
 import kz.aitu.hrms.employee.entity.Employee;
@@ -24,9 +26,12 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @Slf4j
@@ -42,6 +47,7 @@ public class EmployeeServiceImpl implements EmployeeService {
     private final EventPublisher eventPublisher;
     private final EmployeeAccessControl accessControl;
     private final EmployeeMapper mapper;
+    private final LeaveClient leaveClient;
 
     @Override
     @Transactional
@@ -94,7 +100,9 @@ public class EmployeeServiceImpl implements EmployeeService {
     public EmployeeDtos.EmployeeResponse get(UUID id) {
         Employee emp = requireEmployee(id);
         accessControl.assertCanView(emp);
-        return mapper.toResponse(emp);
+        EmployeeDtos.EmployeeResponse resp = mapper.toResponse(emp);
+        resp.setOnLeaveUntil(activeLeaveEndDates(List.of(id)).get(id));
+        return resp;
     }
 
     @Override
@@ -108,9 +116,41 @@ public class EmployeeServiceImpl implements EmployeeService {
         if (scope.getKind() != EmployeeScope.Kind.ALL && scope.getCurrentEmployeeId() == null) {
             return Page.empty(pageable);
         }
-        return employeeRepository.search(search, departmentId, status, type,
+        Page<EmployeeDtos.EmployeeSummary> page = employeeRepository.search(
+                        search, departmentId, status, type,
                         scopeManagerId, scopeSelfId, pageable)
                 .map(mapper::toSummary);
+        if (!page.isEmpty()) {
+            Map<UUID, LocalDate> activeLeaves = activeLeaveEndDates(
+                    page.getContent().stream().map(EmployeeDtos.EmployeeSummary::getId).toList());
+            page.forEach(s -> s.setOnLeaveUntil(activeLeaves.get(s.getId())));
+        }
+        return page;
+    }
+
+    /**
+     * Looks up the leave-service for any APPROVED leave covering today
+     * among the given employees. Returns a map of employeeId → latest
+     * end date (in case of overlapping approvals). Failures are swallowed
+     * so a leave-service outage never breaks employee reads — the badge
+     * just falls back to the stored employment status.
+     */
+    private Map<UUID, LocalDate> activeLeaveEndDates(List<UUID> employeeIds) {
+        if (employeeIds == null || employeeIds.isEmpty()) return Map.of();
+        try {
+            List<ActiveLeaveDto> active = leaveClient.activeToday(employeeIds);
+            if (active == null || active.isEmpty()) return Map.of();
+            Map<UUID, LocalDate> result = new HashMap<>();
+            for (ActiveLeaveDto leave : active) {
+                if (leave.getEmployeeId() == null || leave.getEndDate() == null) continue;
+                result.merge(leave.getEmployeeId(), leave.getEndDate(),
+                        (a, b) -> a.isAfter(b) ? a : b);
+            }
+            return result;
+        } catch (Exception e) {
+            log.debug("leave-service unavailable for activeToday lookup: {}", e.getMessage());
+            return Map.of();
+        }
     }
 
     @Override

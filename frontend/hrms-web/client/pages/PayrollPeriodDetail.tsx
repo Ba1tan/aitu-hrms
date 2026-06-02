@@ -140,7 +140,7 @@ export default function PayrollPeriodDetail() {
         </div>
       ) : (
         <>
-          <div className="rounded-2xl border bg-white/60 backdrop-blur p-5 mb-5">
+          <div className="rounded-2xl border bg-card/60 backdrop-blur p-5 mb-5">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
                 <div className="flex items-center gap-3">
@@ -314,7 +314,7 @@ function SummaryCard({
   highlight?: boolean;
 }) {
   return (
-    <div className="rounded-xl border bg-white/80 p-3">
+    <div className="rounded-xl border bg-card/80 p-3">
       <div className="text-xs text-muted-foreground">{label}</div>
       <div
         className={

@@ -3,8 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
-import { format } from "date-fns";
-import { CalendarIcon } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import DashboardLayout from "./DashboardLayout";
 import { Button } from "@/components/ui/button";
 import {
@@ -17,8 +16,6 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -28,8 +25,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { cn } from "@/lib/utils";
-import { parseLocalDate, toLocalIsoDate } from "../lib/format";
 import { CreateEmployeeRequest } from "../../shared/api";
 import {
   useCreateEmployee,
@@ -45,11 +40,13 @@ import {
 } from "../../shared/schemas/employee";
 
 const NONE = "__none__";
+const TYPES = ["FULL_TIME", "PART_TIME", "CONTRACT", "INTERN"] as const;
 
 export default function EmployeeForm() {
   const navigate = useNavigate();
   const { id } = useParams<{ id?: string }>();
   const isEdit = !!id;
+  const { t } = useTranslation();
 
   const { data: departments = [] } = useDepartments();
   const { data: positions = [] } = usePositions();
@@ -106,9 +103,6 @@ export default function EmployeeForm() {
         dateOfBirth: emp.dateOfBirth || "",
         employmentType: (emp.employmentType as any) || "FULL_TIME",
         baseSalary: String(emp.baseSalary || ""),
-        // Detail endpoint returns objects; list endpoint returns strings.
-        // The edit form is loaded from the detail endpoint, so the object
-        // shape is what we get — but TS sees the union, so narrow defensively.
         departmentId:
           typeof emp.department === "object" && emp.department
             ? emp.department.id
@@ -154,25 +148,29 @@ export default function EmployeeForm() {
     try {
       if (isEdit && id) {
         await updateMutation.mutateAsync(payload);
-        toast.success("Данные обновлены");
+        toast.success(t("employees.form.updated"));
         navigate(`/employees/${id}`);
       } else {
         const created = await createMutation.mutateAsync(payload);
         toast.success(
           data.createAccount
-            ? "Сотрудник создан, учётная запись отправлена на email"
-            : "Сотрудник создан",
+            ? t("employees.form.createdWithAccount")
+            : t("employees.form.created"),
         );
         const newId = (created as any)?.id;
         navigate(newId ? `/employees/${newId}` : "/employees");
       }
     } catch (e: any) {
-      toast.error(e?.response?.data?.message || "Ошибка при сохранении");
+      toast.error(e?.response?.data?.message || t("employees.form.saveError"));
     }
   };
 
   return (
-    <DashboardLayout title={isEdit ? "Редактирование сотрудника" : "Новый сотрудник"}>
+    <DashboardLayout
+      title={
+        isEdit ? t("employees.form.titleEdit") : t("employees.form.titleNew")
+      }
+    >
       <div className="max-w-4xl mx-auto">
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
@@ -184,9 +182,12 @@ export default function EmployeeForm() {
                     name="firstName"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Имя *</FormLabel>
+                        <FormLabel>{t("employees.form.firstName")} *</FormLabel>
                         <FormControl>
-                          <Input placeholder="Имя" {...field} />
+                          <Input
+                            placeholder={t("employees.form.firstName")}
+                            {...field}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -197,9 +198,12 @@ export default function EmployeeForm() {
                     name="lastName"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Фамилия *</FormLabel>
+                        <FormLabel>{t("employees.form.lastName")} *</FormLabel>
                         <FormControl>
-                          <Input placeholder="Фамилия" {...field} />
+                          <Input
+                            placeholder={t("employees.form.lastName")}
+                            {...field}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -210,7 +214,7 @@ export default function EmployeeForm() {
                     name="middleName"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Отчество</FormLabel>
+                        <FormLabel>{t("employees.form.middleName")}</FormLabel>
                         <FormControl>
                           <Input {...field} value={field.value ?? ""} />
                         </FormControl>
@@ -223,9 +227,13 @@ export default function EmployeeForm() {
                     name="email"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Email *</FormLabel>
+                        <FormLabel>{t("employees.form.email")} *</FormLabel>
                         <FormControl>
-                          <Input type="email" placeholder="email@example.com" {...field} />
+                          <Input
+                            type="email"
+                            placeholder="email@example.com"
+                            {...field}
+                          />
                         </FormControl>
                         {!isEdit && (
                           <FormField
@@ -241,7 +249,7 @@ export default function EmployeeForm() {
                                   />
                                 </FormControl>
                                 <FormLabel className="text-xs font-normal text-muted-foreground leading-snug">
-                                  Создать учётную запись (роль EMPLOYEE, временный пароль на email)
+                                  {t("employees.form.createAccount")}
                                 </FormLabel>
                               </FormItem>
                             )}
@@ -256,7 +264,7 @@ export default function EmployeeForm() {
                     name="phone"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Телефон</FormLabel>
+                        <FormLabel>{t("employees.form.phone")}</FormLabel>
                         <FormControl>
                           <Input {...field} value={field.value ?? ""} />
                         </FormControl>
@@ -269,11 +277,13 @@ export default function EmployeeForm() {
                     name="iin"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>ИИН</FormLabel>
+                        <FormLabel>{t("employees.form.iin")}</FormLabel>
                         <FormControl>
                           <Input maxLength={12} {...field} value={field.value ?? ""} />
                         </FormControl>
-                        <FormDescription>12 цифр</FormDescription>
+                        <FormDescription>
+                          {t("employees.form.iinHint")}
+                        </FormDescription>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -282,43 +292,17 @@ export default function EmployeeForm() {
                     control={form.control}
                     name="dateOfBirth"
                     render={({ field }) => (
-                      <FormItem className="flex flex-col">
-                        <FormLabel>Дата рождения</FormLabel>
-                        <Popover>
-                          <PopoverTrigger asChild>
-                            <FormControl>
-                              <Button
-                                variant="outline"
-                                className={cn(
-                                  "w-full pl-3 text-left font-normal",
-                                  !field.value && "text-muted-foreground",
-                                )}
-                              >
-                                {field.value
-                                  ? format(parseLocalDate(field.value)!, "dd.MM.yyyy")
-                                  : "Выберите дату"}
-                                <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                              </Button>
-                            </FormControl>
-                          </PopoverTrigger>
-                          <PopoverContent className="w-auto p-0" align="start">
-                            <Calendar
-                              mode="single"
-                              selected={parseLocalDate(field.value)}
-                              onSelect={(date) =>
-                                field.onChange(date ? toLocalIsoDate(date) : "")
-                              }
-                              disabled={(date) =>
-                                date > new Date() || date < new Date("1940-01-01")
-                              }
-                              defaultMonth={
-                                parseLocalDate(field.value) ??
-                                new Date(1995, 0, 1)
-                              }
-                              initialFocus
-                            />
-                          </PopoverContent>
-                        </Popover>
+                      <FormItem>
+                        <FormLabel>{t("employees.form.dateOfBirth")}</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="date"
+                            max={new Date().toISOString().slice(0, 10)}
+                            min="1940-01-01"
+                            {...field}
+                            value={field.value ?? ""}
+                          />
+                        </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -334,39 +318,17 @@ export default function EmployeeForm() {
                     control={form.control}
                     name="hireDate"
                     render={({ field }) => (
-                      <FormItem className="flex flex-col">
-                        <FormLabel>Дата найма *</FormLabel>
-                        <Popover>
-                          <PopoverTrigger asChild>
-                            <FormControl>
-                              <Button
-                                variant="outline"
-                                className={cn(
-                                  "w-full pl-3 text-left font-normal",
-                                  !field.value && "text-muted-foreground",
-                                )}
-                              >
-                                {field.value
-                                  ? format(parseLocalDate(field.value)!, "dd.MM.yyyy")
-                                  : "Выберите дату"}
-                                <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                              </Button>
-                            </FormControl>
-                          </PopoverTrigger>
-                          <PopoverContent className="w-auto p-0" align="start">
-                            <Calendar
-                              mode="single"
-                              selected={parseLocalDate(field.value)}
-                              onSelect={(date) =>
-                                field.onChange(date ? toLocalIsoDate(date) : "")
-                              }
-                              disabled={(date) =>
-                                date > new Date() || date < new Date("1900-01-01")
-                              }
-                              initialFocus
-                            />
-                          </PopoverContent>
-                        </Popover>
+                      <FormItem>
+                        <FormLabel>{t("employees.form.hireDate")} *</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="date"
+                            max={new Date().toISOString().slice(0, 10)}
+                            min="1900-01-01"
+                            {...field}
+                            value={field.value ?? ""}
+                          />
+                        </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -376,18 +338,21 @@ export default function EmployeeForm() {
                     name="employmentType"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Тип занятости *</FormLabel>
+                        <FormLabel>{t("employees.form.employmentType")} *</FormLabel>
                         <Select onValueChange={field.onChange} value={field.value}>
                           <FormControl>
                             <SelectTrigger>
-                              <SelectValue placeholder="Выберите тип" />
+                              <SelectValue placeholder={t("employees.form.pickType")} />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            <SelectItem value="FULL_TIME">Полный день</SelectItem>
-                            <SelectItem value="PART_TIME">Неполный день</SelectItem>
-                            <SelectItem value="CONTRACT">Договор</SelectItem>
-                            <SelectItem value="INTERN">Стажировка</SelectItem>
+                            {TYPES.map((code) => (
+                              <SelectItem key={code} value={code}>
+                                {t(`common.employmentTypes.${code}`, {
+                                  defaultValue: code,
+                                })}
+                              </SelectItem>
+                            ))}
                           </SelectContent>
                         </Select>
                         <FormMessage />
@@ -399,7 +364,7 @@ export default function EmployeeForm() {
                     name="baseSalary"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Оклад (₸) *</FormLabel>
+                        <FormLabel>{t("employees.form.baseSalary")} *</FormLabel>
                         <FormControl>
                           <Input
                             type="number"
@@ -427,18 +392,22 @@ export default function EmployeeForm() {
                       name="departmentId"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Отдел</FormLabel>
+                          <FormLabel>{t("employees.form.department")}</FormLabel>
                           <Select
                             onValueChange={(v) => field.onChange(v === NONE ? "" : v)}
                             value={field.value || NONE}
                           >
                             <FormControl>
                               <SelectTrigger>
-                                <SelectValue placeholder="Выберите отдел" />
+                                <SelectValue
+                                  placeholder={t("employees.form.pickDepartment")}
+                                />
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                              <SelectItem value={NONE}>— Не указан</SelectItem>
+                              <SelectItem value={NONE}>
+                                {t("employees.form.departmentNone")}
+                              </SelectItem>
                               {departments.map((d) => (
                                 <SelectItem key={d.id} value={d.id}>
                                   {d.name}
@@ -454,18 +423,22 @@ export default function EmployeeForm() {
                       name="positionId"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Должность</FormLabel>
+                          <FormLabel>{t("employees.form.position")}</FormLabel>
                           <Select
                             onValueChange={(v) => field.onChange(v === NONE ? "" : v)}
                             value={field.value || NONE}
                           >
                             <FormControl>
                               <SelectTrigger>
-                                <SelectValue placeholder="Выберите должность" />
+                                <SelectValue
+                                  placeholder={t("employees.form.pickPosition")}
+                                />
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                              <SelectItem value={NONE}>— Не указана</SelectItem>
+                              <SelectItem value={NONE}>
+                                {t("employees.form.positionNone")}
+                              </SelectItem>
                               {positions.map((p) => (
                                 <SelectItem key={p.id} value={p.id}>
                                   {p.title}
@@ -481,18 +454,22 @@ export default function EmployeeForm() {
                       name="managerId"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Прямой руководитель</FormLabel>
+                          <FormLabel>{t("employees.form.manager")}</FormLabel>
                           <Select
                             onValueChange={(v) => field.onChange(v === NONE ? "" : v)}
                             value={field.value || NONE}
                           >
                             <FormControl>
                               <SelectTrigger>
-                                <SelectValue placeholder="Выберите руководителя" />
+                                <SelectValue
+                                  placeholder={t("employees.form.pickManager")}
+                                />
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                              <SelectItem value={NONE}>— Не указан</SelectItem>
+                              <SelectItem value={NONE}>
+                                {t("employees.form.departmentNone")}
+                              </SelectItem>
                               {managerCandidates.map((m) => (
                                 <SelectItem key={m.id} value={m.id}>
                                   {m.fullName}
@@ -508,8 +485,7 @@ export default function EmployeeForm() {
                             </SelectContent>
                           </Select>
                           <FormDescription>
-                            Используется для согласования отпусков и видимости в
-                            команде. Не путать с руководителем отдела.
+                            {t("employees.form.managerHint")}
                           </FormDescription>
                         </FormItem>
                       )}
@@ -517,7 +493,9 @@ export default function EmployeeForm() {
                   </div>
 
                   <div className="space-y-3 border-l pl-6">
-                    <h3 className="text-sm font-medium">Дополнительно</h3>
+                    <h3 className="text-sm font-medium">
+                      {t("employees.form.additional")}
+                    </h3>
                     <FormField
                       control={form.control}
                       name="resident"
@@ -529,7 +507,7 @@ export default function EmployeeForm() {
                               onCheckedChange={field.onChange}
                             />
                           </FormControl>
-                          <FormLabel>Резидент РК</FormLabel>
+                          <FormLabel>{t("employees.form.resident")}</FormLabel>
                         </FormItem>
                       )}
                     />
@@ -544,7 +522,7 @@ export default function EmployeeForm() {
                               onCheckedChange={field.onChange}
                             />
                           </FormControl>
-                          <FormLabel>Инвалидность</FormLabel>
+                          <FormLabel>{t("employees.form.hasDisability")}</FormLabel>
                         </FormItem>
                       )}
                     />
@@ -559,7 +537,7 @@ export default function EmployeeForm() {
                               onCheckedChange={field.onChange}
                             />
                           </FormControl>
-                          <FormLabel>Пенсионер</FormLabel>
+                          <FormLabel>{t("employees.form.pensioner")}</FormLabel>
                         </FormItem>
                       )}
                     />
@@ -571,7 +549,7 @@ export default function EmployeeForm() {
             <Card>
               <CardContent className="pt-6">
                 <h3 className="text-sm font-medium mb-4">
-                  Зарплатная карта (для выплат)
+                  {t("employees.form.bankCard")}
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <FormField
@@ -579,7 +557,7 @@ export default function EmployeeForm() {
                     name="bankName"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Банк</FormLabel>
+                        <FormLabel>{t("employees.form.bankName")}</FormLabel>
                         <FormControl>
                           <Input
                             placeholder="Halyk Bank"
@@ -596,7 +574,7 @@ export default function EmployeeForm() {
                     name="bankAccount"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Номер счёта (IBAN)</FormLabel>
+                        <FormLabel>{t("employees.form.bankAccount")}</FormLabel>
                         <FormControl>
                           <Input
                             placeholder="KZ..."
@@ -618,13 +596,15 @@ export default function EmployeeForm() {
                 variant="outline"
                 onClick={() => navigate(isEdit && id ? `/employees/${id}` : "/employees")}
               >
-                Отмена
+                {t("employees.form.cancel")}
               </Button>
               <Button
                 type="submit"
                 disabled={createMutation.isPending || updateMutation.isPending}
               >
-                {isEdit ? "Сохранить изменения" : "Создать сотрудника"}
+                {isEdit
+                  ? t("employees.form.saveChanges")
+                  : t("employees.form.createEmployee")}
               </Button>
             </div>
           </form>

@@ -3,6 +3,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 import { MoreHorizontal, Plus, Search } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import DashboardLayout from "./DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -75,6 +76,7 @@ const ANY = "__any__";
 const NONE = "__none__";
 
 export default function Positions() {
+  const { t } = useTranslation();
   const [search, setSearch] = useState("");
   const [filterDept, setFilterDept] = useState<string>("");
   const [editing, setEditing] = useState<Position | null>(null);
@@ -93,14 +95,14 @@ export default function Positions() {
   }, [positions, search]);
 
   return (
-    <DashboardLayout title="Должности">
+    <DashboardLayout title={t("positions.title")}>
       <div className="flex flex-wrap items-center justify-between mb-6 gap-3">
         <div className="flex gap-3 flex-1">
           <div className="relative max-w-md flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground h-4 w-4" />
             <Input
               className="pl-9"
-              placeholder="Поиск по названию"
+              placeholder={t("positions.searchPlaceholder")}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
@@ -110,10 +112,10 @@ export default function Positions() {
             onValueChange={(v) => setFilterDept(v === ANY ? "" : v)}
           >
             <SelectTrigger className="w-[220px]">
-              <SelectValue placeholder="Все отделы" />
+              <SelectValue placeholder={t("positions.allDepartments")} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value={ANY}>Все отделы</SelectItem>
+              <SelectItem value={ANY}>{t("positions.allDepartments")}</SelectItem>
               {departments.map((d) => (
                 <SelectItem key={d.id} value={d.id}>
                   {d.name}
@@ -124,19 +126,19 @@ export default function Positions() {
         </div>
         <RequirePermission code="DEPT_MANAGE">
           <Button onClick={() => setCreating(true)}>
-            <Plus className="h-4 w-4 mr-2" /> Добавить должность
+            <Plus className="h-4 w-4 mr-2" /> {t("positions.addPos")}
           </Button>
         </RequirePermission>
       </div>
 
-      <div className="rounded-2xl border bg-white/60 backdrop-blur">
+      <div className="rounded-2xl border bg-card/60 backdrop-blur">
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Название</TableHead>
-              <TableHead>Отдел</TableHead>
-              <TableHead>Мин. оклад</TableHead>
-              <TableHead>Макс. оклад</TableHead>
+              <TableHead>{t("positions.columns.title")}</TableHead>
+              <TableHead>{t("positions.columns.department")}</TableHead>
+              <TableHead>{t("positions.columns.minSalary")}</TableHead>
+              <TableHead>{t("positions.columns.maxSalary")}</TableHead>
               <TableHead className="w-[60px]" />
             </TableRow>
           </TableHeader>
@@ -152,7 +154,7 @@ export default function Positions() {
             ) : filtered.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
-                  Должности не найдены
+                  {t("positions.noneFound")}
                 </TableCell>
               </TableRow>
             ) : (
@@ -172,13 +174,13 @@ export default function Positions() {
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                           <DropdownMenuItem onClick={() => setEditing(p)}>
-                            Редактировать
+                            {t("positions.edit")}
                           </DropdownMenuItem>
                           <DropdownMenuItem
                             onClick={() => setDeleting(p)}
                             className="text-destructive focus:text-destructive"
                           >
-                            Удалить
+                            {t("positions.delete")}
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
@@ -204,15 +206,15 @@ export default function Positions() {
       <AlertDialog open={!!deleting} onOpenChange={(o) => !o && setDeleting(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Удалить должность?</AlertDialogTitle>
+            <AlertDialogTitle>{t("positions.deleteTitle")}</AlertDialogTitle>
             <AlertDialogDescription>
               {deleting
-                ? `Должность "${deleting.title}" будет удалена. Сотрудники с этой должностью останутся, но потеряют привязку.`
+                ? t("positions.deleteDescription", { title: deleting.title })
                 : ""}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Отмена</AlertDialogCancel>
+            <AlertDialogCancel>{t("positions.cancel")}</AlertDialogCancel>
             <DeleteAction position={deleting} onDone={() => setDeleting(null)} />
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -228,6 +230,7 @@ function DeleteAction({
   position: Position | null;
   onDone: () => void;
 }) {
+  const { t } = useTranslation();
   const deleteMutation = useDeletePosition();
   return (
     <AlertDialogAction
@@ -235,15 +238,15 @@ function DeleteAction({
         if (!position) return;
         try {
           await deleteMutation.mutateAsync(position.id);
-          toast.success("Должность удалена");
+          toast.success(t("positions.deleted"));
         } catch (e: any) {
-          toast.error(e?.response?.data?.message || "Не удалось удалить");
+          toast.error(e?.response?.data?.message || t("positions.deleteError"));
         } finally {
           onDone();
         }
       }}
     >
-      Удалить
+      {t("positions.delete")}
     </AlertDialogAction>
   );
 }
@@ -260,6 +263,7 @@ function PositionDialog({
   departments: { id: string; name: string }[];
 }) {
   const isEdit = !!position;
+  const { t } = useTranslation();
   const createMutation = useCreatePosition();
   const updateMutation = useUpdatePosition();
 
@@ -285,14 +289,14 @@ function PositionDialog({
     try {
       if (isEdit && position) {
         await updateMutation.mutateAsync({ id: position.id, data: payload });
-        toast.success("Должность обновлена");
+        toast.success(t("positions.updated"));
       } else {
         await createMutation.mutateAsync(payload);
-        toast.success("Должность создана");
+        toast.success(t("positions.created"));
       }
       onClose();
     } catch (e: any) {
-      toast.error(e?.response?.data?.message || "Ошибка при сохранении");
+      toast.error(e?.response?.data?.message || t("positions.saveError"));
     }
   };
 
@@ -300,9 +304,13 @@ function PositionDialog({
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="max-w-lg">
         <DialogHeader>
-          <DialogTitle>{isEdit ? "Редактировать должность" : "Новая должность"}</DialogTitle>
+          <DialogTitle>
+            {isEdit
+              ? t("positions.dialogTitleEdit")
+              : t("positions.dialogTitleNew")}
+          </DialogTitle>
           <DialogDescription>
-            Оклады в тенге. Используются для проверки при изменении ЗП сотрудников.
+            {t("positions.dialogDescription")}
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
@@ -312,7 +320,7 @@ function PositionDialog({
               name="title"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Название *</FormLabel>
+                  <FormLabel>{t("positions.formTitle")} *</FormLabel>
                   <FormControl>
                     <Input placeholder="Senior Developer" {...field} />
                   </FormControl>
@@ -325,7 +333,7 @@ function PositionDialog({
               name="departmentId"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Отдел</FormLabel>
+                  <FormLabel>{t("positions.formDepartment")}</FormLabel>
                   <Select
                     onValueChange={(v) => field.onChange(v === NONE ? "" : v)}
                     value={field.value || NONE}
@@ -336,7 +344,9 @@ function PositionDialog({
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value={NONE}>— Без отдела</SelectItem>
+                      <SelectItem value={NONE}>
+                        {t("positions.noneDepartment")}
+                      </SelectItem>
                       {departments.map((d) => (
                         <SelectItem key={d.id} value={d.id}>
                           {d.name}
@@ -354,7 +364,7 @@ function PositionDialog({
                 name="minSalary"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Мин. оклад</FormLabel>
+                    <FormLabel>{t("positions.formMinSalary")}</FormLabel>
                     <FormControl>
                       <Input
                         type="number"
@@ -375,7 +385,7 @@ function PositionDialog({
                 name="maxSalary"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Макс. оклад</FormLabel>
+                    <FormLabel>{t("positions.formMaxSalary")}</FormLabel>
                     <FormControl>
                       <Input
                         type="number"
@@ -397,7 +407,7 @@ function PositionDialog({
               name="description"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Описание</FormLabel>
+                  <FormLabel>{t("positions.formDescription")}</FormLabel>
                   <FormControl>
                     <Textarea rows={3} {...field} value={field.value ?? ""} />
                   </FormControl>
@@ -407,13 +417,13 @@ function PositionDialog({
             />
             <DialogFooter>
               <Button type="button" variant="outline" onClick={onClose}>
-                Отмена
+                {t("positions.cancel")}
               </Button>
               <Button
                 type="submit"
                 disabled={createMutation.isPending || updateMutation.isPending}
               >
-                {isEdit ? "Сохранить" : "Создать"}
+                {isEdit ? t("positions.save") : t("positions.create")}
               </Button>
             </DialogFooter>
           </form>

@@ -82,7 +82,7 @@ export default function PayslipTable({ periodId, onSelectPayslip }: Props) {
         </Select>
       </div>
 
-      <div className="rounded-2xl border bg-white/60 backdrop-blur">
+      <div className="rounded-2xl border bg-card/60 backdrop-blur">
         <Table>
           <TableHeader>
             <TableRow>
@@ -121,7 +121,7 @@ export default function PayslipTable({ periodId, onSelectPayslip }: Props) {
                 return (
                   <TableRow
                     key={p.id}
-                    className="cursor-pointer hover:bg-white/80"
+                    className="cursor-pointer hover:bg-card/80"
                     onClick={() => onSelectPayslip(p.id)}
                   >
                     <TableCell>

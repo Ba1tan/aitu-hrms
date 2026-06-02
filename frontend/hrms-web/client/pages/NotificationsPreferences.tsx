@@ -50,7 +50,7 @@ export default function NotificationsPreferences() {
     queryKey: ["settings", "sms_provider"],
     queryFn: async () => {
       try {
-        const res = await settingsApi.get();
+        const res = await settingsApi.getPublic();
         return res.data?.["notification.sms_provider"] ?? "none";
       } catch {
         return "none";
@@ -93,7 +93,7 @@ export default function NotificationsPreferences() {
     <DashboardLayout title="Настройки уведомлений">
       <div
         style={{
-          background: "rgba(255,255,255,0.6)",
+          background: "hsl(var(--card) / 0.6)",
           border: "1px solid rgba(255,255,255,0.4)",
           borderRadius: 20,
           padding: 24,

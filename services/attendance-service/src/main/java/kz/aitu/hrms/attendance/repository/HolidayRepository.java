@@ -23,7 +23,8 @@ public interface HolidayRepository extends JpaRepository<Holiday, UUID> {
     @Query("""
         SELECT h FROM Holiday h
         WHERE h.deleted = false
-          AND (:year IS NULL OR FUNCTION('YEAR', h.holidayDate) = :year)
+          AND FUNCTION('YEAR', h.holidayDate) =
+              COALESCE(:year, FUNCTION('YEAR', h.holidayDate))
         ORDER BY h.holidayDate ASC
         """)
     List<Holiday> findByYear(@Param("year") Integer year);

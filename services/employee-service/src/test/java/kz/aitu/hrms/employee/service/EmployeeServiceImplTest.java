@@ -4,6 +4,7 @@ import kz.aitu.hrms.common.event.EmployeeCreatedEvent;
 import kz.aitu.hrms.common.event.EmployeeTerminatedEvent;
 import kz.aitu.hrms.common.exception.BusinessException;
 import kz.aitu.hrms.common.exception.ResourceNotFoundException;
+import kz.aitu.hrms.employee.client.LeaveClient;
 import kz.aitu.hrms.employee.dto.EmployeeDtos;
 import kz.aitu.hrms.employee.entity.Employee;
 import kz.aitu.hrms.employee.entity.EmploymentStatus;
@@ -48,6 +49,7 @@ class EmployeeServiceImplTest {
     @Mock private PositionRepository positionRepository;
     @Mock private EventPublisher eventPublisher;
     @Mock private EmployeeAccessControl accessControl;
+    @Mock private LeaveClient leaveClient;
 
     private EmployeeMapper mapper;
     private EmployeeServiceImpl service;
@@ -57,7 +59,7 @@ class EmployeeServiceImplTest {
         mapper = new EmployeeMapper();
         service = new EmployeeServiceImpl(
                 employeeRepository, departmentRepository, positionRepository,
-                eventPublisher, accessControl, mapper);
+                eventPublisher, accessControl, mapper, leaveClient);
     }
 
     @Test

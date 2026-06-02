@@ -265,26 +265,14 @@ export function SectionHeader({
   description?: string;
 }) {
   return (
-    <div style={{ display: "flex", gap: 14, marginBottom: 22 }}>
-      <div
-        style={{
-          width: 44,
-          height: 44,
-          borderRadius: 12,
-          background: "rgba(59,130,246,0.1)",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          color: "#3B82F6",
-          flexShrink: 0,
-        }}
-      >
+    <div className="mb-5 flex items-start gap-3.5">
+      <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
         <Icon size={20} />
       </div>
       <div>
-        <div style={{ fontSize: 18, fontWeight: 700 }}>{title}</div>
+        <div className="text-lg font-bold text-foreground">{title}</div>
         {description && (
-          <div style={{ fontSize: 13, color: "#64748B" }}>{description}</div>
+          <div className="text-[13px] text-muted-foreground">{description}</div>
         )}
       </div>
     </div>

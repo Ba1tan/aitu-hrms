@@ -31,6 +31,16 @@ public class SettingsController {
         return ResponseEntity.ok(ApiResponse.ok(settingsService.getAll(category)));
     }
 
+    /**
+     * Non-sensitive settings any authenticated user can read. Backs the
+     * dashboard's AttendanceWidget (check-in methods, schedule) and the
+     * notification preferences page (sms_provider availability).
+     */
+    @GetMapping("/public")
+    public ResponseEntity<ApiResponse<List<SettingDto>>> getPublic() {
+        return ResponseEntity.ok(ApiResponse.ok(settingsService.getPublic()));
+    }
+
     @PutMapping("/{key}")
     @PreAuthorize("hasAuthority('SYSTEM_SETTINGS')")
     public ResponseEntity<ApiResponse<SettingDto>> update(

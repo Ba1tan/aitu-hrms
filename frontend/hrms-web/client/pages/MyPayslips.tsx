@@ -31,7 +31,7 @@ export default function MyPayslips() {
             <Skeleton key={i} className="h-24 w-full rounded-2xl" />
           ))
         ) : !payslips || payslips.length === 0 ? (
-          <div className="rounded-2xl border bg-white/60 backdrop-blur p-10 text-center text-muted-foreground">
+          <div className="rounded-2xl border bg-card/60 backdrop-blur p-10 text-center text-muted-foreground">
             Пока нет расчётных листов
           </div>
         ) : (
@@ -39,7 +39,7 @@ export default function MyPayslips() {
             <button
               key={p.id}
               onClick={() => setSelected(p.id)}
-              className="text-left rounded-2xl border bg-white/60 backdrop-blur p-5 hover:bg-white/80 transition"
+              className="text-left rounded-2xl border bg-card/60 backdrop-blur p-5 hover:bg-card/80 transition"
             >
               <div className="flex items-center justify-between gap-4">
                 <div className="flex items-center gap-3">

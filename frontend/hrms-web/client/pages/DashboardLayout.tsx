@@ -7,7 +7,6 @@ import {
   FileBarChart,
   Search,
   Menu,
-  X,
   Network,
   Building2,
   Briefcase,
@@ -25,11 +24,18 @@ import {
   LogOut,
   Gauge,
   Plug,
+  PanelLeftClose,
+  PanelLeftOpen,
 } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useAuthContext } from "../providers/AuthProvider";
 import NotificationsBell from "../components/NotificationsBell";
+import { LocaleSwitcher } from "../components/LocaleSwitcher";
+import { ThemeToggle } from "../components/ThemeToggle";
+import { useIsMobile } from "../hooks/use-mobile";
+import { Sheet, SheetContent } from "@/components/ui/sheet";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -39,48 +45,40 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useAuth } from "../hooks/useAuth";
-
-const colors = {
-  primary: "#3B82F6",
-  accent: "#00C896",
-  text: "#1E293B",
-  muted: "#64748B",
-  glass: "rgba(255, 255, 255, 0.4)",
-  glassBorder: "rgba(255, 255, 255, 0.3)",
-};
+import { cn } from "@/lib/utils";
 
 interface NavItem {
-  label: string;
+  labelKey: string;
   icon: typeof LayoutDashboard;
   path: string;
   anyOf?: string[];
 }
 
 const navItems: NavItem[] = [
-  { label: "Dashboard", icon: LayoutDashboard, path: "/dashboard" },
-  { label: "Employees", icon: UserSquare2, path: "/employees" },
-  { label: "Org chart", icon: Network, path: "/org-chart" },
-  { label: "Моя команда", icon: Users2, path: "/directory" },
-  { label: "Departments", icon: Building2, path: "/departments" },
-  { label: "Positions", icon: Briefcase, path: "/positions", anyOf: ["DEPT_MANAGE"] },
-  { label: "Payroll", icon: Wallet, path: "/payroll", anyOf: ["PAYROLL_VIEW", "PAYSLIP_VIEW_OWN"] },
-  { label: "Налоговый отчёт (YTD)", icon: FileBarChart, path: "/payroll/ytd", anyOf: ["PAYSLIP_VIEW_OWN", "PAYROLL_VIEW"] },
-  { label: "Leaves", icon: Palmtree, path: "/leave" },
-  { label: "Заявки на отпуск", icon: CheckSquare, path: "/leave/approvals", anyOf: ["LEAVE_APPROVE_TEAM", "LEAVE_APPROVE_ALL"] },
-  { label: "Типы отпусков", icon: Tags, path: "/leave/types", anyOf: ["LEAVE_BALANCE_MANAGE"] },
-  { label: "Attendance", icon: ClipboardCheck, path: "/attendance" },
-  { label: "Праздники", icon: CalendarDays, path: "/attendance/holidays", anyOf: ["ATTENDANCE_MANAGE"] },
-  { label: "Графики работы", icon: CalendarClock, path: "/attendance/schedules", anyOf: ["ATTENDANCE_MANAGE"] },
-  { label: "Reports", icon: FileBarChart, path: "/reports", anyOf: ["REPORT_PAYROLL", "REPORT_HR", "REPORT_EXECUTIVE", "REPORT_ATTENDANCE", "REPORT_LEAVE"] },
-  { label: "Дашборд руководителя", icon: Gauge, path: "/executive", anyOf: ["REPORT_EXECUTIVE"] },
-  { label: "Интеграция 1С", icon: Plug, path: "/integration", anyOf: ["INTEGRATION_MANAGE"] },
-  { label: "Настройки", icon: Settings, path: "/settings", anyOf: ["SYSTEM_SETTINGS"] },
+  { labelKey: "nav.dashboard", icon: LayoutDashboard, path: "/dashboard" },
+  { labelKey: "nav.employees", icon: UserSquare2, path: "/employees" },
+  { labelKey: "nav.orgChart", icon: Network, path: "/org-chart" },
+  { labelKey: "nav.directory", icon: Users2, path: "/directory" },
+  { labelKey: "nav.departments", icon: Building2, path: "/departments" },
+  { labelKey: "nav.positions", icon: Briefcase, path: "/positions", anyOf: ["DEPT_MANAGE"] },
+  { labelKey: "nav.payroll", icon: Wallet, path: "/payroll", anyOf: ["PAYROLL_VIEW", "PAYSLIP_VIEW_OWN"] },
+  { labelKey: "nav.payrollYtd", icon: FileBarChart, path: "/payroll/ytd", anyOf: ["PAYSLIP_VIEW_OWN", "PAYROLL_VIEW"] },
+  { labelKey: "nav.leaves", icon: Palmtree, path: "/leave" },
+  { labelKey: "nav.leaveApprovals", icon: CheckSquare, path: "/leave/approvals", anyOf: ["LEAVE_APPROVE_TEAM", "LEAVE_APPROVE_ALL"] },
+  { labelKey: "nav.leaveTypes", icon: Tags, path: "/leave/types", anyOf: ["LEAVE_BALANCE_MANAGE"] },
+  { labelKey: "nav.attendance", icon: ClipboardCheck, path: "/attendance" },
+  { labelKey: "nav.holidays", icon: CalendarDays, path: "/attendance/holidays", anyOf: ["ATTENDANCE_MANAGE"] },
+  { labelKey: "nav.schedules", icon: CalendarClock, path: "/attendance/schedules", anyOf: ["ATTENDANCE_MANAGE"] },
+  { labelKey: "nav.reports", icon: FileBarChart, path: "/reports", anyOf: ["REPORT_PAYROLL", "REPORT_HR", "REPORT_EXECUTIVE", "REPORT_ATTENDANCE", "REPORT_LEAVE"] },
+  { labelKey: "nav.executive", icon: Gauge, path: "/executive", anyOf: ["REPORT_EXECUTIVE"] },
+  { labelKey: "nav.integration", icon: Plug, path: "/integration", anyOf: ["INTEGRATION_MANAGE"] },
+  { labelKey: "nav.settings", icon: Settings, path: "/settings", anyOf: ["SYSTEM_SETTINGS"] },
 ];
 
 const adminItems: NavItem[] = [
-  { label: "Users", icon: Users, path: "/admin/users", anyOf: ["SYSTEM_USERS"] },
-  { label: "Audit log", icon: ScrollText, path: "/admin/audit", anyOf: ["SYSTEM_AUDIT"] },
-  { label: "Roles", icon: ShieldCheck, path: "/admin/roles", anyOf: ["SYSTEM_ROLES", "SYSTEM_USERS"] },
+  { labelKey: "nav.adminUsers", icon: Users, path: "/admin/users", anyOf: ["SYSTEM_USERS"] },
+  { labelKey: "nav.adminAudit", icon: ScrollText, path: "/admin/audit", anyOf: ["SYSTEM_AUDIT"] },
+  { labelKey: "nav.adminRoles", icon: ShieldCheck, path: "/admin/roles", anyOf: ["SYSTEM_ROLES", "SYSTEM_USERS"] },
 ];
 
 const ADMIN_ANY = ["SYSTEM_USERS", "SYSTEM_AUDIT", "SYSTEM_ROLES"];
@@ -95,7 +93,10 @@ export default function DashboardLayout({
   const { pathname } = useLocation();
   const { user, hasPermission } = useAuthContext();
   const { logout } = useAuth();
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const { t } = useTranslation();
+  const isMobile = useIsMobile();
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
   const [adminOpen, setAdminOpen] = useState(pathname.startsWith("/admin"));
   const initials = `${user?.firstName?.[0] ?? ""}${user?.lastName?.[0] ?? ""}`.toUpperCase();
 
@@ -108,177 +109,96 @@ export default function DashboardLayout({
   const canSeeAdmin =
     user?.role === "SUPER_ADMIN" || ADMIN_ANY.some(hasPermission);
 
-  return (
-    <div
-      style={{
-        minHeight: "100vh",
-        background: "linear-gradient(135deg, #f8fafc 0%, #eff6ff 50%, #f1f5f9 100%)",
-        color: colors.text,
-        fontFamily: "'Inter', sans-serif",
-        display: "flex",
-        position: "relative",
-        overflow: "hidden",
-      }}
-    >
-      <div
-        style={{
-          position: "fixed",
-          top: "-10%",
-          right: "-5%",
-          width: 500,
-          height: 500,
-          background: "rgba(59,130,246,0.05)",
-          borderRadius: "50%",
-          filter: "blur(100px)",
-          zIndex: 0,
-        }}
-      />
-      <div
-        style={{
-          position: "fixed",
-          bottom: "5%",
-          left: "-5%",
-          width: 400,
-          height: 400,
-          background: "rgba(0,200,150,0.05)",
-          borderRadius: "50%",
-          filter: "blur(80px)",
-          zIndex: 0,
-        }}
-      />
-
-      <aside
-        style={{
-          width: sidebarOpen ? 240 : 80,
-          background: "rgba(255, 255, 255, 0.3)",
-          backdropFilter: "blur(12px)",
-          borderRight: `1px solid ${colors.glassBorder}`,
-          zIndex: 10,
-          display: "flex",
-          flexDirection: "column",
-          transition: "width 0.3s ease",
-        }}
-      >
-        <div
-          style={{
-            padding: "30px 24px",
-            display: "flex",
-            alignItems: "center",
-            gap: 12,
-          }}
-        >
-          <div
-            style={{
-              width: 32,
-              height: 32,
-              background: colors.accent,
-              borderRadius: 8,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              color: "#fff",
-              fontWeight: 800,
-            }}
-          >
+  const sidebarContent = (showLabels: boolean) => {
+    const visiblePaths = navItems.filter(canSee).map((n) => n.path);
+    const bestMatch = visiblePaths
+      .filter((p) => pathname === p || pathname.startsWith(p + "/"))
+      .sort((a, b) => b.length - a.length)[0];
+    return (
+      <>
+        <div className="flex items-center gap-3 px-6 py-7">
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-accent text-accent-foreground font-extrabold">
             H
           </div>
-          {sidebarOpen && (
-            <span style={{ fontSize: 20, fontWeight: 800, color: colors.text }}>
-              HRMS
+          {showLabels && (
+            <span className="text-xl font-extrabold text-foreground">
+              {t("common.appName")}
             </span>
           )}
         </div>
 
-        <nav style={{ flex: 1, padding: "0 12px", overflowY: "auto" }}>
-          {navItems.filter(canSee).map(({ label, icon: Icon, path }) => {
-            // Longest visible path wins so /leave doesn't also light up on
-            // /leave/approvals when both are nav items.
-            const visiblePaths = navItems.filter(canSee).map((n) => n.path);
-            const bestMatch = visiblePaths
-              .filter((p) => pathname === p || pathname.startsWith(p + "/"))
-              .sort((a, b) => b.length - a.length)[0];
+        <nav className="flex-1 overflow-y-auto px-3 pb-4">
+          {navItems.filter(canSee).map(({ labelKey, icon: Icon, path }) => {
             const active = path === bestMatch;
             return (
-              <Link key={path} to={path} style={{ textDecoration: "none" }}>
-                <div
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 12,
-                    padding: "12px 16px",
-                    margin: "4px 0",
-                    borderRadius: 12,
-                    color: active ? colors.primary : colors.muted,
-                    background: active ? "rgba(59,130,246,0.1)" : "transparent",
-                    transition: "0.2s ease",
-                  }}
-                >
-                  <Icon size={18} />
-                  {sidebarOpen && (
-                    <span style={{ fontSize: 14, fontWeight: active ? 600 : 400 }}>
-                      {label}
-                    </span>
-                  )}
-                </div>
+              <Link
+                key={path}
+                to={path}
+                onClick={() => setMobileOpen(false)}
+                className={cn(
+                  "my-1 flex items-center gap-3 rounded-xl px-4 py-3 transition-colors",
+                  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                  active
+                    ? "bg-primary/10 text-primary"
+                    : "text-muted-foreground hover:bg-accent/20 hover:text-foreground",
+                )}
+                aria-current={active ? "page" : undefined}
+              >
+                <Icon size={18} aria-hidden="true" />
+                {showLabels && (
+                  <span
+                    className={cn(
+                      "text-sm",
+                      active ? "font-semibold" : "font-normal",
+                    )}
+                  >
+                    {t(labelKey)}
+                  </span>
+                )}
               </Link>
             );
           })}
 
           {canSeeAdmin && (
-            <div style={{ marginTop: 12 }}>
+            <div className="mt-3">
               <button
+                type="button"
                 onClick={() => setAdminOpen((o) => !o)}
-                style={{
-                  width: "100%",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 12,
-                  padding: "12px 16px",
-                  margin: "4px 0",
-                  borderRadius: 12,
-                  color: colors.muted,
-                  background: "transparent",
-                  border: "none",
-                  cursor: "pointer",
-                  fontFamily: "inherit",
-                }}
+                className="my-1 flex w-full items-center gap-3 rounded-xl px-4 py-3 text-muted-foreground hover:bg-accent/20 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                aria-expanded={adminOpen}
               >
-                <Settings size={18} />
-                {sidebarOpen && (
+                <Settings size={18} aria-hidden="true" />
+                {showLabels && (
                   <>
-                    <span style={{ fontSize: 14, flex: 1, textAlign: "left" }}>
-                      Admin
+                    <span className="flex-1 text-left text-sm">
+                      {t("nav.admin")}
                     </span>
-                    {adminOpen ? (
-                      <ChevronDown size={14} />
-                    ) : (
-                      <ChevronRight size={14} />
-                    )}
+                    {adminOpen ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
                   </>
                 )}
               </button>
-              {adminOpen && sidebarOpen && (
-                <div style={{ paddingLeft: 12 }}>
-                  {adminItems.filter(canSee).map(({ label, icon: Icon, path }) => {
+              {adminOpen && showLabels && (
+                <div className="pl-3">
+                  {adminItems.filter(canSee).map(({ labelKey, icon: Icon, path }) => {
                     const active = pathname === path;
                     return (
-                      <Link key={path} to={path} style={{ textDecoration: "none" }}>
-                        <div
-                          style={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: 12,
-                            padding: "10px 16px",
-                            margin: "2px 0",
-                            borderRadius: 12,
-                            color: active ? colors.primary : colors.muted,
-                            background: active ? "rgba(59,130,246,0.1)" : "transparent",
-                            fontSize: 13,
-                          }}
-                        >
-                          <Icon size={16} />
-                          <span style={{ fontWeight: active ? 600 : 400 }}>{label}</span>
-                        </div>
+                      <Link
+                        key={path}
+                        to={path}
+                        onClick={() => setMobileOpen(false)}
+                        className={cn(
+                          "my-0.5 flex items-center gap-3 rounded-xl px-4 py-2.5 text-[13px] transition-colors",
+                          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                          active
+                            ? "bg-primary/10 text-primary"
+                            : "text-muted-foreground hover:bg-accent/20 hover:text-foreground",
+                        )}
+                        aria-current={active ? "page" : undefined}
+                      >
+                        <Icon size={16} aria-hidden="true" />
+                        <span className={active ? "font-semibold" : undefined}>
+                          {t(labelKey)}
+                        </span>
                       </Link>
                     );
                   })}
@@ -287,109 +207,119 @@ export default function DashboardLayout({
             </div>
           )}
         </nav>
+      </>
+    );
+  };
 
+  return (
+    <div className="relative flex min-h-screen overflow-hidden bg-gradient-to-br from-background via-background to-muted/30 text-foreground">
+      <div
+        aria-hidden="true"
+        className="pointer-events-none fixed -right-[5%] -top-[10%] z-0 hidden h-[500px] w-[500px] rounded-full bg-primary/5 blur-3xl md:block"
+      />
+      <div
+        aria-hidden="true"
+        className="pointer-events-none fixed -left-[5%] bottom-[5%] z-0 hidden h-[400px] w-[400px] rounded-full bg-accent/5 blur-3xl md:block"
+      />
+
+      {/* Desktop sidebar */}
+      <aside
+        className={cn(
+          "z-10 hidden flex-col border-r border-border/40 bg-background/40 backdrop-blur-md transition-[width] duration-300 md:flex",
+          sidebarCollapsed ? "w-20" : "w-60",
+        )}
+        aria-label={t("nav.dashboard")}
+      >
+        {sidebarContent(!sidebarCollapsed)}
         <button
-          onClick={() => setSidebarOpen(!sidebarOpen)}
-          style={{
-            margin: 16,
-            padding: 8,
-            border: "none",
-            background: "rgba(0,0,0,0.05)",
-            borderRadius: 8,
-            cursor: "pointer",
-          }}
+          type="button"
+          onClick={() => setSidebarCollapsed((c) => !c)}
+          aria-label={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+          className="m-4 rounded-lg border border-border/40 bg-background/60 p-2 hover:bg-accent/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         >
-          {sidebarOpen ? <X size={18} /> : <Menu size={18} />}
+          {sidebarCollapsed ? <PanelLeftOpen size={18} /> : <PanelLeftClose size={18} />}
         </button>
       </aside>
 
-      <div
-        style={{
-          flex: 1,
-          display: "flex",
-          flexDirection: "column",
-          zIndex: 1,
-          overflowY: "auto",
-        }}
-      >
-        <header
-          style={{
-            height: 70,
-            padding: "0 40px",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            background: "rgba(255, 255, 255, 0.2)",
-            backdropFilter: "blur(8px)",
-            borderBottom: `1px solid ${colors.glassBorder}`,
-          }}
+      {/* Mobile sidebar via Sheet */}
+      <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
+        <SheetContent
+          side="left"
+          className="flex w-72 max-w-[85%] flex-col p-0"
         >
-          <div style={{ fontSize: 18, fontWeight: 700 }}>{title}</div>
-          <div style={{ display: "flex", alignItems: "center", gap: 20 }}>
-            <div style={{ position: "relative" }}>
+          {sidebarContent(true)}
+        </SheetContent>
+      </Sheet>
+
+      <div className="z-[1] flex flex-1 flex-col overflow-y-auto">
+        <header className="flex h-[70px] items-center justify-between border-b border-border/40 bg-background/30 px-4 backdrop-blur-md md:px-10">
+          <div className="flex items-center gap-3">
+            {isMobile && (
+              <button
+                type="button"
+                aria-label="Open navigation menu"
+                onClick={() => setMobileOpen(true)}
+                className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-border/40 bg-background/60 hover:bg-accent/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              >
+                <Menu size={18} />
+              </button>
+            )}
+            <div className="text-base font-bold md:text-lg">{title}</div>
+          </div>
+
+          <div className="flex items-center gap-2 md:gap-3">
+            <div className="relative hidden lg:block">
               <Search
                 size={16}
-                style={{
-                  position: "absolute",
-                  left: 12,
-                  top: "50%",
-                  transform: "translateY(-50%)",
-                  color: colors.muted,
-                }}
+                className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+                aria-hidden="true"
               />
+              <label htmlFor="topbar-search" className="sr-only">
+                {t("common.search")}
+              </label>
               <input
-                type="text"
-                placeholder="Search..."
-                style={{
-                  background: "rgba(255,255,255,0.5)",
-                  border: "none",
-                  borderRadius: 10,
-                  padding: "8px 36px",
-                  fontSize: 13,
-                  width: 200,
-                }}
+                id="topbar-search"
+                type="search"
+                placeholder={t("common.search")}
+                className="w-52 rounded-lg border border-border/40 bg-background/60 px-9 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               />
             </div>
+            <LocaleSwitcher />
+            <ThemeToggle />
             <NotificationsBell />
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button
                   type="button"
-                  aria-label="Профиль"
-                  style={{
-                    width: 36,
-                    height: 36,
-                    borderRadius: "50%",
-                    background: "linear-gradient(45deg, #3B82F6, #00C896)",
-                    border: "2px solid #fff",
-                    color: "#fff",
-                    fontWeight: 700,
-                    fontSize: 13,
-                    cursor: "pointer",
-                    display: "inline-flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
+                  aria-label={t("common.profile")}
+                  className="inline-flex h-9 w-9 items-center justify-center rounded-full border-2 border-background bg-gradient-to-br from-primary to-accent text-sm font-bold text-primary-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 >
                   {initials || "U"}
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-56">
                 <DropdownMenuLabel>
-                  <div style={{ fontSize: 13, fontWeight: 700 }}>
+                  <div className="text-[13px] font-bold">
                     {user?.firstName} {user?.lastName}
                   </div>
-                  <div style={{ fontSize: 11, color: "#64748B" }}>{user?.email}</div>
+                  <div className="text-[11px] text-muted-foreground">
+                    {user?.email}
+                  </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <Link to="/profile" style={{ textDecoration: "none", color: "inherit" }}>
+                <Link to="/profile" className="no-underline text-inherit">
                   <DropdownMenuItem>
-                    <UserSquare2 className="h-4 w-4 mr-2" /> Профиль
+                    <UserSquare2 className="mr-2 h-4 w-4" />
+                    {t("common.profile")}
                   </DropdownMenuItem>
                 </Link>
-                <Link to="/notifications/preferences" style={{ textDecoration: "none", color: "inherit" }}>
+                <Link
+                  to="/notifications/preferences"
+                  className="no-underline text-inherit"
+                >
                   <DropdownMenuItem>
-                    <Settings className="h-4 w-4 mr-2" /> Уведомления
+                    <Settings className="mr-2 h-4 w-4" />
+                    {t("nav.notifications")}
                   </DropdownMenuItem>
                 </Link>
                 <DropdownMenuSeparator />
@@ -397,13 +327,14 @@ export default function DashboardLayout({
                   onClick={() => logout.mutate()}
                   disabled={logout.isPending}
                 >
-                  <LogOut className="h-4 w-4 mr-2" /> Выйти
+                  <LogOut className="mr-2 h-4 w-4" />
+                  {t("common.logout")}
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
         </header>
-        <main style={{ padding: "32px 40px" }}>{children}</main>
+        <main className="px-4 py-6 md:px-10 md:py-8">{children}</main>
       </div>
     </div>
   );

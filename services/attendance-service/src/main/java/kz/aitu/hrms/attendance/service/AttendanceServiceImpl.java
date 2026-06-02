@@ -77,12 +77,20 @@ public class AttendanceServiceImpl implements AttendanceService {
             throw new BusinessException("Today is a holiday: " + holiday.get().getName());
         }
 
-        DayOfWeek dow = today.getDayOfWeek();
-        if (dow == DayOfWeek.SATURDAY || dow == DayOfWeek.SUNDAY) {
-            throw new BusinessException("Today is a weekend");
+        // Fetch the employee summary once and reuse it for both schedule
+        // resolution (department override) and response decoration (name).
+        // employee-service unreachable → null → falls back to the
+        // company-wide default schedule, same as the legacy behaviour.
+        var employee = employeeLookup.summary(employeeId);
+        UUID departmentId = employee == null ? null : employee.departmentId();
+        WorkSchedule schedule = resolveSchedule(departmentId);
+
+        // "Weekend" is now whichever days the resolved schedule doesn't
+        // mark as working. Falls back to Mon–Fri if the column is empty.
+        if (!isWorkingDay(today.getDayOfWeek(), schedule)) {
+            throw new BusinessException("Today is not a working day under the active schedule");
         }
 
-        WorkSchedule schedule = resolveSchedule(null);
         AttendanceStatus status = computeStatus(now.toLocalTime(), schedule);
 
         AttendanceRecord record = AttendanceRecord.builder()
@@ -106,7 +114,7 @@ public class AttendanceServiceImpl implements AttendanceService {
                 .checkIn(now)
                 .build());
 
-        String name = employeeLookup.fullName(employeeId);
+        String name = employee == null ? null : employee.fullName();
         return mapper.toCheckIn(record, name);
     }
 
@@ -137,7 +145,11 @@ public class AttendanceServiceImpl implements AttendanceService {
         record.setCheckOut(now);
         record.setCheckOutMethod(resolvedMethod);
 
-        WorkSchedule schedule = resolveSchedule(null);
+        // Same department override as check-in. Falls back to the default
+        // schedule if employee-service is unreachable.
+        var employee = employeeLookup.summary(employeeId);
+        UUID departmentId = employee == null ? null : employee.departmentId();
+        WorkSchedule schedule = resolveSchedule(departmentId);
         int workedMinutes = (int) Duration.between(record.getCheckIn(), now).toMinutes();
         if (workedMinutes < 0) workedMinutes = 0;
         record.setWorkedMinutes(workedMinutes);
@@ -165,15 +177,18 @@ public class AttendanceServiceImpl implements AttendanceService {
                 .workedHours(mapper.toHours(workedMinutes))
                 .build());
 
-        String name = employeeLookup.fullName(employeeId);
+        String name = employee == null ? null : employee.fullName();
         return mapper.toCheckIn(record, name);
     }
 
     @Override
     @Transactional(readOnly = true)
     public AttendanceDtos.TodayResponse today(UUID employeeId) {
+        // Admins / service accounts can hit this endpoint via shared UI (the
+        // dashboard's AttendanceWidget). They have no employee record, so
+        // return the same shape as "not checked in yet" instead of 400.
         if (employeeId == null) {
-            throw new BusinessException("Caller has no associated employee profile");
+            return mapper.toToday(null);
         }
         AttendanceRecord r = recordRepo
                 .findByEmployeeIdAndWorkDateAndDeletedFalse(employeeId, LocalDate.now(zone()))
@@ -184,8 +199,10 @@ public class AttendanceServiceImpl implements AttendanceService {
     @Override
     @Transactional(readOnly = true)
     public Page<AttendanceDtos.RecordResponse> ownRecords(UUID employeeId, LocalDate from, LocalDate to, Pageable pageable) {
+        // Same rationale as today(): admins without an employeeId get an
+        // empty page rather than a 400, so shared UI doesn't blow up.
         if (employeeId == null) {
-            throw new BusinessException("Caller has no associated employee profile");
+            return Page.empty(pageable);
         }
         return recordRepo.search(employeeId, from, to, pageable)
                 .map(r -> mapper.toRecord(r, null));
@@ -354,5 +371,26 @@ public class AttendanceServiceImpl implements AttendanceService {
     private AttendanceStatus computeStatus(LocalTime now, WorkSchedule schedule) {
         LocalTime threshold = schedule.getWorkStartTime().plusMinutes(schedule.getLateThresholdMin());
         return now.isAfter(threshold) ? AttendanceStatus.LATE : AttendanceStatus.PRESENT;
+    }
+
+    /** Working-day lookup against the schedule's stored CSV (MON,TUE,…). */
+    private boolean isWorkingDay(DayOfWeek dow, WorkSchedule schedule) {
+        String csv = schedule.getWorkingDays();
+        if (csv == null || csv.isBlank()) {
+            return dow != DayOfWeek.SATURDAY && dow != DayOfWeek.SUNDAY;
+        }
+        String code = switch (dow) {
+            case MONDAY    -> "MON";
+            case TUESDAY   -> "TUE";
+            case WEDNESDAY -> "WED";
+            case THURSDAY  -> "THU";
+            case FRIDAY    -> "FRI";
+            case SATURDAY  -> "SAT";
+            case SUNDAY    -> "SUN";
+        };
+        for (String token : csv.split(",")) {
+            if (token.trim().equalsIgnoreCase(code)) return true;
+        }
+        return false;
     }
 }

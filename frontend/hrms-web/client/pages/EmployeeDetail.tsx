@@ -131,7 +131,7 @@ export default function EmployeeDetail() {
         </div>
       </div>
 
-      <Card className="mb-6 bg-white/60 backdrop-blur">
+      <Card className="mb-6 bg-card/60 backdrop-blur">
         <CardContent className="pt-6 flex items-center gap-6 flex-wrap">
           <div className="w-20 h-20 rounded-full bg-gradient-to-br from-blue-400 to-emerald-400 flex items-center justify-center text-white text-2xl font-bold">
             {(employee.firstName?.[0] ?? "") + (employee.lastName?.[0] ?? "")}
@@ -214,7 +214,7 @@ function Field({
 function ProfileTab({ employee }: { employee: any }) {
   const createAccount = useCreateAccountForEmployee(employee.id);
   return (
-    <Card className="bg-white/60 backdrop-blur">
+    <Card className="bg-card/60 backdrop-blur">
       <CardContent className="pt-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <Field label="Имя" value={employee.firstName} />
         <Field label="Фамилия" value={employee.lastName} />
@@ -380,7 +380,7 @@ function SalaryChangeDialog({
 function SalaryTab({ employeeId }: { employeeId: string }) {
   const { data: history = [], isLoading } = useSalaryHistory(employeeId);
   return (
-    <Card className="bg-white/60 backdrop-blur">
+    <Card className="bg-card/60 backdrop-blur">
       <CardContent className="pt-6">
         <Table>
           <TableHeader>
@@ -457,7 +457,7 @@ function DocumentsTab({ employeeId }: { employeeId: string }) {
   };
 
   return (
-    <Card className="bg-white/60 backdrop-blur">
+    <Card className="bg-card/60 backdrop-blur">
       <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle className="text-base">Документы</CardTitle>
         <RequirePermission code="EMPLOYEE_DOCUMENTS">
@@ -547,7 +547,7 @@ function DocumentsTab({ employeeId }: { employeeId: string }) {
 function EmergencyTab({ employeeId }: { employeeId: string }) {
   const { data: contacts = [], isLoading } = useEmergencyContacts(employeeId);
   return (
-    <Card className="bg-white/60 backdrop-blur">
+    <Card className="bg-card/60 backdrop-blur">
       <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle className="text-base">Экстренные контакты</CardTitle>
         <RequirePermission code="EMPLOYEE_UPDATE">

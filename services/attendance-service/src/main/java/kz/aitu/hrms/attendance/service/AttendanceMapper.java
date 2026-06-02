@@ -80,7 +80,18 @@ public class AttendanceMapper {
                 .halfDayThresholdMin(s.getHalfDayThresholdMin())
                 .departmentId(s.getDepartmentId())
                 .isDefault(s.isDefault())
+                .workingDays(parseWorkingDays(s.getWorkingDays()))
+                .description(s.getDescription())
                 .build();
+    }
+
+    /** Splits the persisted CSV back into a list for clients. */
+    public static java.util.List<String> parseWorkingDays(String csv) {
+        if (csv == null || csv.isBlank()) return java.util.List.of();
+        return java.util.Arrays.stream(csv.split(","))
+                .map(String::trim)
+                .filter(s -> !s.isBlank())
+                .toList();
     }
 
     public BigDecimal toHours(Integer minutes) {

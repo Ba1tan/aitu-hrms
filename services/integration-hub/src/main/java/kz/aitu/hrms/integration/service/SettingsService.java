@@ -31,6 +31,32 @@ public class SettingsService {
         return settings.stream().map(this::toPublicDto).toList();
     }
 
+    /**
+     * Non-sensitive keys that any authenticated user can read — used by the
+     * frontend's AttendanceWidget (needs check-in methods + work hours) and
+     * NotificationsPreferences (needs to know if SMS is wired). DO NOT add
+     * keys here without checking they're safe to leak to every employee.
+     */
+    @Transactional(readOnly = true)
+    public List<SettingDto> getPublic() {
+        return repo.findAll().stream()
+                .filter(s -> isPublicKey(s.getKey()))
+                .map(this::toPublicDto)
+                .toList();
+    }
+
+    private boolean isPublicKey(String key) {
+        if (isEncryptedKey(key)) return false;
+        // company.* is generally safe — name, bin (BIN is public-record),
+        // timezone, locale_default, currency, tax_resident.
+        if (key.startsWith("company.")) return true;
+        return key.equals("attendance.check_in_methods")
+                || key.equals("attendance.require_face")
+                || key.equals("attendance.work_schedule_default_id")
+                || key.equals("notification.sms_provider")
+                || key.equals("payroll.payslip_release_day");
+    }
+
     private SettingDto toPublicDto(CompanySetting s) {
         String displayValue = isEncryptedKey(s.getKey()) ? "********" : s.getValue();
         return new SettingDto(s.getId(), s.getKey(), displayValue,

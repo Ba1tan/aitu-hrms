@@ -2,7 +2,6 @@ package kz.aitu.hrms.reporting.service.xlsx.reports;
 
 import kz.aitu.hrms.reporting.client.AttendanceClient;
 import kz.aitu.hrms.reporting.client.dto.AttendanceRecordDto;
-import kz.aitu.hrms.reporting.client.dto.PageResponse;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -18,7 +17,8 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -38,17 +38,9 @@ class AttendanceMonthlyXlsxTest {
         rec.setCheckOut(LocalDateTime.of(2026, 2, 1, 18, 0));
         rec.setStatus("PRESENT");
 
-        PageResponse<AttendanceRecordDto> page = new PageResponse<>();
-        page.setContent(List.of(rec));
-        page.setLast(true);
-
-        PageResponse<AttendanceRecordDto> empty = new PageResponse<>();
-        empty.setContent(List.of());
-        empty.setLast(true);
-
-        // Feb 2026 has 28 days; stub all daily calls generically
-        when(attendanceClient.daily(any(), anyInt(), anyInt())).thenReturn(empty);
-        when(attendanceClient.daily(eq("2026-02-01"), eq(0), eq(200))).thenReturn(page);
+        // Feb 2026 has 28 days; stub all daily calls empty, override day 1.
+        when(attendanceClient.daily(any())).thenReturn(List.of());
+        when(attendanceClient.daily(eq("2026-02-01"))).thenReturn(List.of(rec));
 
         File out = tmp.resolve("attendance.xlsx").toFile();
         try (OutputStream os = new FileOutputStream(out)) {
@@ -65,10 +57,7 @@ class AttendanceMonthlyXlsxTest {
 
     @Test
     void emptyMonth_onlyHeader() throws Exception {
-        PageResponse<AttendanceRecordDto> empty = new PageResponse<>();
-        empty.setContent(List.of());
-        empty.setLast(true);
-        when(attendanceClient.daily(any(), anyInt(), anyInt())).thenReturn(empty);
+        when(attendanceClient.daily(any())).thenReturn(List.of());
 
         File out = tmp.resolve("attendance-empty.xlsx").toFile();
         try (OutputStream os = new FileOutputStream(out)) {

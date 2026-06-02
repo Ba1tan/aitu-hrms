@@ -9,6 +9,7 @@ import {
   CalendarHeart,
   LogIn as LogInIcon,
 } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import DashboardLayout from "./DashboardLayout";
 import AttendanceWidget from "../components/AttendanceWidget";
 import { useAuthContext } from "../providers/AuthProvider";
@@ -53,6 +54,7 @@ function unwrapTotal<T>(
 
 export default function Dashboard() {
   const { user, hasPermission } = useAuthContext();
+  const { t } = useTranslation();
   const role = user?.role;
   const isSuperAdmin = role === "SUPER_ADMIN";
   const employeeId = user?.employeeId ?? null;
@@ -149,7 +151,7 @@ export default function Dashboard() {
   const balanceToShow = annualBalance ?? (myLeaveBalanceQuery.data ?? [])[0];
 
   return (
-    <DashboardLayout title="Dashboard">
+    <DashboardLayout title={t("dashboard.title")}>
       <div
         style={{
           display: "grid",
@@ -160,7 +162,7 @@ export default function Dashboard() {
       >
         {canSeeEmployees && (
           <StatCard
-            label="Сотрудников"
+            label={t("dashboard.stats.employees")}
             value={
               employeesQuery.isLoading
                 ? "…"
@@ -175,7 +177,7 @@ export default function Dashboard() {
         )}
         {canSeePayrollAdmin && (
           <StatCard
-            label="Последний период"
+            label={t("dashboard.stats.lastPeriod")}
             value={
               lastPeriodQuery.isLoading
                 ? "…"
@@ -183,7 +185,15 @@ export default function Dashboard() {
                   ? `${lastPeriod.name}`
                   : "—"
             }
-            sub={lastPeriod ? `Статус: ${lastPeriod.status}` : undefined}
+            sub={
+              lastPeriod
+                ? t("dashboard.stats.lastPeriodStatus", {
+                    status: t(`common.statuses.${lastPeriod.status}`, {
+                      defaultValue: lastPeriod.status,
+                    }),
+                  })
+                : undefined
+            }
             icon={Wallet}
             color="#10B981"
             href="/payroll"
@@ -191,7 +201,7 @@ export default function Dashboard() {
         )}
         {canSeePendingLeave && (
           <StatCard
-            label="Заявок на отпуск"
+            label={t("dashboard.stats.pendingLeave")}
             value={
               pendingLeaveQuery.isLoading
                 ? "…"
@@ -199,7 +209,7 @@ export default function Dashboard() {
                   ? String(pendingLeaveTotal)
                   : "—"
             }
-            sub="ожидают подтверждения"
+            sub={t("dashboard.stats.pendingApprovals")}
             icon={Palmtree}
             color="#F59E0B"
             href="/leave/approvals"
@@ -207,7 +217,7 @@ export default function Dashboard() {
         )}
         {canSeeTodayAttendance && (
           <StatCard
-            label="Сегодня в офисе"
+            label={t("dashboard.stats.todayInOffice")}
             value={
               todayAttendanceQuery.isLoading
                 ? "…"
@@ -217,7 +227,9 @@ export default function Dashboard() {
             }
             sub={
               todayTotal > 0
-                ? `${Math.round((todayPresent / todayTotal) * 100)}% присутствие`
+                ? t("dashboard.stats.attendancePct", {
+                    pct: Math.round((todayPresent / todayTotal) * 100),
+                  })
                 : undefined
             }
             icon={Clock}
@@ -228,7 +240,7 @@ export default function Dashboard() {
 
         {hasPersonal && (
           <StatCard
-            label="Мой последний расчётный лист"
+            label={t("dashboard.stats.myLastPayslip")}
             value={
               myPayslipQuery.isLoading
                 ? "…"
@@ -236,7 +248,9 @@ export default function Dashboard() {
                   ? moneyKzt(myPayslip.netSalary)
                   : "—"
             }
-            sub={myPayslip ? myPayslip.period?.name : "пока нет"}
+            sub={
+              myPayslip ? myPayslip.period?.name : t("dashboard.stats.noPayslip")
+            }
             icon={ReceiptText}
             color="#0EA5E9"
             href="/my-payslips"
@@ -244,7 +258,7 @@ export default function Dashboard() {
         )}
         {hasPersonal && (
           <StatCard
-            label="Остаток отпуска"
+            label={t("dashboard.stats.leaveBalance")}
             value={
               myLeaveBalanceQuery.isLoading
                 ? "…"
@@ -252,7 +266,13 @@ export default function Dashboard() {
                   ? `${balanceToShow.remainingDays}`
                   : "—"
             }
-            sub={balanceToShow ? `дней (${balanceToShow.leaveType?.name})` : "не настроено"}
+            sub={
+              balanceToShow
+                ? t("dashboard.stats.balanceUnit", {
+                    name: balanceToShow.leaveType?.name ?? "",
+                  })
+                : t("dashboard.stats.balanceMissing")
+            }
             icon={CalendarHeart}
             color="#22C55E"
             href="/leave"
@@ -261,35 +281,20 @@ export default function Dashboard() {
       </div>
 
       {hasPersonal && (
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "minmax(0, 1fr) 320px",
-            gap: 24,
-          }}
-        >
+        <div className="grid gap-6 md:grid-cols-[minmax(0,1fr)_320px]">
           <PersonalLeaveCard />
           <AttendanceWidget />
         </div>
       )}
 
       {!hasPersonal && !canSeeEmployees && (
-        <div
-          style={{
-            background: "rgba(255,255,255,0.6)",
-            border: "1px solid rgba(255,255,255,0.4)",
-            padding: 24,
-            borderRadius: 16,
-            color: "#64748B",
-            textAlign: "center",
-          }}
-        >
-          <LogInIcon size={32} style={{ marginBottom: 8 }} />
-          <div style={{ fontSize: 16, fontWeight: 600, marginBottom: 4 }}>
-            Профиль не привязан к сотруднику
+        <div className="rounded-2xl border border-border/40 bg-card/60 p-6 text-center text-muted-foreground">
+          <LogInIcon size={32} className="mx-auto mb-2" aria-hidden="true" />
+          <div className="mb-1 text-base font-semibold text-foreground">
+            {t("dashboard.profileNotLinkedTitle")}
           </div>
-          <div style={{ fontSize: 13 }}>
-            Обратитесь к HR — администратор должен связать ваш аккаунт с записью сотрудника.
+          <div className="text-[13px]">
+            {t("dashboard.profileNotLinkedHint")}
           </div>
         </div>
       )}
@@ -308,40 +313,22 @@ interface StatCardProps {
 
 function StatCard({ label, value, sub, icon: Icon, color, href }: StatCardProps) {
   const body = (
-    <div
-      style={{
-        background: "rgba(255,255,255,0.55)",
-        backdropFilter: "blur(10px)",
-        border: "1px solid rgba(255,255,255,0.3)",
-        padding: 20,
-        borderRadius: 20,
-        height: "100%",
-        transition: "transform 0.15s ease",
-      }}
-    >
+    <div className="rounded-2xl border border-border/40 bg-card/60 p-5 backdrop-blur h-full transition-transform hover:-translate-y-0.5">
       <div
-        style={{
-          width: 36,
-          height: 36,
-          borderRadius: 10,
-          background: `${color}1A`,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          marginBottom: 12,
-        }}
+        className="mb-3 flex h-9 w-9 items-center justify-center rounded-lg"
+        style={{ background: `${color}1A` }}
       >
         <Icon size={18} color={color} />
       </div>
-      <div style={{ fontSize: 22, fontWeight: 800, color: "#1E293B" }}>{value}</div>
-      <div style={{ fontSize: 12, color: "#64748B", marginTop: 4 }}>{label}</div>
+      <div className="text-[22px] font-extrabold text-foreground">{value}</div>
+      <div className="mt-1 text-xs text-muted-foreground">{label}</div>
       {sub && (
-        <div style={{ fontSize: 11, color: "#94A3B8", marginTop: 2 }}>{sub}</div>
+        <div className="mt-0.5 text-[11px] text-muted-foreground/70">{sub}</div>
       )}
     </div>
   );
   return href ? (
-    <Link to={href} style={{ textDecoration: "none" }}>
+    <Link to={href} className="no-underline text-inherit">
       {body}
     </Link>
   ) : (
@@ -350,6 +337,7 @@ function StatCard({ label, value, sub, icon: Icon, color, href }: StatCardProps)
 }
 
 function PersonalLeaveCard() {
+  const { t } = useTranslation();
   const myRequests = useQuery({
     queryKey: ["dashboard", "my-recent-requests"],
     queryFn: () =>
@@ -357,38 +345,30 @@ function PersonalLeaveCard() {
   });
   const rows = unwrapPage(myRequests.data);
   return (
-    <div
-      style={{
-        background: "rgba(255,255,255,0.55)",
-        border: "1px solid rgba(255,255,255,0.3)",
-        padding: 20,
-        borderRadius: 20,
-      }}
-    >
-      <h3 style={{ fontSize: 14, fontWeight: 700, marginBottom: 14 }}>
-        Мои недавние заявки на отпуск
+    <div className="rounded-2xl border border-border/40 bg-card/60 p-5">
+      <h3 className="mb-3.5 text-sm font-bold text-foreground">
+        {t("dashboard.myRecentLeave")}
       </h3>
       {myRequests.isLoading ? (
-        <div style={{ color: "#64748B", fontSize: 13 }}>Загрузка…</div>
+        <div className="text-[13px] text-muted-foreground">
+          {t("common.loading")}
+        </div>
       ) : rows.length === 0 ? (
-        <div style={{ color: "#94A3B8", fontSize: 13 }}>Заявок пока нет.</div>
+        <div className="text-[13px] text-muted-foreground">
+          {t("dashboard.noLeaveRequests")}
+        </div>
       ) : (
         rows.map((row) => (
           <div
             key={row.id}
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              padding: "10px 0",
-              borderBottom: "1px solid rgba(0,0,0,0.05)",
-              fontSize: 13,
-            }}
+            className="flex items-center justify-between border-b border-border/30 py-2.5 text-[13px] last:border-b-0"
           >
             <div>
-              <div style={{ fontWeight: 600 }}>{row.leaveType?.name ?? "Отпуск"}</div>
-              <div style={{ fontSize: 11, color: "#64748B" }}>
-                {row.startDate} — {row.endDate} · {row.daysRequested} дн.
+              <div className="font-semibold text-foreground">
+                {row.leaveType?.name ?? t("nav.leaves")}
+              </div>
+              <div className="text-[11px] text-muted-foreground">
+                {row.startDate} — {row.endDate} · {row.daysRequested}
               </div>
             </div>
             <StatusPill status={row.status} />
@@ -400,25 +380,19 @@ function PersonalLeaveCard() {
 }
 
 function StatusPill({ status }: { status: string }) {
-  const map: Record<string, { bg: string; fg: string }> = {
-    PENDING: { bg: "#FEF3C7", fg: "#D97706" },
-    APPROVED: { bg: "#D1FAE5", fg: "#059669" },
-    REJECTED: { bg: "#FEE2E2", fg: "#DC2626" },
-    CANCELLED: { bg: "#E5E7EB", fg: "#475569" },
+  const { t } = useTranslation();
+  const map: Record<string, string> = {
+    PENDING: "bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-300",
+    APPROVED: "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300",
+    REJECTED: "bg-rose-100 text-rose-700 dark:bg-rose-500/20 dark:text-rose-300",
+    CANCELLED: "bg-muted text-muted-foreground",
   };
-  const s = map[status] ?? { bg: "#E5E7EB", fg: "#475569" };
+  const cls = map[status] ?? "bg-muted text-muted-foreground";
   return (
     <span
-      style={{
-        background: s.bg,
-        color: s.fg,
-        fontSize: 10,
-        fontWeight: 700,
-        padding: "4px 8px",
-        borderRadius: 6,
-      }}
+      className={`inline-flex items-center rounded-md px-2 py-1 text-[10px] font-bold uppercase ${cls}`}
     >
-      {status}
+      {t(`common.statuses.${status}`, { defaultValue: status })}
     </span>
   );
 }

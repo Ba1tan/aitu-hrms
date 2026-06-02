@@ -1,5 +1,7 @@
 import "./global.css";
+import "./i18n";
 
+import { lazy, Suspense } from "react";
 import { createRoot } from "react-dom/client";
 import { Toaster } from "./components/ui/toaster";
 import { Toaster as Sonner } from "./components/ui/sonner";
@@ -10,137 +12,210 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuthContext } from "./providers/AuthProvider";
 import { ProtectedRoute } from "./providers/ProtectedRoute";
 import { SetupGate } from "./providers/SetupGate";
+import { ThemeProvider } from "./providers/ThemeProvider";
+import { ErrorBoundary } from "./components/ErrorBoundary";
+import { RouteSpinner } from "./components/RouteSpinner";
+import { useOnlineStatus } from "./hooks/useOnlineStatus";
+import { initSentry, SentryRoot } from "./lib/sentry";
 
-import Dashboard from "./pages/Dashboard";
-import EmployeesList from "./pages/EmployeesList";
-import EmployeeForm from "./pages/EmployeeForm";
-import EmployeeDetail from "./pages/EmployeeDetail";
-import Departments from "./pages/Departments";
-import Positions from "./pages/Positions";
-import OrgChart from "./pages/OrgChart";
-import Directory from "./pages/Directory";
-import PayrollPeriods from "./pages/PayrollPeriods";
-import PayrollPeriodDetail from "./pages/PayrollPeriodDetail";
-import MyPayslips from "./pages/MyPayslips";
-import PayrollYtd from "./pages/PayrollYtd";
+// Public routes — eagerly loaded; they're the entry point.
 import Login from "./pages/Login";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
-import Leave from "./pages/Leave";
-import LeaveApprovalQueue from "./pages/LeaveApprovalQueue";
-import LeaveTypes from "./pages/LeaveTypes";
-import Attendance from "./pages/Attendance";
-import AttendanceHolidays from "./pages/AttendanceHolidays";
-import AttendanceSchedules from "./pages/AttendanceSchedules";
-import Reports from "./pages/Reports";
-import ExecutiveDashboard from "./pages/ExecutiveDashboard";
-import IntegrationHistory from "./pages/IntegrationHistory";
-import Settings from "./pages/Settings";
-import AdminUsers from "./pages/admin/Users";
-import AdminAuditLog from "./pages/admin/AuditLog";
-import AdminRoles from "./pages/admin/Roles";
-import Profile from "./pages/Profile";
-import Notifications from "./pages/Notifications";
-import NotificationsPreferences from "./pages/NotificationsPreferences";
 import AwaitingSetup from "./pages/AwaitingSetup";
-import SetupShell from "./pages/setup/SetupShell";
-import StepWelcome from "./pages/setup/StepWelcome";
-import StepCompany from "./pages/setup/StepCompany";
-import StepWorkSchedule from "./pages/setup/StepWorkSchedule";
-import StepHolidays from "./pages/setup/StepHolidays";
-import StepAttendanceMethods from "./pages/setup/StepAttendanceMethods";
-import StepDepartment from "./pages/setup/StepDepartment";
-import StepIntegrations from "./pages/setup/StepIntegrations";
-import StepReview from "./pages/setup/StepReview";
+
+// Lazy-loaded: every authenticated page splits into its own chunk so the
+// auth + landing path stays small. Heavy deps (reactflow, recharts, three)
+// only download when their page is opened.
+const Dashboard = lazy(() => import("./pages/Dashboard"));
+const EmployeesList = lazy(() => import("./pages/EmployeesList"));
+const EmployeeForm = lazy(() => import("./pages/EmployeeForm"));
+const EmployeeDetail = lazy(() => import("./pages/EmployeeDetail"));
+const Departments = lazy(() => import("./pages/Departments"));
+const Positions = lazy(() => import("./pages/Positions"));
+const OrgChart = lazy(() => import("./pages/OrgChart"));
+const Directory = lazy(() => import("./pages/Directory"));
+const PayrollPeriods = lazy(() => import("./pages/PayrollPeriods"));
+const PayrollPeriodDetail = lazy(() => import("./pages/PayrollPeriodDetail"));
+const MyPayslips = lazy(() => import("./pages/MyPayslips"));
+const PayrollYtd = lazy(() => import("./pages/PayrollYtd"));
+const Leave = lazy(() => import("./pages/Leave"));
+const LeaveApprovalQueue = lazy(() => import("./pages/LeaveApprovalQueue"));
+const LeaveTypes = lazy(() => import("./pages/LeaveTypes"));
+const Attendance = lazy(() => import("./pages/Attendance"));
+const AttendanceHolidays = lazy(() => import("./pages/AttendanceHolidays"));
+const AttendanceSchedules = lazy(() => import("./pages/AttendanceSchedules"));
+const Reports = lazy(() => import("./pages/Reports"));
+const ExecutiveDashboard = lazy(() => import("./pages/ExecutiveDashboard"));
+const IntegrationHistory = lazy(() => import("./pages/IntegrationHistory"));
+const Settings = lazy(() => import("./pages/Settings"));
+const AdminUsers = lazy(() => import("./pages/admin/Users"));
+const AdminAuditLog = lazy(() => import("./pages/admin/AuditLog"));
+const AdminRoles = lazy(() => import("./pages/admin/Roles"));
+const Profile = lazy(() => import("./pages/Profile"));
+const Notifications = lazy(() => import("./pages/Notifications"));
+const NotificationsPreferences = lazy(
+  () => import("./pages/NotificationsPreferences"),
+);
+const SetupShell = lazy(() => import("./pages/setup/SetupShell"));
+const StepWelcome = lazy(() => import("./pages/setup/StepWelcome"));
+const StepCompany = lazy(() => import("./pages/setup/StepCompany"));
+const StepWorkSchedule = lazy(() => import("./pages/setup/StepWorkSchedule"));
+const StepHolidays = lazy(() => import("./pages/setup/StepHolidays"));
+const StepAttendanceMethods = lazy(
+  () => import("./pages/setup/StepAttendanceMethods"),
+);
+const StepDepartment = lazy(() => import("./pages/setup/StepDepartment"));
+const StepIntegrations = lazy(() => import("./pages/setup/StepIntegrations"));
+const StepReview = lazy(() => import("./pages/setup/StepReview"));
+
+initSentry();
 
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       staleTime: 30_000,
       retry: (failureCount, error: any) => {
-        // Don't retry on auth failures — the axios interceptor already tries
-        // a refresh once; if that failed, retrying won't help.
-        if (error?.response?.status === 401 || error?.response?.status === 403) return false;
+        if (error?.response?.status === 401 || error?.response?.status === 403)
+          return false;
         return failureCount < 2;
       },
     },
   },
 });
 
+/**
+ * Wraps a route element with its own ErrorBoundary + Suspense fallback. The
+ * boundary is per-route so a crash in one page doesn't blank the whole app.
+ */
+function Page({ children }: { children: React.ReactNode }) {
+  return (
+    <ErrorBoundary>
+      <Suspense fallback={<RouteSpinner />}>{children}</Suspense>
+    </ErrorBoundary>
+  );
+}
+
+function AppShell() {
+  useOnlineStatus();
+  return (
+    <Routes>
+      {/* Public */}
+      <Route path="/index" element={<Page><Index /></Page>} />
+      <Route path="/login" element={<Page><Login /></Page>} />
+      <Route path="/signup" element={<Navigate to="/index" replace />} />
+
+      {/* Protected — everything beyond this point requires a valid JWT */}
+      <Route element={<ProtectedRoute />}>
+        <Route path="/awaiting-setup" element={<Page><AwaitingSetup /></Page>} />
+        <Route
+          path="/setup"
+          element={
+            <SuperAdminOnly>
+              <Page>
+                <SetupShell />
+              </Page>
+            </SuperAdminOnly>
+          }
+        >
+          <Route index element={<Navigate to="/setup/welcome" replace />} />
+          <Route path="welcome" element={<Page><StepWelcome /></Page>} />
+          <Route path="company" element={<Page><StepCompany /></Page>} />
+          <Route path="work-schedule" element={<Page><StepWorkSchedule /></Page>} />
+          <Route path="holidays" element={<Page><StepHolidays /></Page>} />
+          <Route path="attendance-methods" element={<Page><StepAttendanceMethods /></Page>} />
+          <Route path="department" element={<Page><StepDepartment /></Page>} />
+          <Route path="integrations" element={<Page><StepIntegrations /></Page>} />
+          <Route path="review" element={<Page><StepReview /></Page>} />
+        </Route>
+
+        <Route element={<SetupGate />}>
+          <Route path="/" element={<Navigate to="/dashboard" replace />} />
+          <Route path="/dashboard" element={<Page><Dashboard /></Page>} />
+          <Route path="/profile" element={<Page><Profile /></Page>} />
+          <Route path="/notifications" element={<Page><Notifications /></Page>} />
+          <Route
+            path="/notifications/preferences"
+            element={<Page><NotificationsPreferences /></Page>}
+          />
+          <Route path="/employees" element={<Page><EmployeesList /></Page>} />
+          <Route path="/employees/new" element={<Page><EmployeeForm /></Page>} />
+          <Route path="/employees/:id" element={<Page><EmployeeDetail /></Page>} />
+          <Route path="/employees/:id/edit" element={<Page><EmployeeForm /></Page>} />
+          <Route path="/org-chart" element={<Page><OrgChart /></Page>} />
+          <Route path="/directory" element={<Page><Directory /></Page>} />
+          <Route path="/departments" element={<Page><Departments /></Page>} />
+          <Route path="/positions" element={<Page><Positions /></Page>} />
+          <Route path="/payroll" element={<Page><PayrollRoute /></Page>} />
+          <Route
+            path="/payroll/periods/:id"
+            element={<Page><PayrollPeriodDetail /></Page>}
+          />
+          <Route path="/payroll/ytd" element={<Page><PayrollYtd /></Page>} />
+          <Route path="/payroll/ytd/:id" element={<Page><PayrollYtd /></Page>} />
+          <Route path="/my-payslips" element={<Page><MyPayslips /></Page>} />
+          <Route path="/leave" element={<Page><Leave /></Page>} />
+          <Route path="/leave/approvals" element={<Page><LeaveApprovalQueue /></Page>} />
+          <Route path="/leave/types" element={<Page><LeaveTypes /></Page>} />
+          <Route path="/attendance" element={<Page><Attendance /></Page>} />
+          <Route
+            path="/attendance/holidays"
+            element={<Page><AttendanceHolidays /></Page>}
+          />
+          <Route
+            path="/attendance/schedules"
+            element={<Page><AttendanceSchedules /></Page>}
+          />
+          <Route path="/reports" element={<Page><Reports /></Page>} />
+          <Route path="/executive" element={<Page><ExecutiveDashboard /></Page>} />
+          <Route path="/integration" element={<Page><IntegrationHistory /></Page>} />
+          <Route path="/settings" element={<Page><Settings /></Page>} />
+          <Route path="/admin/users" element={<Page><AdminUsers /></Page>} />
+          <Route path="/admin/audit" element={<Page><AdminAuditLog /></Page>} />
+          <Route path="/admin/roles" element={<Page><AdminRoles /></Page>} />
+        </Route>
+      </Route>
+
+      <Route path="*" element={<Page><NotFound /></Page>} />
+    </Routes>
+  );
+}
+
+const RootFallback = ({ error }: { error: unknown }) => {
+  const message = error instanceof Error ? error.message : String(error);
+  return (
+    <div className="flex min-h-screen items-center justify-center p-6 text-center">
+      <div className="max-w-md">
+        <h1 className="text-xl font-semibold">Application crashed</h1>
+        <p className="mt-2 text-sm text-muted-foreground">{message}</p>
+        <button
+          type="button"
+          onClick={() => window.location.reload()}
+          className="mt-4 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground"
+        >
+          Reload
+        </button>
+      </div>
+    </div>
+  );
+};
+
 const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <AuthProvider>
-          <Routes>
-            {/* Public */}
-            <Route path="/index" element={<Index />} />
-            <Route path="/login" element={<Login />} />
-            {/* /signup is intentionally absent — employees are created by HR
-                in /admin/users; the first admin is bootstrapped from /index. */}
-            <Route path="/signup" element={<Navigate to="/index" replace />} />
-
-            {/* Protected — everything beyond this point requires a valid JWT */}
-            <Route element={<ProtectedRoute />}>
-              {/* Setup routes live OUTSIDE the SetupGate so SUPER_ADMIN can
-                  reach the wizard before the tenant is configured. */}
-              <Route path="/awaiting-setup" element={<AwaitingSetup />} />
-              <Route path="/setup" element={<SuperAdminOnly><SetupShell /></SuperAdminOnly>}>
-                <Route index element={<Navigate to="/setup/welcome" replace />} />
-                <Route path="welcome" element={<StepWelcome />} />
-                <Route path="company" element={<StepCompany />} />
-                <Route path="work-schedule" element={<StepWorkSchedule />} />
-                <Route path="holidays" element={<StepHolidays />} />
-                <Route path="attendance-methods" element={<StepAttendanceMethods />} />
-                <Route path="department" element={<StepDepartment />} />
-                <Route path="integrations" element={<StepIntegrations />} />
-                <Route path="review" element={<StepReview />} />
-              </Route>
-
-              {/* Main app — gated on a configured tenant */}
-              <Route element={<SetupGate />}>
-                <Route path="/" element={<Navigate to="/dashboard" replace />} />
-                <Route path="/dashboard" element={<Dashboard />} />
-                <Route path="/profile" element={<Profile />} />
-                <Route path="/notifications" element={<Notifications />} />
-                <Route path="/notifications/preferences" element={<NotificationsPreferences />} />
-                <Route path="/employees" element={<EmployeesList />} />
-                <Route path="/employees/new" element={<EmployeeForm />} />
-                <Route path="/employees/:id" element={<EmployeeDetail />} />
-                <Route path="/employees/:id/edit" element={<EmployeeForm />} />
-                <Route path="/org-chart" element={<OrgChart />} />
-                <Route path="/directory" element={<Directory />} />
-                <Route path="/departments" element={<Departments />} />
-                <Route path="/positions" element={<Positions />} />
-                <Route path="/payroll" element={<PayrollRoute />} />
-                <Route path="/payroll/periods/:id" element={<PayrollPeriodDetail />} />
-                <Route path="/payroll/ytd" element={<PayrollYtd />} />
-                <Route path="/payroll/ytd/:id" element={<PayrollYtd />} />
-                <Route path="/my-payslips" element={<MyPayslips />} />
-                <Route path="/leave" element={<Leave />} />
-                <Route path="/leave/approvals" element={<LeaveApprovalQueue />} />
-                <Route path="/leave/types" element={<LeaveTypes />} />
-                <Route path="/attendance" element={<Attendance />} />
-                <Route path="/attendance/holidays" element={<AttendanceHolidays />} />
-                <Route path="/attendance/schedules" element={<AttendanceSchedules />} />
-                <Route path="/reports" element={<Reports />} />
-                <Route path="/executive" element={<ExecutiveDashboard />} />
-                <Route path="/integration" element={<IntegrationHistory />} />
-                <Route path="/settings" element={<Settings />} />
-                <Route path="/admin/users" element={<AdminUsers />} />
-                <Route path="/admin/audit" element={<AdminAuditLog />} />
-                <Route path="/admin/roles" element={<AdminRoles />} />
-              </Route>
-            </Route>
-
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </AuthProvider>
-      </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
+  <SentryRoot fallback={({ error }) => <RootFallback error={error} />}>
+    <QueryClientProvider client={queryClient}>
+      <ThemeProvider>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <AuthProvider>
+              <AppShell />
+            </AuthProvider>
+          </BrowserRouter>
+        </TooltipProvider>
+      </ThemeProvider>
+    </QueryClientProvider>
+  </SentryRoot>
 );
 
 function SuperAdminOnly({ children }: { children: JSX.Element }) {

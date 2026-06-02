@@ -46,22 +46,48 @@ public class LeaveBalanceService {
         return LocalDate.now(ZoneId.of(zoneId)).getYear();
     }
 
-    @Transactional(readOnly = true)
+    @Transactional
     public List<LeaveBalanceDtos.Response> own(UUID employeeId) {
         if (employeeId == null) {
             throw new BusinessException("Caller has no associated employee profile");
         }
+        ensureBalances(employeeId, currentYear());
         return forEmployeeYear(employeeId, currentYear(), null);
     }
 
-    @Transactional(readOnly = true)
+    @Transactional
     public List<LeaveBalanceDtos.Response> forEmployee(UUID employeeId, Integer year) {
         if (employeeId == null) {
             throw new BusinessException("employeeId is required");
         }
         int y = year == null ? currentYear() : year;
+        ensureBalances(employeeId, y);
         String name = employeeLookup.fullName(employeeId);
         return forEmployeeYear(employeeId, y, name);
+    }
+
+    /**
+     * Create missing balances for this employee against every active leave
+     * type for the given year. Idempotent — exits early if all types already
+     * have a row. Called from read paths so the UI always shows every
+     * entitlement, even for employees seeded via SQL or for new leave types
+     * added after the employee was created.
+     */
+    private void ensureBalances(UUID employeeId, int year) {
+        List<LeaveType> types = typeRepo.findAllByDeletedFalseOrderByName();
+        List<LeaveBalance> existing = balanceRepo.findForEmployeeYear(employeeId, year);
+        if (existing.size() >= types.size()) return;
+        java.util.Set<UUID> have = new java.util.HashSet<>();
+        for (LeaveBalance b : existing) have.add(b.getLeaveType().getId());
+        for (LeaveType type : types) {
+            if (have.contains(type.getId())) continue;
+            balanceRepo.save(LeaveBalance.builder()
+                    .employeeId(employeeId)
+                    .leaveType(type)
+                    .year(year)
+                    .entitledDays(type.getDaysAllowed())
+                    .build());
+        }
     }
 
     private List<LeaveBalanceDtos.Response> forEmployeeYear(UUID employeeId, int year, String name) {

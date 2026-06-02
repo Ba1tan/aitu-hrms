@@ -1,32 +1,33 @@
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { ArrowLeft } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { useAuth } from "../hooks/useAuth";
 import { useAuthContext } from "../providers/AuthProvider";
 import "./css/login.css";
 
-interface LocationState {
-  from?: { pathname: string };
-}
+// After login (or when an already-authenticated user lands on /login by hand)
+// always send them to /dashboard. We deliberately ignore location.state.from
+// — it was carrying the *previous* user's last route across logout/relogin,
+// so account A logging out and account B logging back in would dump B on
+// A's old page.
+const DEFAULT_REDIRECT = "/dashboard";
 
 export default function Login() {
   const navigate = useNavigate();
-  const location = useLocation();
   const { login } = useAuth();
   const { isAuthenticated } = useAuthContext();
+  const { t } = useTranslation();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  const redirectAfterLogin =
-    (location.state as LocationState)?.from?.pathname || "/dashboard";
-
   // If already authenticated (e.g. user typed /login by hand), skip the form.
   useEffect(() => {
     if (isAuthenticated) {
-      navigate(redirectAfterLogin, { replace: true });
+      navigate(DEFAULT_REDIRECT, { replace: true });
     }
-  }, [isAuthenticated, navigate, redirectAfterLogin]);
+  }, [isAuthenticated, navigate]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -34,7 +35,7 @@ export default function Login() {
     login.mutate(
       { email, password },
       {
-        onSuccess: () => navigate(redirectAfterLogin, { replace: true }),
+        onSuccess: () => navigate(DEFAULT_REDIRECT, { replace: true }),
       },
     );
   };
@@ -52,42 +53,42 @@ export default function Login() {
           <div className="auth-left-content">
             <div className="auth-logo">HR</div>
             <div className="auth-left-tagline">
-              <p>Welcome back</p>
-              <h2>Sign in to continue managing your HRMS workspace</h2>
+              <p>{t("auth.welcomeBack")}</p>
+              <h2>{t("auth.signInSubtitle")}</h2>
             </div>
           </div>
         </div>
 
         <div className="auth-right">
-          <Link to="/" className="auth-back">
+          <Link to="/index" className="auth-back">
             <ArrowLeft size={14} />
-            Back to home
+            {t("auth.backToHome")}
           </Link>
 
-          <h1>Sign in</h1>
-          <p className="subtitle">
-            Enter your email and password to access your account.
-          </p>
+          <h1>{t("auth.signIn")}</h1>
+          <p className="subtitle">{t("auth.enterCredentials")}</p>
 
           <form className="auth-form" onSubmit={handleSubmit}>
             <div className="auth-field">
-              <label>Email address</label>
+              <label htmlFor="login-email">{t("auth.emailLabel")}</label>
               <input
+                id="login-email"
                 type="email"
                 required
                 autoComplete="email"
-                placeholder="you@company.kz"
+                placeholder={t("auth.emailPlaceholder")}
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
               />
             </div>
             <div className="auth-field">
-              <label>Password</label>
+              <label htmlFor="login-password">{t("auth.passwordLabel")}</label>
               <input
+                id="login-password"
                 type="password"
                 required
                 autoComplete="current-password"
-                placeholder="••••••••••"
+                placeholder={t("auth.passwordPlaceholder")}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
               />
@@ -97,7 +98,7 @@ export default function Login() {
               className="auth-submit"
               disabled={login.isPending}
             >
-              {login.isPending ? "Signing in…" : "Sign in"}
+              {login.isPending ? t("auth.signingIn") : t("auth.signIn")}
             </button>
           </form>
         </div>

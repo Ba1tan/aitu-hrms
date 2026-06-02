@@ -138,7 +138,7 @@ export default function ExecutiveDashboard() {
         </div>
       ) : (
         <div className="grid gap-4 lg:grid-cols-2">
-          <Card className="bg-white/60 backdrop-blur">
+          <Card className="bg-card/60 backdrop-blur">
             <CardHeader>
               <CardTitle className="text-base">
                 Динамика численности
@@ -153,7 +153,7 @@ export default function ExecutiveDashboard() {
               ) : (
                 <ResponsiveContainer width="100%" height={260}>
                   <LineChart data={headcountData}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#E2E8F0" />
+                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                     <XAxis dataKey="label" fontSize={11} />
                     <YAxis allowDecimals={false} fontSize={11} />
                     <Tooltip />
@@ -171,7 +171,7 @@ export default function ExecutiveDashboard() {
             </CardContent>
           </Card>
 
-          <Card className="bg-white/60 backdrop-blur">
+          <Card className="bg-card/60 backdrop-blur">
             <CardHeader>
               <CardTitle className="text-base">
                 Затраты на ФОТ
@@ -184,7 +184,7 @@ export default function ExecutiveDashboard() {
               ) : (
                 <ResponsiveContainer width="100%" height={260}>
                   <BarChart data={payrollData}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#E2E8F0" />
+                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                     <XAxis dataKey="label" fontSize={11} />
                     <YAxis
                       fontSize={11}
@@ -204,7 +204,7 @@ export default function ExecutiveDashboard() {
             </CardContent>
           </Card>
 
-          <Card className="bg-white/60 backdrop-blur">
+          <Card className="bg-card/60 backdrop-blur">
             <CardHeader>
               <CardTitle className="text-base">
                 Распределение по отделам

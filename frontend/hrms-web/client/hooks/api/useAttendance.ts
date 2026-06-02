@@ -228,9 +228,14 @@ export const useUpdateSchedule = () => {
 
 // ── Settings (read-only on this page; mutations live in setup wizard) ───────
 
+/**
+ * Public settings only — backs the dashboard AttendanceWidget which runs
+ * for every employee. Calling the admin /v1/settings endpoint would 401
+ * non-admins. The whitelist is enforced server-side.
+ */
 export const useSettings = () =>
   useQuery({
     queryKey: SETTINGS_KEY,
-    queryFn: () => settingsApi.get().then((r) => r.data),
+    queryFn: () => settingsApi.getPublic().then((r) => r.data),
     staleTime: 5 * 60_000,
   });

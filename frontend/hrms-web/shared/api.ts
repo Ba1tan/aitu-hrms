@@ -268,6 +268,12 @@ export interface Employee {
   baseSalary: string;
   status: string;
   hireDate: string;
+  /**
+   * Derived from leave-service: end date of an APPROVED leave covering
+   * today, or null/absent if the employee isn't currently on leave.
+   * Used by the UI to render an ON_LEAVE badge while the leave is active.
+   */
+  onLeaveUntil?: string | null;
 }
 
 export interface EmployeeListItem {
@@ -299,6 +305,8 @@ export interface EmployeeListItem {
   hasDisability: boolean;
   pensioner: boolean;
   status: string;
+  /** See {@link Employee.onLeaveUntil}. */
+  onLeaveUntil?: string | null;
 }
 
 /**
@@ -461,9 +469,11 @@ export interface WorkSchedule {
   workStartTime: string;
   workEndTime: string;
   lateThresholdMin: number;
+  halfDayThresholdMin?: number;
   workingDays?: string[] | string;
   isDefault?: boolean;
   description?: string | null;
+  departmentId?: string | null;
 }
 
 export interface WorkScheduleRequest {
@@ -474,6 +484,7 @@ export interface WorkScheduleRequest {
   workingDays?: string[];
   isDefault?: boolean;
   description?: string;
+  departmentId?: string;
 }
 
 export interface ManualAttendanceRequest {
@@ -1020,11 +1031,28 @@ export const settingsApi = {
    * `category` filters server-side (company.*, payroll.*, …). The backend
    * returns a list of {key, value, …}; flatten it into a key→value map since
    * every caller indexes settings by key.
+   *
+   * Requires `SYSTEM_SETTINGS` — use {@link getPublic} for the non-admin
+   * widgets (dashboard, notification prefs).
    */
   get: async (category?: string) => {
     const res = await apiClient.get<SettingValue[]>("/v1/settings", {
       params: category ? { category } : {},
     });
+    const list = Array.isArray(res.data) ? res.data : [];
+    const values = list.reduce<Record<string, string>>((acc, s) => {
+      acc[s.key] = s.value;
+      return acc;
+    }, {});
+    return { ...res, data: values };
+  },
+  /**
+   * Non-sensitive keys readable by any authenticated user. Backend
+   * whitelists `company.*`, `attendance.check_in_methods`,
+   * `attendance.require_face`, `notification.sms_provider`, etc.
+   */
+  getPublic: async () => {
+    const res = await apiClient.get<SettingValue[]>("/v1/settings/public");
     const list = Array.isArray(res.data) ? res.data : [];
     const values = list.reduce<Record<string, string>>((acc, s) => {
       acc[s.key] = s.value;

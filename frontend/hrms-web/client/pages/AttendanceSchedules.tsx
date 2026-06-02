@@ -41,18 +41,28 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { RequirePermission } from "../providers/RequirePermission";
 import {
   useCreateSchedule,
   useSchedules,
   useUpdateSchedule,
 } from "../hooks/api/useAttendance";
+import { useDepartments } from "../hooks/api/useDepartments";
 import { type WorkSchedule } from "../../shared/api";
 import {
   scheduleSchema,
   type ScheduleFormOutput,
   type ScheduleFormValues,
 } from "../../shared/schemas/attendance";
+
+const NONE = "__none__";
 
 const DAYS: Array<{ value: "MON" | "TUE" | "WED" | "THU" | "FRI" | "SAT" | "SUN"; label: string }> = [
   { value: "MON", label: "Пн" },
@@ -75,6 +85,9 @@ export default function AttendanceSchedules() {
   const [editing, setEditing] = useState<WorkSchedule | null>(null);
 
   const { data: schedules = [], isLoading } = useSchedules();
+  const { data: departments = [] } = useDepartments();
+  const deptName = (id: string | null | undefined) =>
+    id ? departments.find((d) => d.id === id)?.name ?? "—" : "—";
 
   return (
     <DashboardLayout title="Рабочие графики">
@@ -86,11 +99,12 @@ export default function AttendanceSchedules() {
         </RequirePermission>
       </div>
 
-      <div className="rounded-2xl border bg-white/60 backdrop-blur">
+      <div className="rounded-2xl border bg-card/60 backdrop-blur">
         <Table>
           <TableHeader>
             <TableRow>
               <TableHead>Название</TableHead>
+              <TableHead>Отдел</TableHead>
               <TableHead>Начало</TableHead>
               <TableHead>Конец</TableHead>
               <TableHead>Порог опоздания</TableHead>
@@ -103,7 +117,7 @@ export default function AttendanceSchedules() {
             {isLoading ? (
               Array.from({ length: 3 }).map((_, i) => (
                 <TableRow key={i}>
-                  <TableCell colSpan={7}>
+                  <TableCell colSpan={8}>
                     <Skeleton className="h-6 w-full" />
                   </TableCell>
                 </TableRow>
@@ -118,6 +132,9 @@ export default function AttendanceSchedules() {
               schedules.map((s) => (
                 <TableRow key={s.id}>
                   <TableCell className="font-medium">{s.name}</TableCell>
+                  <TableCell className="text-muted-foreground">
+                    {deptName(s.departmentId)}
+                  </TableCell>
                   <TableCell>{s.workStartTime}</TableCell>
                   <TableCell>{s.workEndTime}</TableCell>
                   <TableCell>{s.lateThresholdMin} мин</TableCell>
@@ -174,6 +191,10 @@ function ScheduleDialog({
   const isEdit = !!schedule;
   const create = useCreateSchedule();
   const update = useUpdateSchedule();
+  const { data: departments = [] } = useDepartments();
+  const [departmentId, setDepartmentId] = useState<string>(
+    schedule?.departmentId ?? "",
+  );
 
   const form = useForm<ScheduleFormValues, unknown, ScheduleFormOutput>({
     resolver: zodResolver(scheduleSchema),
@@ -199,6 +220,7 @@ function ScheduleDialog({
       workingDays: data.workingDays,
       isDefault: data.isDefault,
       description: data.description || undefined,
+      departmentId: departmentId || undefined,
     };
     try {
       if (isEdit && schedule) {
@@ -320,6 +342,29 @@ function ScheduleDialog({
                 );
               }}
             />
+            <FormItem>
+              <FormLabel>Отдел</FormLabel>
+              <Select
+                value={departmentId || NONE}
+                onValueChange={(v) => setDepartmentId(v === NONE ? "" : v)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="—" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={NONE}>— Без отдела (общий) —</SelectItem>
+                  {departments.map((d) => (
+                    <SelectItem key={d.id} value={d.id}>
+                      {d.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">
+                График применяется только к сотрудникам выбранного отдела.
+                Оставьте пустым для общего графика.
+              </p>
+            </FormItem>
             <FormField
               control={form.control}
               name="isDefault"
@@ -328,8 +373,7 @@ function ScheduleDialog({
                   <div>
                     <FormLabel>По умолчанию</FormLabel>
                     <p className="text-xs text-muted-foreground">
-                      Применяется ко всем сотрудникам без индивидуального
-                      графика
+                      Применяется к сотрудникам, чей отдел не имеет своего графика.
                     </p>
                   </div>
                   <FormControl>

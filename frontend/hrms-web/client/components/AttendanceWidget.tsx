@@ -91,7 +91,7 @@ export default function AttendanceWidget() {
 
   if (isLoading) {
     return (
-      <div className="rounded-2xl border bg-white/60 backdrop-blur p-5">
+      <div className="rounded-2xl border bg-card/60 backdrop-blur p-5">
         <Skeleton className="h-6 w-32 mb-3" />
         <Skeleton className="h-9 w-full" />
       </div>
@@ -99,7 +99,7 @@ export default function AttendanceWidget() {
   }
 
   return (
-    <div className="rounded-2xl border bg-white/60 backdrop-blur p-5">
+    <div className="rounded-2xl border bg-card/60 backdrop-blur p-5">
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
           <Clock className="h-4 w-4" />

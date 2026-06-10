@@ -29,6 +29,7 @@ class SettingsServiceTest {
     @Mock private CompanySettingRepository repo;
     @Mock private SettingsAuditRepository auditRepo;
     @Mock private TextEncryptor encryptor;
+    @Mock private AuditPublisher auditPublisher;
     @InjectMocks private SettingsService service;
 
     private AuthenticatedUser actor;

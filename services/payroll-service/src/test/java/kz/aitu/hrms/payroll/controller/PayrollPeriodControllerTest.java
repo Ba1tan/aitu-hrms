@@ -49,13 +49,13 @@ class PayrollPeriodControllerTest {
     // ── /periods POST ─────────────────────────────────────────────────────
 
     @Test
-    void create_unauthenticatedReturns401or403() throws Exception {
-        // No security context → Spring returns 401/403 depending on entry-point.
-        // GlobalExceptionHandler converts AccessDenied → 403; AuthenticationException → 401.
+    void create_unauthenticatedReturns401() throws Exception {
+        // No security context → custom authenticationEntryPoint returns 401 (not 403),
+        // so the frontend's refresh/logout recovery kicks in on a stale/expired token.
         mvc.perform(post("/v1/payroll/periods")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"year\":2026,\"month\":3,\"workingDays\":22}"))
-                .andExpect(status().is(403));
+                .andExpect(status().isUnauthorized());
         verify(periodService, never()).create(any());
     }
 

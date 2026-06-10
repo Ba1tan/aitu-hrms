@@ -25,6 +25,7 @@ public class RabbitConfig {
     public static final String RK_EMPLOYEE_CREATED    = "employee.created";
     public static final String RK_EMPLOYEE_TERMINATED = "employee.terminated";
     public static final String RK_SALARY_CHANGED      = "employee.salary.changed";
+    public static final String RK_AUDIT               = "audit.recorded";
 
     @Bean
     public TopicExchange exchange() {

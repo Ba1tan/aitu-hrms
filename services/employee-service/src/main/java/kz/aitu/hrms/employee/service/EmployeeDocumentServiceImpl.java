@@ -36,6 +36,7 @@ public class EmployeeDocumentServiceImpl implements EmployeeDocumentService {
     private final EmployeeRepository employeeRepository;
     private final EmployeeAccessControl accessControl;
     private final EmployeeMapper mapper;
+    private final EventPublisher eventPublisher;
 
     @Value("${app.storage.base-path:/data/hrms/uploads}")
     private String basePath;
@@ -82,7 +83,12 @@ public class EmployeeDocumentServiceImpl implements EmployeeDocumentService {
                 .fileSize(file.getSize())
                 .expiryDate(expiryDate)
                 .build();
-        return mapper.toDocumentResponse(documentRepository.save(doc));
+        EmployeeDocument saved = documentRepository.save(doc);
+        EmployeeDocumentDtos.DocumentResponse resp = mapper.toDocumentResponse(saved);
+        eventPublisher.audit("CREATE", "EMPLOYEE_DOCUMENT", saved.getId(), null,
+                Map.of("employeeId", employeeId, "documentType", documentType,
+                        "fileName", String.valueOf(file.getOriginalFilename())));
+        return resp;
     }
 
     @Override
@@ -108,6 +114,8 @@ public class EmployeeDocumentServiceImpl implements EmployeeDocumentService {
         EmployeeDocument doc = documentRepository.findByIdAndEmployee_IdAndDeletedFalse(docId, employeeId)
                 .orElseThrow(() -> new ResourceNotFoundException("Document not found: " + docId));
         doc.setDeleted(true);
+        eventPublisher.audit("DELETE", "EMPLOYEE_DOCUMENT", docId,
+                Map.of("employeeId", employeeId, "fileName", String.valueOf(doc.getFileName())), null);
     }
 
     private Employee requireEmployee(UUID id) {

@@ -23,10 +23,12 @@ public class RabbitConfig {
     public static final String Q_USER_ACCOUNT_CREATED    = "user.account.created";
     public static final String Q_PASSWORD_RESET          = "user.password.reset-requested";
     public static final String Q_EMPLOYEE_CREATED        = "user.employee.created";
+    public static final String Q_AUDIT_RECORDED          = "user.audit.recorded";
 
     public static final String RK_USER_ACCOUNT_CREATED   = "user.account.created";
     public static final String RK_PASSWORD_RESET         = "user.password.reset-requested";
     public static final String RK_EMPLOYEE_CREATED       = "employee.created";
+    public static final String RK_AUDIT_RECORDED         = "audit.recorded";
 
     @Bean
     public TopicExchange exchange() {
@@ -43,6 +45,9 @@ public class RabbitConfig {
     public Queue employeeCreatedQueue()      { return new Queue(Q_EMPLOYEE_CREATED, true); }
 
     @Bean
+    public Queue auditRecordedQueue()        { return new Queue(Q_AUDIT_RECORDED, true); }
+
+    @Bean
     public Binding bindUserAccountCreated(Queue userAccountCreatedQueue, TopicExchange exchange) {
         return BindingBuilder.bind(userAccountCreatedQueue).to(exchange).with(RK_USER_ACCOUNT_CREATED);
     }
@@ -55,6 +60,11 @@ public class RabbitConfig {
     @Bean
     public Binding bindEmployeeCreated(Queue employeeCreatedQueue, TopicExchange exchange) {
         return BindingBuilder.bind(employeeCreatedQueue).to(exchange).with(RK_EMPLOYEE_CREATED);
+    }
+
+    @Bean
+    public Binding bindAuditRecorded(Queue auditRecordedQueue, TopicExchange exchange) {
+        return BindingBuilder.bind(auditRecordedQueue).to(exchange).with(RK_AUDIT_RECORDED);
     }
 
     @Bean

@@ -70,6 +70,7 @@ public class AuthService {
         user.setLastLoginIp(clientIp(http));
         userRepository.save(user);
 
+        auditService.log(user.getId(), user.getEmail(), "LOGIN", "USER", user.getId(), null, null);
         log.info("User logged in: {}", user.getEmail());
         return buildAuthResponse(user);
     }
@@ -145,6 +146,13 @@ public class AuthService {
         }
         String token = authHeader.substring(7);
         blacklist.blacklist(token, jwtService.remainingLifeMs(token));
+        // Best-effort audit from token claims — never let it break logout.
+        try {
+            java.util.UUID userId = java.util.UUID.fromString(jwtService.extractUserId(token));
+            auditService.log(userId, jwtService.extractEmail(token), "LOGOUT", "USER", userId, null, null);
+        } catch (Exception ignored) {
+            // token unreadable; skip audit
+        }
         log.info("User logged out");
     }
 
@@ -237,11 +245,15 @@ public class AuthService {
     private void recordFailedLogin(User user) {
         int attempts = user.getFailedLoginCount() + 1;
         user.setFailedLoginCount(attempts);
-        if (attempts >= MAX_FAILED_LOGIN) {
+        boolean nowLocked = attempts >= MAX_FAILED_LOGIN;
+        if (nowLocked) {
             user.setLockedUntil(LocalDateTime.now().plusMinutes(lockoutMinutes));
             log.warn("Account locked after {} failed attempts: {}", attempts, user.getEmail());
         }
         userRepository.save(user);
+        auditService.log(user.getId(), user.getEmail(),
+                nowLocked ? "LOGIN_LOCKED" : "LOGIN_FAILED", "USER", user.getId(),
+                null, java.util.Map.of("failedAttempts", attempts));
     }
 
     private AuthDtos.AuthResponse buildAuthResponse(User user) {
@@ -268,6 +280,8 @@ public class AuthService {
 
     private String clientIp(HttpServletRequest req) {
         if (req == null) return null;
+        String realIp = req.getHeader("X-Real-IP");
+        if (realIp != null && !realIp.isBlank()) return realIp.trim();
         String fwd = req.getHeader("X-Forwarded-For");
         if (fwd != null && !fwd.isBlank()) return fwd.split(",")[0].trim();
         return req.getRemoteAddr();

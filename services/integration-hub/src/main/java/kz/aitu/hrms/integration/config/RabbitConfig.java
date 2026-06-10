@@ -25,6 +25,7 @@ public class RabbitConfig {
     // Producer routing keys
     public static final String RK_SYNC_COMPLETED = "integration.1c.synced";
     public static final String RK_SYNC_FAILED    = "integration.sync.failed";
+    public static final String RK_AUDIT          = "audit.recorded";
 
     // Consumer queue names
     public static final String Q_PAYROLL_PERIOD_APPROVED = "integration.payroll.period.approved";

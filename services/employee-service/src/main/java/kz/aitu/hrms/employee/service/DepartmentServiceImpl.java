@@ -21,6 +21,7 @@ public class DepartmentServiceImpl implements DepartmentService {
     private final DepartmentRepository departmentRepository;
     private final EmployeeRepository employeeRepository;
     private final EmployeeMapper mapper;
+    private final EventPublisher eventPublisher;
 
     @Override
     @Transactional
@@ -37,7 +38,9 @@ public class DepartmentServiceImpl implements DepartmentService {
                 .manager(req.getManagerId() != null ? requireEmployee(req.getManagerId()) : null)
                 .build();
         Department saved = departmentRepository.save(dept);
-        return mapper.toDepartmentResponse(saved, 0L);
+        DepartmentDtos.DepartmentResponse resp = mapper.toDepartmentResponse(saved, 0L);
+        eventPublisher.audit("CREATE", "DEPARTMENT", saved.getId(), null, resp);
+        return resp;
     }
 
     @Override
@@ -59,6 +62,7 @@ public class DepartmentServiceImpl implements DepartmentService {
     @Transactional
     public DepartmentDtos.DepartmentResponse update(UUID id, DepartmentDtos.UpdateDepartmentRequest req) {
         Department dept = requireDepartment(id);
+        DepartmentDtos.DepartmentResponse before = mapper.toDepartmentResponse(dept, countEmployees(dept.getId()));
         if (req.getName() != null) dept.setName(req.getName());
         if (req.getCode() != null) {
             if (!req.getCode().equals(dept.getCode())
@@ -77,7 +81,9 @@ public class DepartmentServiceImpl implements DepartmentService {
         if (req.getManagerId() != null) {
             dept.setManager(requireEmployee(req.getManagerId()));
         }
-        return mapper.toDepartmentResponse(dept, countEmployees(dept.getId()));
+        DepartmentDtos.DepartmentResponse after = mapper.toDepartmentResponse(dept, countEmployees(dept.getId()));
+        eventPublisher.audit("UPDATE", "DEPARTMENT", id, before, after);
+        return after;
     }
 
     @Override
@@ -88,8 +94,10 @@ public class DepartmentServiceImpl implements DepartmentService {
         if (count > 0) {
             throw new BusinessException("Cannot delete department with assigned employees (" + count + ")");
         }
+        DepartmentDtos.DepartmentResponse before = mapper.toDepartmentResponse(dept, count);
         dept.setDeleted(true);
         departmentRepository.save(dept);
+        eventPublisher.audit("DELETE", "DEPARTMENT", id, before, null);
     }
 
     private Department requireDepartment(UUID id) {

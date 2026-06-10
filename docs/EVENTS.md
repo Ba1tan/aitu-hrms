@@ -49,26 +49,33 @@ Status:
 
 | Routing key | Payload | Publisher | Consumers | Status |
 |---|---|---|---|---|
-| `employee.created` | `EmployeeCreatedEvent` | employee-service | user-service (`Q_EMPLOYEE_CREATED`), leave-service (`leave.employee.created`), payroll-service (`payroll.employee.created`), notification-service 🟡 | ✅ |
-| `employee.terminated` | `EmployeeTerminatedEvent` | employee-service | user-service 🟡 (deactivate account), payroll-service 🟡 (stop calc), leave-service 🟡 (cancel pending), notification-service 🟡 | ✅ (publisher only — no listeners wired yet) |
-| `employee.salary.changed` | `SalaryChangedEvent` | employee-service | payroll-service (`payroll.employee.salary.changed`), notification-service 🟡 | ✅ |
-| `attendance.recorded` | `AttendanceRecordedEvent` | attendance-service | reporting-service 🟡 (dashboard cache invalidation), notification-service 🟡 (late-arrival nudge) | ✅ (publisher only) |
-| `leave.request.created` | `LeaveRequestCreatedEvent` | leave-service | notification-service 🟡 (notify approver) | ✅ (publisher only) |
-| `leave.approved` | `LeaveApprovedEvent` | leave-service | attendance-service (`attendance.leave.approved`) auto-marks ON_LEAVE; notification-service 🟡 (notify employee) | ✅ |
-| `leave.rejected` | `LeaveRejectedEvent` | leave-service | notification-service 🟡 (notify employee) | ✅ (publisher only) |
-| `payroll.job.started` | `PayrollJobStartedEvent` | payroll-service | reporting-service 🟡 (cache lock), notification-service 🟡 (HR progress notice) | ✅ (publisher only) |
-| `payroll.job.completed` | `PayrollJobCompletedEvent` | payroll-service | reporting-service 🟡 (invalidate dashboard cache, pre-gen XLSX), notification-service 🟡 (HR notice) | ✅ (publisher only) |
-| `payroll.period.approved` | `PayrollPeriodApprovedEvent` | payroll-service | notification-service 🟡 (per-employee payslip-ready), integration-hub 🟡 (1C sync trigger) | ✅ (publisher only) |
-| `user.account.created` | `UserAccountCreatedEvent` | user-service | notification-service 🟡 (welcome email + temp password) | ✅ (publisher only) |
-| `user.password.reset-requested` | `PasswordResetRequestedEvent` | user-service | notification-service 🟡 (reset link email) | ✅ (publisher only) |
+| `employee.created` | `EmployeeCreatedEvent` | employee-service | user-service (`Q_EMPLOYEE_CREATED`), leave-service (`leave.employee.created`), payroll-service (`payroll.employee.created`), notification-service (`notification.employee.created`) | ✅ |
+| `employee.terminated` | `EmployeeTerminatedEvent` | employee-service | notification-service (`notification.employee.terminated`) | ✅ |
+| `employee.salary.changed` | `SalaryChangedEvent` | employee-service | payroll-service (`payroll.employee.salary.changed`), notification-service | ✅ |
+| `attendance.recorded` | `AttendanceRecordedEvent` | attendance-service | notification-service (late-arrival nudge) | ✅ |
+| `leave.request.created` | `LeaveRequestCreatedEvent` | leave-service | notification-service (notify approver) | ✅ |
+| `leave.approved` | `LeaveApprovedEvent` | leave-service | attendance-service (`attendance.leave.approved`) auto-marks ON_LEAVE; notification-service (notify employee) | ✅ |
+| `leave.rejected` | `LeaveRejectedEvent` | leave-service | notification-service (notify employee) | ✅ |
+| `payroll.job.started` | `PayrollJobStartedEvent` | payroll-service | notification-service (HR progress notice) | ✅ |
+| `payroll.job.completed` | `PayrollJobCompletedEvent` | payroll-service | reporting-service (dashboard cache), notification-service (HR notice) | ✅ |
+| `payroll.period.approved` | `PayrollPeriodApprovedEvent` | payroll-service | integration-hub (1C sync trigger), notification-service (per-employee payslip-ready) | ✅ |
+| `user.account.created` | `UserAccountCreatedEvent` | user-service | notification-service (welcome email + temp password) | ✅ |
+| `user.password.reset-requested` | `PasswordResetRequestedEvent` | user-service | notification-service (reset link email) | ✅ |
+| `audit.recorded` | `AuditEvent` (hrms-common) | employee-, attendance-, leave-, payroll-service, integration-hub | user-service (`user.audit.recorded`) → persists to `hrms_user.audit_logs` | ✅ |
 
-### Pending events (reserved names — Askar should add when implementing)
+### Integration sync events (published by integration-hub)
+
+| Routing key | When emitted | Producer | Consumers | Status |
+|---|---|---|---|---|
+| `integration.1c.synced` | 1C sync job succeeded | integration-hub (`IntegrationEventPublisher.publishCompleted`) | none wired yet 🟡 | ✅ (publisher only) |
+| `integration.sync.failed` | 1C sync job failed (after retries) | integration-hub (`IntegrationEventPublisher.publishFailed`) | none wired yet 🟡 | ✅ (publisher only) |
+
+### Reserved events (names agreed, not published yet)
 
 | Routing key | When emitted | Producer | Notes |
 |---|---|---|---|
 | `payslip.adjusted` 🟡 | Per-employee correction inside an approved period | payroll-service | Reuse `PayslipAdjustedEvent` shape — payslipId, employeeId, periodId, correctionAmount |
 | `report.generated` 🟡 | Long-running XLSX/PDF finished | reporting-service | Allows notification-service to push "Your report is ready" |
-| `integration.1c.synced` 🟡 | 1C sync job finished | integration-hub | Drives an audit log row + dashboard "last sync at X" |
 | `notification.sent` 🟡 | Outbound email/push delivered | notification-service | Optional — only if reporting wants delivery analytics |
 
 ---
@@ -227,6 +234,31 @@ Status:
 }
 ```
 
+### `AuditEvent`
+
+System-wide audit trail. Any service emits this on a sensitive write; user-service
+consumes it into `hrms_user.audit_logs` (the single table the admin audit-log
+endpoint reads). Built via `kz.aitu.hrms.common.audit.AuditEvents.build(...)`,
+which pulls the actor from the `AuthenticatedUser` principal and IP/user-agent
+from the current request. user-service's own actions are written directly (no
+round-trip). `oldValue`/`newValue` are pre-serialized JSON strings.
+
+```json
+{
+  "actorId":       "UUID|null",
+  "actorEmail":    "string|null",
+  "action":        "CREATE|UPDATE|DELETE|APPROVE|REJECT|CANCEL|TERMINATE|SALARY_CHANGE|PROCESS|PAY|LOCK|ADJUST|RECALCULATE|BULK_ABSENT|CARRYOVER|SYNC|RETRY|BANK_FILE|SETUP_COMPLETED",
+  "entityType":    "EMPLOYEE|DEPARTMENT|POSITION|ATTENDANCE|HOLIDAY|WORK_SCHEDULE|LEAVE_REQUEST|LEAVE_TYPE|LEAVE_BALANCE|PAYROLL_PERIOD|PAYSLIP|PAYROLL_ADDITION|SETTING|SYNC_JOB|BANK_FILE|EMPLOYEE_DOCUMENT",
+  "entityId":      "UUID|null",
+  "oldValue":      "string(JSON)|null",
+  "newValue":      "string(JSON)|null",
+  "ipAddress":     "string|null",
+  "userAgent":     "string|null",
+  "sourceService": "string (e.g. employee-service)",
+  "occurredAt":    "ISO datetime"
+}
+```
+
 ---
 
 ## 4. Consumer queues currently bound
@@ -238,8 +270,24 @@ Status:
 | `payroll.employee.salary.changed` | payroll-service | `employee.salary.changed` |
 | `leave.employee.created` | leave-service | `employee.created` |
 | `attendance.leave.approved` | attendance-service | `leave.approved` |
+| `user.audit.recorded` | user-service | `audit.recorded` |
+| `integration.payroll.period.approved` | integration-hub | `payroll.period.approved` |
+| `integration.payroll.job.completed` | integration-hub | `payroll.job.completed` |
+| `reporting.payroll.job.completed` | reporting-service | `payroll.job.completed` |
+| `notification.employee.created` | notification-service | `employee.created` |
+| `notification.employee.terminated` | notification-service | `employee.terminated` |
+| `notification.employee.salary.changed` | notification-service | `employee.salary.changed` |
+| `notification.attendance.recorded` | notification-service | `attendance.recorded` |
+| `notification.leave.request.created` | notification-service | `leave.request.created` |
+| `notification.leave.approved` | notification-service | `leave.approved` |
+| `notification.leave.rejected` | notification-service | `leave.rejected` |
+| `notification.payroll.job.started` | notification-service | `payroll.job.started` |
+| `notification.payroll.job.completed` | notification-service | `payroll.job.completed` |
+| `notification.payroll.period.approved` | notification-service | `payroll.period.approved` |
+| `notification.user.account.created` | notification-service | `user.account.created` |
+| `notification.user.password.reset-requested` | notification-service | `user.password.reset-requested` |
 
-Pending services should pre-declare their queues in their own `RabbitConfig`
+New consumers should declare their queues in their own `RabbitConfig`
 following the same naming convention. See §1 for the convention.
 
 ---
@@ -264,15 +312,15 @@ following the same naming convention. See §1 for the convention.
   `employee-service.event`. employee-service currently publishes the local
   variant (without `approvedBy`). Consolidate to the hrms-common variant and
   delete the local one.
-- **Several listeners on the consumer side don't exist yet** — most notably
-  notification-service has no consumers wired but is documented as the
-  consumer for 11 of the 14 events. Treat the 🟡 markers above as Askar's
-  TODO list.
-- **`employee.terminated`, `attendance.recorded`,
-  `leave.request.created`, `leave.rejected`, `payroll.*` events are
-  publish-only today** — every reactive workflow downstream is currently a
-  no-op. This is acceptable until notification-service ships, but it does
-- **No DLQ / retry policy declared** — every queue is plain durable. Once
-  notification-service starts sending email, add a per-queue DLX with
-  `x-dead-letter-exchange = hrms.events.dlx` and a retry exchange. See
-  `docs/OPERATIONS.md` once that doc exists.
+- **Consumers are now wired** — notification-service consumes 11 events
+  (employee created/terminated/salary, leave created/approved/rejected,
+  payroll started/completed/period-approved, user account-created/password-reset,
+  attendance recorded); reporting-service consumes `payroll.job.completed`;
+  integration-hub consumes `payroll.period.approved` + `payroll.job.completed`.
+  The earlier "🟡 / publish-only / no-op downstream" notes are obsolete — the
+  table in §2 reflects the current wiring.
+- **No DLQ / retry policy declared** — every queue is plain durable, and every
+  consumer swallows-and-drops on failure (including the `audit.recorded`
+  consumer). There is no dead-letter exchange. Add a per-queue DLX with
+  `x-dead-letter-exchange = hrms.events.dlx` + a retry exchange before relying
+  on any event for delivery guarantees (e.g. outbound email). Still open.

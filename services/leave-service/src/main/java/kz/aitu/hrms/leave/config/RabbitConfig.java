@@ -35,6 +35,7 @@ public class RabbitConfig {
     public static final String RK_LEAVE_APPROVED        = "leave.approved";
     public static final String RK_LEAVE_REJECTED        = "leave.rejected";
     public static final String RK_EMPLOYEE_CREATED      = "employee.created";
+    public static final String RK_AUDIT                 = "audit.recorded";
 
     public static final String QUEUE_EMPLOYEE_CREATED   = "leave.employee.created";
 

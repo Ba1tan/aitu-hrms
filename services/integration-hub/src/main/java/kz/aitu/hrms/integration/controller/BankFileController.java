@@ -24,7 +24,7 @@ public class BankFileController {
     private final SettingsService settingsService;
 
     @GetMapping("/bank-file/{periodId}")
-    @PreAuthorize("hasAnyAuthority('SYSTEM_SETTINGS', 'PAYROLL_APPROVE')")
+    @PreAuthorize("hasAnyAuthority('INTEGRATION_MANAGE', 'SYSTEM_SETTINGS')")
     public void downloadBankFile(
             @PathVariable UUID periodId,
             @AuthenticationPrincipal AuthenticatedUser me,
@@ -39,10 +39,9 @@ public class BankFileController {
 
     private String fileExtension(String format) {
         return switch (format) {
-            case "KASPI_TSV"  -> "tsv";
-            case "HALYK_MT940" -> "mt940";
-            case "JUSAN_CSV"  -> "csv";
-            default -> "dat";
+            case "KASPI_TSV" -> "tsv";
+            case "HALYK_CSV", "JUSAN_CSV" -> "csv";
+            default -> "csv";
         };
     }
 }

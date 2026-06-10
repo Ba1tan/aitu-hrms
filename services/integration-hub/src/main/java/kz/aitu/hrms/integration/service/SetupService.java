@@ -28,6 +28,7 @@ public class SetupService {
 
     private final CompanySettingRepository repo;
     private final SettingsAuditRepository auditRepo;
+    private final AuditPublisher auditPublisher;
 
     @Transactional(readOnly = true)
     public SetupStatusDto getStatus() {
@@ -66,5 +67,8 @@ public class SetupService {
                 .userEmail(actor.getEmail())
                 .action("SETUP_COMPLETED")
                 .build());
+
+        auditPublisher.audit("SETUP_COMPLETED", "SETTING", null, null,
+                java.util.Map.of("key", "setup.completed", "value", "true"));
     }
 }

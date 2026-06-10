@@ -290,7 +290,9 @@ public class AttendanceServiceImpl implements AttendanceService {
                 .workedHours(mapper.toHours(worked))
                 .build());
 
-        return mapper.toRecord(record, employeeLookup.fullName(req.getEmployeeId()));
+        AttendanceDtos.RecordResponse resp = mapper.toRecord(record, employeeLookup.fullName(req.getEmployeeId()));
+        events.audit("CREATE", "ATTENDANCE", record.getId(), null, resp);
+        return resp;
     }
 
     @Override
@@ -298,6 +300,7 @@ public class AttendanceServiceImpl implements AttendanceService {
     public AttendanceDtos.RecordResponse update(UUID id, AttendanceDtos.UpdateRecordRequest req) {
         AttendanceRecord record = recordRepo.findByIdAndDeletedFalse(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Attendance record not found: " + id));
+        AttendanceDtos.RecordResponse before = mapper.toRecord(record, employeeLookup.fullName(record.getEmployeeId()));
 
         if (req.getCheckIn() != null) record.setCheckIn(req.getCheckIn());
         if (req.getCheckOut() != null) record.setCheckOut(req.getCheckOut());
@@ -311,7 +314,9 @@ public class AttendanceServiceImpl implements AttendanceService {
         }
 
         record = recordRepo.save(record);
-        return mapper.toRecord(record, employeeLookup.fullName(record.getEmployeeId()));
+        AttendanceDtos.RecordResponse after = mapper.toRecord(record, employeeLookup.fullName(record.getEmployeeId()));
+        events.audit("UPDATE", "ATTENDANCE", id, before, after);
+        return after;
     }
 
     @Override
@@ -352,6 +357,9 @@ public class AttendanceServiceImpl implements AttendanceService {
         if (!toSave.isEmpty()) {
             recordRepo.saveAll(toSave);
         }
+
+        events.audit("BULK_ABSENT", "ATTENDANCE", null, null,
+                Map.of("date", target, "marked", marked, "skipped", skipped));
 
         return AttendanceDtos.BulkAbsentResponse.builder()
                 .date(target)

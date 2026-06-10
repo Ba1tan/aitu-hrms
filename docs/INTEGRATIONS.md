@@ -127,29 +127,46 @@ mark `sync_jobs` row `FAILED` and emit `integration.1c.sync-failed`
 
 ### 2.1 Scope
 
-Generate a salary-payment file for the customer's bank (after
-`PAYROLL_PAY` action on a period). The bank ingests the file and credits
-employee accounts.
+Generate a salary-payment **register** for the customer's bank. This is a
+file the accountant downloads and uploads to the bank's business portal
+("зарплатный проект" → "загрузить реестр") — there is **no live bank API**.
+The bank then runs the interbank transfer itself (Halyk e.g. as MT-102).
+
+Each register row is one beneficiary: **IBAN, ИИН, ФИО, сумма (net), КНП, КБе,
+назначение**. The employee IBAN comes from `employees.bank_account`
+(entered on the employee form, persisted by employee-service since V3); the
+net amount from the period's payslips; company BIN / КНП / КБе / purpose from
+company settings.
 
 ### 2.2 Trigger
 
-User-initiated: `GET /v1/integration/bank-file/{periodId}` returns the
-generated file as a binary download. No event side-effect.
+User-initiated: `GET /v1/integration/bank-file/{periodId}` streams the
+register as a binary download (`INTEGRATION_MANAGE` or `SYSTEM_SETTINGS`).
+No event side-effect. Employees with no IBAN on file are still listed (blank
+account) and logged as a warning — the accountant reviews before upload.
 
-### 2.3 Supported formats
+### 2.3 Supported formats (implemented)
 
-Pick **at minimum two** of the KZ retail banks before launch.
+Generators live in `services/integration-hub/.../service/bank/`. All produce
+the same canonical KZ register columns; they differ only in delimiter. Format
+key is the `integration.bank_default_format` setting.
 
-| Bank | Format | Status |
-|---|---|---|
-| Kaspi Pay (Bank Kaspi) | TSV (custom) | **TBD** — need format spec |
-| Halyk Bank | MT940 / proprietary CSV | **TBD** — need format spec |
-| Jusan | CSV | **TBD** |
-| Forte | CSV | Stretch goal |
+| Bank | Format key | Delimiter | Generator |
+|---|---|---|---|
+| Kaspi | `KASPI_TSV` | tab | `KaspiTsvGenerator` |
+| Halyk | `HALYK_CSV` | comma | `HalykCsvGenerator` |
+| Jusan | `JUSAN_CSV` | semicolon | `JusanCsvGenerator` |
 
-For each bank we need the *exact* spec from their corporate-banking team
-(usually a PDF). Field-by-field column order, separators, encoding
-(usually CP1251 — not UTF-8), row terminators (CRLF).
+КНП / КБе / purpose are configurable: `integration.bank_knp` (default `010`),
+`integration.bank_kbe` (default `19` — resident individuals),
+`integration.bank_payment_purpose` (default `Заработная плата за MM.YYYY`).
+
+> **Still needs per-bank validation.** The exact column order / headers /
+> encoding differ per bank's current template. These generators emit UTF-8
+> (BOM, CRLF); some banks require **CP1251**. Confirm each bank's spec against
+> their corporate-banking template before go-live, and verify the КНП code
+> against the current НБРК classifier (`010` was the historical salary code;
+> some sources now map it to ОПВ).
 
 ### 2.4 File-naming convention (proposed)
 
@@ -161,16 +178,19 @@ Example: `kaspi-salary-2026-03-20260405093000.tsv`.
 
 ### 2.5 Storage
 
-Generated files are written to `${BANK_FILE_DIR:/data/hrms/bank-files}`
-and indexed in `hrms_integration.bank_files` (TBD table). Retain 1 year
-(see `docs/COMPLIANCE.md` §3).
+Today the register is **streamed straight to the download** — it is not
+persisted server-side. Writing copies to `${BANK_FILE_DIR:/data/hrms/bank-files}`
+and indexing them in `hrms_integration.bank_files` for a 1-year retention
+(see `docs/COMPLIANCE.md` §3) is still open — see §2.6.
 
 ### 2.6 Open items
 
-- [ ] Confirm which banks customer #1 uses.
-- [ ] Get format spec from each bank's corporate-banking team.
-- [ ] Decide encoding: most KZ banks still want CP1251 — but payslips are
-      generated in UTF-8. Conversion happens in integration-hub.
+- [x] IBAN-based register with configurable КНП/КБе/purpose (V3 employee bank
+      account + integration-hub generators).
+- [ ] Confirm which banks customer #1 uses and validate each register against
+      that bank's portal template (column order, headers).
+- [ ] Encoding: generators emit UTF-8; add CP1251 output for banks that need it.
+- [ ] Persist + index generated files for retention (§2.5).
 - [ ] Decide signing: some banks require a digital signature (NCALayer/EDS).
       That's a separate workflow with the user's hardware key.
 

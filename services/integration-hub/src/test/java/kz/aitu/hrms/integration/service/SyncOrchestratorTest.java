@@ -37,6 +37,7 @@ class SyncOrchestratorTest {
     @Mock private SettingsService settingsService;
     @Mock private IntegrationEventPublisher eventPublisher;
     @Mock private SyncJobMapper syncJobMapper;
+    @Mock private AuditPublisher auditPublisher;
     @InjectMocks private SyncOrchestrator orchestrator;
 
     private UUID periodId;

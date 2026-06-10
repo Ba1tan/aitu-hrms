@@ -29,6 +29,7 @@ public class PayslipService {
     private final PayslipFactory payslipFactory;
     private final EmployeeLookup employeeLookup;
     private final PayrollMapper mapper;
+    private final EventPublisher events;
 
     @Transactional(readOnly = true)
     public Page<PayslipDtos.Response> findByPeriod(UUID periodId,
@@ -56,13 +57,16 @@ public class PayslipService {
         }
 
         EmployeePayrollProfile profile = employeeLookup.profileOrThrow(payslip.getEmployeeId());
+        PayslipDtos.Response before = mapper.toPayslipResponse(payslip);
         // Use existing on-payslip values when the request omits a field.
         int workedDays = req.getWorkedDays() != null ? req.getWorkedDays() : payslip.getWorkedDays();
         BigDecimal allowances = req.getAllowances() != null ? req.getAllowances() : payslip.getAllowances();
         BigDecimal otherDed = req.getOtherDeductions() != null ? req.getOtherDeductions() : payslip.getOtherDeductions();
 
         payslipFactory.recalculate(payslip, profile, workedDays, allowances, otherDed);
-        return mapper.toPayslipResponse(payslipRepo.save(payslip));
+        PayslipDtos.Response after = mapper.toPayslipResponse(payslipRepo.save(payslip));
+        events.audit("ADJUST", "PAYSLIP", payslipId, before, after);
+        return after;
     }
 
     @Transactional
@@ -72,12 +76,15 @@ public class PayslipService {
             throw new BusinessException("Cannot recalculate payslip in a locked period");
         }
         EmployeePayrollProfile profile = employeeLookup.profileOrThrow(payslip.getEmployeeId());
+        PayslipDtos.Response before = mapper.toPayslipResponse(payslip);
         payslipFactory.recalculate(
                 payslip, profile,
                 payslip.getWorkedDays(),
                 payslip.getAllowances(),
                 payslip.getOtherDeductions());
-        return mapper.toPayslipResponse(payslipRepo.save(payslip));
+        PayslipDtos.Response after = mapper.toPayslipResponse(payslipRepo.save(payslip));
+        events.audit("RECALCULATE", "PAYSLIP", payslipId, before, after);
+        return after;
     }
 
     // ── Self-service ───────────────────────────────────────────────────────

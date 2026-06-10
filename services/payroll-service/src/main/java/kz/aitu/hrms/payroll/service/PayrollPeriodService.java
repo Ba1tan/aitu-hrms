@@ -54,7 +54,9 @@ public class PayrollPeriodService {
                 .build();
         p = periodRepo.save(p);
         log.info("Payroll period created: {}", p.getName());
-        return toResponse(p);
+        PeriodDtos.Response resp = toResponse(p);
+        events.audit("CREATE", "PAYROLL_PERIOD", p.getId(), null, resp);
+        return resp;
     }
 
     @Transactional(readOnly = true)
@@ -105,7 +107,9 @@ public class PayrollPeriodService {
                 .build());
 
         log.info("Period {} approved by {}", period.getName(), period.getApprovedBy());
-        return toResponse(period);
+        PeriodDtos.Response resp = toResponse(period);
+        events.audit("APPROVE", "PAYROLL_PERIOD", period.getId(), null, resp);
+        return resp;
     }
 
     @Transactional
@@ -123,7 +127,9 @@ public class PayrollPeriodService {
 
         period.setStatus(PayrollPeriodStatus.PAID);
         log.info("Period {} marked as paid", period.getName());
-        return toResponse(periodRepo.save(period));
+        PeriodDtos.Response resp = toResponse(periodRepo.save(period));
+        events.audit("PAY", "PAYROLL_PERIOD", period.getId(), null, resp);
+        return resp;
     }
 
     @Transactional
@@ -135,7 +141,9 @@ public class PayrollPeriodService {
         }
         period.setStatus(PayrollPeriodStatus.LOCKED);
         log.info("Period {} locked", period.getName());
-        return toResponse(periodRepo.save(period));
+        PeriodDtos.Response resp = toResponse(periodRepo.save(period));
+        events.audit("LOCK", "PAYROLL_PERIOD", period.getId(), null, resp);
+        return resp;
     }
 
     PayrollPeriod requirePeriod(UUID periodId) {

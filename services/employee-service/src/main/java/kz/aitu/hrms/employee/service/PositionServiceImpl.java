@@ -22,6 +22,7 @@ public class PositionServiceImpl implements PositionService {
     private final PositionRepository positionRepository;
     private final DepartmentRepository departmentRepository;
     private final EmployeeMapper mapper;
+    private final EventPublisher eventPublisher;
 
     @Override
     @Transactional
@@ -34,7 +35,10 @@ public class PositionServiceImpl implements PositionService {
                 .maxSalary(req.getMaxSalary())
                 .department(req.getDepartmentId() != null ? requireDepartment(req.getDepartmentId()) : null)
                 .build();
-        return mapper.toPositionResponse(positionRepository.save(pos));
+        Position saved = positionRepository.save(pos);
+        PositionDtos.PositionResponse resp = mapper.toPositionResponse(saved);
+        eventPublisher.audit("CREATE", "POSITION", saved.getId(), null, resp);
+        return resp;
     }
 
     @Override
@@ -56,20 +60,25 @@ public class PositionServiceImpl implements PositionService {
     @Transactional
     public PositionDtos.PositionResponse update(UUID id, PositionDtos.UpdatePositionRequest req) {
         Position pos = requirePosition(id);
+        PositionDtos.PositionResponse before = mapper.toPositionResponse(pos);
         if (req.getTitle() != null) pos.setTitle(req.getTitle());
         if (req.getDescription() != null) pos.setDescription(req.getDescription());
         if (req.getMinSalary() != null) pos.setMinSalary(req.getMinSalary());
         if (req.getMaxSalary() != null) pos.setMaxSalary(req.getMaxSalary());
         validateBand(pos.getMinSalary(), pos.getMaxSalary());
         if (req.getDepartmentId() != null) pos.setDepartment(requireDepartment(req.getDepartmentId()));
-        return mapper.toPositionResponse(pos);
+        PositionDtos.PositionResponse after = mapper.toPositionResponse(pos);
+        eventPublisher.audit("UPDATE", "POSITION", id, before, after);
+        return after;
     }
 
     @Override
     @Transactional
     public void delete(UUID id) {
         Position pos = requirePosition(id);
+        PositionDtos.PositionResponse before = mapper.toPositionResponse(pos);
         pos.setDeleted(true);
+        eventPublisher.audit("DELETE", "POSITION", id, before, null);
     }
 
     private void validateBand(BigDecimal min, BigDecimal max) {

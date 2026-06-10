@@ -36,8 +36,9 @@ class DepartmentControllerSecurityTest {
 
     @Test
     void listRequiresAuthentication() throws Exception {
+        // Unauthenticated → 401 (custom authenticationEntryPoint), not Spring's default 403.
         mvc.perform(get("/v1/departments"))
-                .andExpect(status().isForbidden());
+                .andExpect(status().isUnauthorized());
     }
 
     @Test

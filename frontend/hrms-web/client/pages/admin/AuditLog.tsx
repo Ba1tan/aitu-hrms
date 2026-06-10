@@ -32,16 +32,50 @@ import { formatDateTime, todayIso } from "../../lib/format";
 
 const ANY = "__any__";
 
-const ACTIONS = ["CREATE", "UPDATE", "DELETE", "APPROVE", "LOGIN", "LOGOUT"];
+const ACTIONS = [
+  "CREATE",
+  "UPDATE",
+  "DELETE",
+  "APPROVE",
+  "REJECT",
+  "CANCEL",
+  "TERMINATE",
+  "SALARY_CHANGE",
+  "PROCESS",
+  "PAY",
+  "LOCK",
+  "ADJUST",
+  "RECALCULATE",
+  "BULK_ABSENT",
+  "CARRYOVER",
+  "SYNC",
+  "RETRY",
+  "BANK_FILE",
+  "SETUP_COMPLETED",
+  "LOGIN",
+  "LOGIN_FAILED",
+  "LOGIN_LOCKED",
+  "LOGOUT",
+];
 const ENTITY_TYPES = [
   "USER",
+  "ROLE_PERMISSION",
   "EMPLOYEE",
+  "EMPLOYEE_DOCUMENT",
   "DEPARTMENT",
   "POSITION",
+  "ATTENDANCE",
+  "HOLIDAY",
+  "WORK_SCHEDULE",
+  "LEAVE_REQUEST",
+  "LEAVE_TYPE",
+  "LEAVE_BALANCE",
   "PAYROLL_PERIOD",
   "PAYSLIP",
-  "LEAVE_REQUEST",
+  "PAYROLL_ADDITION",
   "SETTING",
+  "SYNC_JOB",
+  "BANK_FILE",
 ];
 
 export default function AdminAuditLog() {
@@ -52,7 +86,7 @@ export default function AdminAuditLog() {
   const [to, setTo] = useState("");
   const [selected, setSelected] = useState<AuditLogEntry | null>(null);
 
-  const { data, isLoading } = useAuditLog({
+  const { data, isLoading, isError } = useAuditLog({
     actor: actor || undefined,
     entityType: entityType || undefined,
     action: action || undefined,
@@ -169,14 +203,26 @@ export default function AdminAuditLog() {
                   </TableCell>
                 </TableRow>
               ))
+            ) : isError ? (
+              <TableRow>
+                <TableCell
+                  colSpan={6}
+                  className="text-center py-10 text-destructive"
+                >
+                  Не удалось загрузить журнал. Проверьте, что сервис
+                  пользователей обновлён и перезапущен (эндпоинт{" "}
+                  <code>/v1/users/audit</code>), а у вас есть право{" "}
+                  <code>SYSTEM_AUDIT</code>.
+                </TableCell>
+              </TableRow>
             ) : entries.length === 0 ? (
               <TableRow>
                 <TableCell
                   colSpan={6}
                   className="text-center py-10 text-muted-foreground"
                 >
-                  Записей нет. Возможно, backend-эндпоинт `/v1/users/audit` ещё не
-                  реализован.
+                  Записей аудита пока нет — они появятся после действий
+                  пользователей (создание/изменение, смена ролей и т.п.).
                 </TableCell>
               </TableRow>
             ) : (

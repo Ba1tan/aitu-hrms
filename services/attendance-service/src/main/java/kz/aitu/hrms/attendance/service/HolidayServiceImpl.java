@@ -18,6 +18,7 @@ public class HolidayServiceImpl implements HolidayService {
 
     private final HolidayRepository holidayRepo;
     private final AttendanceMapper mapper;
+    private final EventPublisher events;
 
     @Override
     @Transactional(readOnly = true)
@@ -39,7 +40,10 @@ public class HolidayServiceImpl implements HolidayService {
                 .annual(Boolean.TRUE.equals(req.getAnnual()))
                 .description(req.getDescription())
                 .build();
-        return mapper.toHoliday(holidayRepo.save(h));
+        Holiday saved = holidayRepo.save(h);
+        HolidayDtos.HolidayResponse resp = mapper.toHoliday(saved);
+        events.audit("CREATE", "HOLIDAY", saved.getId(), null, resp);
+        return resp;
     }
 
     @Override
@@ -47,6 +51,7 @@ public class HolidayServiceImpl implements HolidayService {
     public HolidayDtos.HolidayResponse update(UUID id, HolidayDtos.UpdateHolidayRequest req) {
         Holiday h = holidayRepo.findByIdAndDeletedFalse(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Holiday not found: " + id));
+        HolidayDtos.HolidayResponse before = mapper.toHoliday(h);
         if (req.getName() != null) h.setName(req.getName());
         if (req.getHolidayDate() != null) {
             if (!req.getHolidayDate().equals(h.getHolidayDate())
@@ -57,7 +62,9 @@ public class HolidayServiceImpl implements HolidayService {
         }
         if (req.getAnnual() != null) h.setAnnual(req.getAnnual());
         if (req.getDescription() != null) h.setDescription(req.getDescription());
-        return mapper.toHoliday(holidayRepo.save(h));
+        HolidayDtos.HolidayResponse after = mapper.toHoliday(holidayRepo.save(h));
+        events.audit("UPDATE", "HOLIDAY", id, before, after);
+        return after;
     }
 
     @Override
@@ -65,7 +72,9 @@ public class HolidayServiceImpl implements HolidayService {
     public void delete(UUID id) {
         Holiday h = holidayRepo.findByIdAndDeletedFalse(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Holiday not found: " + id));
+        HolidayDtos.HolidayResponse before = mapper.toHoliday(h);
         h.setDeleted(true);
         holidayRepo.save(h);
+        events.audit("DELETE", "HOLIDAY", id, before, null);
     }
 }

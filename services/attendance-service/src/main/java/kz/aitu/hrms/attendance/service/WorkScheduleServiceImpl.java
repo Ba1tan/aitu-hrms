@@ -19,6 +19,7 @@ public class WorkScheduleServiceImpl implements WorkScheduleService {
 
     private final WorkScheduleRepository scheduleRepo;
     private final AttendanceMapper mapper;
+    private final EventPublisher events;
 
     @Override
     @Transactional(readOnly = true)
@@ -53,7 +54,10 @@ public class WorkScheduleServiceImpl implements WorkScheduleService {
                 .description(req.getDescription())
                 .isDefault(wantDefault)
                 .build();
-        return mapper.toSchedule(scheduleRepo.save(s));
+        WorkSchedule saved = scheduleRepo.save(s);
+        ScheduleDtos.ScheduleResponse resp = mapper.toSchedule(saved);
+        events.audit("CREATE", "WORK_SCHEDULE", saved.getId(), null, resp);
+        return resp;
     }
 
     @Override
@@ -61,6 +65,7 @@ public class WorkScheduleServiceImpl implements WorkScheduleService {
     public ScheduleDtos.ScheduleResponse update(UUID id, ScheduleDtos.UpdateScheduleRequest req) {
         WorkSchedule s = scheduleRepo.findByIdAndDeletedFalse(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Schedule not found: " + id));
+        ScheduleDtos.ScheduleResponse before = mapper.toSchedule(s);
 
         if (req.getName() != null) s.setName(req.getName());
         if (req.getWorkStartTime() != null) s.setWorkStartTime(req.getWorkStartTime());
@@ -78,7 +83,9 @@ public class WorkScheduleServiceImpl implements WorkScheduleService {
         }
 
         validate(s.getWorkStartTime(), s.getWorkEndTime());
-        return mapper.toSchedule(scheduleRepo.save(s));
+        ScheduleDtos.ScheduleResponse after = mapper.toSchedule(scheduleRepo.save(s));
+        events.audit("UPDATE", "WORK_SCHEDULE", id, before, after);
+        return after;
     }
 
     private void validate(java.time.LocalTime start, java.time.LocalTime end) {

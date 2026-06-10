@@ -25,6 +25,7 @@ class SetupServiceTest {
 
     @Mock private CompanySettingRepository repo;
     @Mock private SettingsAuditRepository auditRepo;
+    @Mock private AuditPublisher auditPublisher;
     @InjectMocks private SetupService service;
 
     private AuthenticatedUser actor;

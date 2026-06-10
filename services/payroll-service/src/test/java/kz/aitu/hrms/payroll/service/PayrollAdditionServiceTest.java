@@ -32,6 +32,7 @@ class PayrollAdditionServiceTest {
     @Mock private PayrollAdditionRepository additionRepo;
     @Mock private PayrollPeriodRepository periodRepo;
     @Mock private PayrollMapper mapper;
+    @Mock private EventPublisher events;
 
     @InjectMocks private PayrollAdditionService service;
 

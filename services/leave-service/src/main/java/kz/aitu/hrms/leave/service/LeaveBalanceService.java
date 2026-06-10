@@ -35,6 +35,7 @@ public class LeaveBalanceService {
     private final BalanceAdjustmentRepository adjustmentRepo;
     private final EmployeeLookup employeeLookup;
     private final LeaveMapper mapper;
+    private final EventPublisher events;
 
     @Value("${app.zone:Asia/Almaty}")
     private String zoneId;
@@ -193,7 +194,10 @@ public class LeaveBalanceService {
 
         // Reload to pick up the fresh remaining_days from the generated column.
         LeaveBalance fresh = balanceRepo.findById(balance.getId()).orElse(balance);
-        return mapper.toBalance(fresh, employeeLookup.fullName(fresh.getEmployeeId()));
+        LeaveBalanceDtos.Response resp = mapper.toBalance(fresh, employeeLookup.fullName(fresh.getEmployeeId()));
+        events.audit("ADJUST", "LEAVE_BALANCE", fresh.getId(),
+                Map.of("days", req.getDays(), "reason", String.valueOf(req.getReason())), resp);
+        return resp;
     }
 
     /**
@@ -246,12 +250,14 @@ public class LeaveBalanceService {
             totalCarried += toCarry;
         }
 
-        return LeaveBalanceDtos.CarryoverResponse.builder()
+        LeaveBalanceDtos.CarryoverResponse resp = LeaveBalanceDtos.CarryoverResponse.builder()
                 .fromYear(fromYear)
                 .toYear(toYear)
                 .balancesProcessed(processed)
                 .totalDaysCarried(totalCarried)
                 .build();
+        events.audit("CARRYOVER", "LEAVE_BALANCE", null, null, resp);
+        return resp;
     }
 
     /**

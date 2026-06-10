@@ -31,6 +31,7 @@ public class RabbitConfig {
 
     public static final String RK_ATTENDANCE_RECORDED       = "attendance.recorded";
     public static final String RK_LEAVE_APPROVED            = "leave.approved";
+    public static final String RK_AUDIT                     = "audit.recorded";
 
     public static final String QUEUE_LEAVE_APPROVED         = "attendance.leave.approved";
 

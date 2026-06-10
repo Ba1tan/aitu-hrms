@@ -18,6 +18,7 @@ public class LeaveTypeService {
 
     private final LeaveTypeRepository typeRepo;
     private final LeaveMapper mapper;
+    private final EventPublisher events;
 
     @Transactional(readOnly = true)
     public List<LeaveTypeDtos.Response> list() {
@@ -42,13 +43,17 @@ public class LeaveTypeService {
                 .carryoverMaxDays(req.getCarryoverMaxDays() == null ? 0 : req.getCarryoverMaxDays())
                 .description(req.getDescription())
                 .build();
-        return mapper.toType(typeRepo.save(type));
+        LeaveType saved = typeRepo.save(type);
+        LeaveTypeDtos.Response resp = mapper.toType(saved);
+        events.audit("CREATE", "LEAVE_TYPE", saved.getId(), null, resp);
+        return resp;
     }
 
     @Transactional
     public LeaveTypeDtos.Response update(UUID id, LeaveTypeDtos.UpsertRequest req) {
         LeaveType type = typeRepo.findByIdAndDeletedFalse(id)
                 .orElseThrow(() -> new ResourceNotFoundException("LeaveType", id));
+        LeaveTypeDtos.Response before = mapper.toType(type);
 
         type.setName(req.getName());
         if (req.getCode() != null && !req.getCode().isBlank()) {
@@ -66,15 +71,19 @@ public class LeaveTypeService {
         if (req.getCarryoverMaxDays() != null) type.setCarryoverMaxDays(req.getCarryoverMaxDays());
         if (req.getDescription() != null) type.setDescription(req.getDescription());
 
-        return mapper.toType(typeRepo.save(type));
+        LeaveTypeDtos.Response after = mapper.toType(typeRepo.save(type));
+        events.audit("UPDATE", "LEAVE_TYPE", id, before, after);
+        return after;
     }
 
     @Transactional
     public void delete(UUID id) {
         LeaveType type = typeRepo.findByIdAndDeletedFalse(id)
                 .orElseThrow(() -> new ResourceNotFoundException("LeaveType", id));
+        LeaveTypeDtos.Response before = mapper.toType(type);
         type.setDeleted(true);
         typeRepo.save(type);
+        events.audit("DELETE", "LEAVE_TYPE", id, before, null);
     }
 
     private static String resolveCode(String code, String name) {

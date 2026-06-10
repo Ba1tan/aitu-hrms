@@ -83,7 +83,7 @@ class SyncControllerTest {
         when(syncJobService.getById(jobId)).thenReturn(dto);
 
         mvc.perform(get("/v1/integration/sync/status/{jobId}", jobId)
-                        .with(authentication(auth("PAYROLL_APPROVE"))))
+                        .with(authentication(auth("INTEGRATION_MANAGE"))))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.status").value("SUCCESS"));
     }

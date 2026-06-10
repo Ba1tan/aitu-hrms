@@ -7,7 +7,7 @@ update the other doc, do not invent new codes.
 This catalog covers:
 1. The 8 system roles
 2. Every permission code referenced by `@PreAuthorize(...)` in service code today
-3. Permission codes reserved for pending services (reporting, notification, integration-hub) so Askar can adopt them without re-litigating names
+3. Permission codes for every service including reporting, notification and integration-hub (all now implemented)
 
 Permissions are flat strings. Spring Security `hasAuthority('CODE')` matches
 exactly — no `ROLE_` prefix, no wildcards. Roles are mapped to permissions in
@@ -54,8 +54,8 @@ status, and which roles get it by default. Statuses:
 | `EMPLOYEE_VIEW_OWN` | ✅ | EMPLOYEE (and all higher roles implicitly) | Own profile, own biometric status |
 | `EMPLOYEE_DOCUMENTS` | ✅ | SUPER_ADMIN, HR_MANAGER, HR_SPECIALIST | Upload / delete employee documents |
 | `EMPLOYEE_BIOMETRIC` | ✅ | SUPER_ADMIN, HR_MANAGER, HR_SPECIALIST | Enroll / delete face data |
-| `EMPLOYEE_SALARY_CHANGE` | 🟡 | SUPER_ADMIN, HR_MANAGER | `POST /v1/employees/{id}/salary-change` (currently gated by `EMPLOYEE_UPDATE` — split out before payroll audit) |
-| `EMPLOYEE_SALARY_VIEW` | 🟡 | SUPER_ADMIN, HR_MANAGER, ACCOUNTANT, DIRECTOR | `GET /v1/employees/{id}/salary-history` |
+| `EMPLOYEE_SALARY_CHANGE` | ⚪ Unused | — | Superseded: `POST /v1/employees/{id}/salary-change` is gated by `PAYROLL_ADJUST` (salary changes feed payroll). This code is not enforced anywhere; kept reserved only. |
+| `EMPLOYEE_SALARY_VIEW` | ⚪ Unused | — | Superseded: `GET /v1/employees/{id}/salary-history` is gated by `PAYROLL_READ_ALL`. Not enforced anywhere; kept reserved only. |
 | `DEPT_MANAGE` | ✅ | SUPER_ADMIN, HR_MANAGER | Departments + positions CRUD |
 
 ### 2.2 Attendance domain (attendance-service)
@@ -89,15 +89,15 @@ status, and which roles get it by default. Statuses:
 | `PAYSLIP_VIEW_OWN` | ✅ | EMPLOYEE (all roles) | Own payslips only |
 | `PAYSLIP_ADJUST` | ✅ | SUPER_ADMIN, HR_MANAGER, ACCOUNTANT | Per-employee correction within an approved period |
 
-### 2.5 Reporting domain (reporting-service — pending)
+### 2.5 Reporting domain (reporting-service)
 
 | Code | Status | Default roles | Used by |
 |------|--------|---------------|---------|
-| `REPORT_PAYROLL` | 🟡 | SUPER_ADMIN, HR_MANAGER, ACCOUNTANT | Payroll XLSX/PDF, Form 200.00, salary breakdown |
-| `REPORT_ATTENDANCE` | 🟡 | SUPER_ADMIN, HR_MANAGER, HR_SPECIALIST | Attendance monthly / summary |
-| `REPORT_LEAVE` | 🟡 | SUPER_ADMIN, HR_MANAGER, HR_SPECIALIST | Leave balances export |
-| `REPORT_EXECUTIVE` | 🟡 | SUPER_ADMIN, DIRECTOR | Executive PDF summary |
-| `REPORT_HR` | 🟡 | SUPER_ADMIN, HR_MANAGER, HR_SPECIALIST | Employee directory, headcount, turnover |
+| `REPORT_PAYROLL` | ✅ | SUPER_ADMIN, HR_MANAGER, ACCOUNTANT | Payroll XLSX/PDF, Form 200.00, salary breakdown |
+| `REPORT_ATTENDANCE` | ✅ | SUPER_ADMIN, HR_MANAGER, HR_SPECIALIST | Attendance monthly / summary |
+| `REPORT_LEAVE` | ✅ | SUPER_ADMIN, HR_MANAGER, HR_SPECIALIST | Leave balances export |
+| `REPORT_EXECUTIVE` | ✅ | SUPER_ADMIN, DIRECTOR | Executive PDF summary |
+| `REPORT_HR` | ✅ | SUPER_ADMIN, HR_MANAGER, HR_SPECIALIST | Employee directory, headcount, turnover |
 
 > Dashboard (`/v1/dashboard/stats`) is **not** permission-gated; field visibility
 > is role-aware inside the service. Any authenticated caller can hit it.
@@ -115,11 +115,11 @@ Notification listing is always scoped to the caller's own user, so no special
 permission code is needed beyond `isAuthenticated()`. Admin-only mass notification
 sending is reserved under `SYSTEM_SETTINGS`.
 
-### 2.8 Integration domain (integration-hub — pending)
+### 2.8 Integration domain (integration-hub)
 
 | Code | Status | Default roles | Used by |
 |------|--------|---------------|---------|
-| `INTEGRATION_MANAGE` | 🟡 | SUPER_ADMIN, ACCOUNTANT | Trigger 1C sync, generate bank file, view sync log |
+| `INTEGRATION_MANAGE` | ✅ | SUPER_ADMIN, ACCOUNTANT | Trigger 1C sync, generate bank file, view sync log. Endpoints gate on `hasAnyAuthority('INTEGRATION_MANAGE','SYSTEM_SETTINGS')` (SYSTEM_SETTINGS kept so SUPER_ADMIN never locks out mid-rollout). Seeded by `V5__add_integration_manage_permission.sql`. |
 | `SYSTEM_SETTINGS` | ✅ | SUPER_ADMIN | `/v1/settings/**` (currently lives in integration-hub per gateway routing) |
 
 ### 2.9 System / admin

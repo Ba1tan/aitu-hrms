@@ -24,7 +24,7 @@ public class BankFileController {
     private final SettingsService settingsService;
 
     @GetMapping("/bank-file/{periodId}")
-    @PreAuthorize("hasAnyAuthority('SYSTEM_SETTINGS', 'PAYROLL_APPROVE')")
+    @PreAuthorize("hasAnyAuthority('INTEGRATION_MANAGE', 'SYSTEM_SETTINGS')")
     public void downloadBankFile(
             @PathVariable UUID periodId,
             @AuthenticationPrincipal AuthenticatedUser me,

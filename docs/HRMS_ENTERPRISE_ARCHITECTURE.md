@@ -727,7 +727,7 @@ CREATE TABLE hrms_integration.company_settings (
 
 All client requests go through the gateway. Base path: `/api`.
 
-### 4.2 User Service — 18 endpoints (14 done + 4 pending 🟡)
+### 4.2 User Service — 18 endpoints (all implemented)
 
 ```
 # Authentication (Public — no JWT required)
@@ -750,15 +750,15 @@ PUT    /v1/users/{id}                                  # Update {role, enabled, 
 DELETE /v1/users/{id}                                  # Soft delete
 PUT    /v1/users/{id}/link-employee                    # Link to employee {employeeId}
 
-# Admin — pending 🟡 (frontend Phase 1B already wired with graceful fallback)
+# Admin (AdminController — frontend Phase 1B admin UI)
 GET    /v1/users/audit                                 # SYSTEM_AUDIT — paginated audit log
 GET    /v1/users/roles                                 # SYSTEM_ROLES — role↔permission matrix
 GET    /v1/users/permissions                           # SYSTEM_ROLES — flat permission catalog
 POST   /v1/users/roles/{role}/permissions              # SYSTEM_ROLES — { add: [], remove: [] }
 ```
 
-Payload shapes for the four pending endpoints: see `docs/API_CONTRACT.md`
-§"Admin — pending endpoints". JWT propagation rule: `docs/PERMISSIONS.md` §6.
+Payload shapes: see `docs/API_CONTRACT.md` §"Admin endpoints". JWT propagation
+rule: `docs/PERMISSIONS.md` §6. The audit log is system-wide — see `docs/EVENTS.md`.
 
 ### 4.3 Employee Service — 38 endpoints (see services/employee-service/EMPLOYEE_SERVICE.md for full list)
 
@@ -986,7 +986,7 @@ GET    /v1/dashboard/stats                             # Role-aware dashboard da
 
 | Service | Endpoints |
 |---------|-----------|
-| User Service | 18 (14 done + 4 pending 🟡) |
+| User Service | 18 |
 | Employee Service | 25 (+10 dept/position) = 35 |
 | Attendance Service | 18 |
 | Leave Service | 19 |
@@ -995,7 +995,7 @@ GET    /v1/dashboard/stats                             # Role-aware dashboard da
 | Notification Service | 5 |
 | Integration Hub | 7 |
 | Dashboard | 1 |
-| **Total** | **146** (142 done + 4 pending) |
+| **Total** | **146** (all implemented) |
 
 ---
 

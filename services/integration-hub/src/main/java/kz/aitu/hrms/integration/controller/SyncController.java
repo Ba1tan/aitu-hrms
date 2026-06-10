@@ -29,7 +29,7 @@ public class SyncController {
     private final SyncJobService syncJobService;
 
     @PostMapping("/sync/{periodId}")
-    @PreAuthorize("hasAnyAuthority('SYSTEM_SETTINGS', 'PAYROLL_APPROVE')")
+    @PreAuthorize("hasAnyAuthority('INTEGRATION_MANAGE', 'SYSTEM_SETTINGS')")
     public ResponseEntity<ApiResponse<SyncTriggerResponseDto>> triggerSync(
             @PathVariable UUID periodId,
             @AuthenticationPrincipal AuthenticatedUser me) {
@@ -38,13 +38,13 @@ public class SyncController {
     }
 
     @GetMapping("/sync/status/{jobId}")
-    @PreAuthorize("hasAnyAuthority('SYSTEM_SETTINGS', 'PAYROLL_APPROVE')")
+    @PreAuthorize("hasAnyAuthority('INTEGRATION_MANAGE', 'SYSTEM_SETTINGS')")
     public ResponseEntity<ApiResponse<SyncJobDto>> status(@PathVariable UUID jobId) {
         return ResponseEntity.ok(ApiResponse.ok(syncJobService.getById(jobId)));
     }
 
     @GetMapping("/sync/history")
-    @PreAuthorize("hasAnyAuthority('SYSTEM_SETTINGS', 'PAYROLL_APPROVE')")
+    @PreAuthorize("hasAnyAuthority('INTEGRATION_MANAGE', 'SYSTEM_SETTINGS')")
     public ResponseEntity<ApiResponse<Page<SyncJobDto>>> history(
             @RequestParam(required = false) SyncTarget target,
             @RequestParam(required = false) SyncStatus status,
@@ -53,7 +53,7 @@ public class SyncController {
     }
 
     @PostMapping("/retry/{jobId}")
-    @PreAuthorize("hasAnyAuthority('SYSTEM_SETTINGS', 'PAYROLL_APPROVE')")
+    @PreAuthorize("hasAnyAuthority('INTEGRATION_MANAGE', 'SYSTEM_SETTINGS')")
     public ResponseEntity<ApiResponse<SyncJobDto>> retry(
             @PathVariable UUID jobId,
             @AuthenticationPrincipal AuthenticatedUser me) {

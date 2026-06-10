@@ -11,7 +11,7 @@ All IDs: UUID strings. All money: decimal strings (`"250575.00"`). All dates: `"
 
 ## Quick Reference — All 146 Endpoints
 
-### Auth & Users (18 — 4 marked 🟡 pending, see below)
+### Auth & Users (18 — all implemented)
 | Method | Path | Auth | Permission |
 |--------|------|------|------------|
 | POST | `/v1/auth/login` | Public | — |
@@ -28,14 +28,14 @@ All IDs: UUID strings. All money: decimal strings (`"250575.00"`). All dates: `"
 | PUT | `/v1/users/{id}` | Bearer | SYSTEM_USERS |
 | DELETE | `/v1/users/{id}` | Bearer | SYSTEM_USERS |
 | PUT | `/v1/users/{id}/link-employee` | Bearer | SYSTEM_USERS |
-| GET | `/v1/users/audit` 🟡 | Bearer | SYSTEM_AUDIT |
-| GET | `/v1/users/roles` 🟡 | Bearer | SYSTEM_ROLES |
-| GET | `/v1/users/permissions` 🟡 | Bearer | SYSTEM_ROLES |
-| POST | `/v1/users/roles/{role}/permissions` 🟡 | Bearer | SYSTEM_ROLES |
+| GET | `/v1/users/audit` | Bearer | SYSTEM_AUDIT |
+| GET | `/v1/users/roles` | Bearer | SYSTEM_ROLES |
+| GET | `/v1/users/permissions` | Bearer | SYSTEM_ROLES |
+| POST | `/v1/users/roles/{role}/permissions` | Bearer | SYSTEM_ROLES |
 
-🟡 = endpoint not yet implemented; frontend Phase 1B admin UI calls it
-with a graceful fallback. Schemas in `services/user-service/CLAUDE.md`
-under "Pending endpoints — payload shapes".
+The four admin endpoints are implemented in `AdminController` +
+`AuditQueryService` + `RoleService`. Schemas in `services/user-service/CLAUDE.md`
+under "Admin UI endpoints — payload shapes".
 
 ### Employees (25)
 | Method | Path | Permission |
@@ -243,13 +243,15 @@ under "Pending endpoints — payload shapes".
 }
 ```
 
-### Admin — pending endpoints (🟡)
+### Admin endpoints
 
-These are wired in the Phase 1B admin UI (`client/pages/admin/AuditLog.tsx`,
-`admin/Roles.tsx`, `admin/Users.tsx`) with graceful fallback. Backend implementation
-pending. TypeScript reference shapes: `AuditLogEntry`, `RolePermissionMatrix`
-in `frontend/hrms-web/shared/api.ts`. See `docs/PERMISSIONS.md` §6 for the
-JWT propagation rule.
+Implemented in `AdminController` + `AuditQueryService` + `RoleService`, consumed
+by the Phase 1B admin UI (`client/pages/admin/AuditLog.tsx`, `admin/Roles.tsx`,
+`admin/Users.tsx`). TypeScript reference shapes: `AuditLogEntry`,
+`RolePermissionMatrix` in `frontend/hrms-web/shared/api.ts`. See
+`docs/PERMISSIONS.md` §6 for the JWT propagation rule. The audit log is
+system-wide (every service publishes `audit.recorded` → user-service persists
+it); see `docs/EVENTS.md`.
 
 **GET `/v1/users/audit`** — SYSTEM_AUDIT
 

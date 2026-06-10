@@ -85,15 +85,9 @@ export interface AuditFilters {
 export const useAuditLog = (filters: AuditFilters = {}) =>
   useQuery({
     queryKey: ["audit", filters],
-    queryFn: async () => {
-      try {
-        const res = await usersApi.audit(filters);
-        return res.data;
-      } catch {
-        // Endpoint may not yet exist on the backend (per Phase 1B note).
-        return [] as AuditLogEntry[];
-      }
-    },
+    // Let errors surface as `isError` so the page can tell a failed request
+    // (endpoint missing / no permission) apart from a successful empty result.
+    queryFn: () => usersApi.audit(filters).then((r) => r.data),
     retry: false,
     placeholderData: (prev) => prev,
   });

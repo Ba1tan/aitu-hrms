@@ -52,7 +52,7 @@ export default function AdminAuditLog() {
   const [to, setTo] = useState("");
   const [selected, setSelected] = useState<AuditLogEntry | null>(null);
 
-  const { data, isLoading } = useAuditLog({
+  const { data, isLoading, isError } = useAuditLog({
     actor: actor || undefined,
     entityType: entityType || undefined,
     action: action || undefined,
@@ -169,14 +169,26 @@ export default function AdminAuditLog() {
                   </TableCell>
                 </TableRow>
               ))
+            ) : isError ? (
+              <TableRow>
+                <TableCell
+                  colSpan={6}
+                  className="text-center py-10 text-destructive"
+                >
+                  Не удалось загрузить журнал. Проверьте, что сервис
+                  пользователей обновлён и перезапущен (эндпоинт{" "}
+                  <code>/v1/users/audit</code>), а у вас есть право{" "}
+                  <code>SYSTEM_AUDIT</code>.
+                </TableCell>
+              </TableRow>
             ) : entries.length === 0 ? (
               <TableRow>
                 <TableCell
                   colSpan={6}
                   className="text-center py-10 text-muted-foreground"
                 >
-                  Записей нет. Возможно, backend-эндпоинт `/v1/users/audit` ещё не
-                  реализован.
+                  Записей аудита пока нет — они появятся после действий
+                  пользователей (создание/изменение, смена ролей и т.п.).
                 </TableCell>
               </TableRow>
             ) : (

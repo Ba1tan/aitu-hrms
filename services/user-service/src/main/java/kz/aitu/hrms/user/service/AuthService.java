@@ -280,6 +280,8 @@ public class AuthService {
 
     private String clientIp(HttpServletRequest req) {
         if (req == null) return null;
+        String realIp = req.getHeader("X-Real-IP");
+        if (realIp != null && !realIp.isBlank()) return realIp.trim();
         String fwd = req.getHeader("X-Forwarded-For");
         if (fwd != null && !fwd.isBlank()) return fwd.split(",")[0].trim();
         return req.getRemoteAddr();

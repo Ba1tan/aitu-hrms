@@ -64,6 +64,13 @@ public final class AuditEvents {
     }
 
     private static String extractIp(HttpServletRequest req) {
+        // X-Real-IP is set by the edge nginx to the actual TCP peer and is the
+        // most trustworthy. X-Forwarded-For's first hop is the original client
+        // but only once every proxy forwards it. Fall back to the socket peer.
+        String realIp = req.getHeader("X-Real-IP");
+        if (realIp != null && !realIp.isBlank()) {
+            return realIp.trim();
+        }
         String forwarded = req.getHeader("X-Forwarded-For");
         if (forwarded != null && !forwarded.isBlank()) {
             return forwarded.split(",")[0].trim();

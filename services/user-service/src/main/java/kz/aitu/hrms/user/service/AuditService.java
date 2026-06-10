@@ -82,6 +82,13 @@ public class AuditService {
     }
 
     private String extractIp(HttpServletRequest req) {
+        // Prefer X-Real-IP (set by the edge nginx to the real client) over
+        // X-Forwarded-For, whose first hop is only correct once every proxy
+        // forwards it. Fall back to the socket peer.
+        String realIp = req.getHeader("X-Real-IP");
+        if (realIp != null && !realIp.isBlank()) {
+            return realIp.trim();
+        }
         String forwarded = req.getHeader("X-Forwarded-For");
         if (forwarded != null && !forwarded.isBlank()) {
             return forwarded.split(",")[0].trim();

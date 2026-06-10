@@ -128,8 +128,8 @@ sending is reserved under `SYSTEM_SETTINGS`.
 |------|--------|---------------|---------|
 | `SYSTEM_USERS` | ✅ | SUPER_ADMIN | User CRUD, link/unlink user↔employee, password reset by admin |
 | `SYSTEM_SETTINGS` | ✅ | SUPER_ADMIN | Company-wide settings (`/v1/settings/**`) |
-| `SYSTEM_ROLES` | 🟡 | SUPER_ADMIN | `GET /v1/users/roles`, `GET /v1/users/permissions`, `POST /v1/users/roles/{role}/permissions` (endpoints not yet built — Phase 1B admin UI already calls them with graceful fallback; payload shapes in `services/user-service/CLAUDE.md`) |
-| `SYSTEM_AUDIT` | 🟡 | SUPER_ADMIN, DIRECTOR | `GET /v1/users/audit` (read `hrms_user.audit_logs`; endpoint not yet built — Phase 1B admin UI already calls it with graceful fallback) |
+| `SYSTEM_ROLES` | ✅ | SUPER_ADMIN | `GET /v1/users/roles`, `GET /v1/users/permissions`, `POST /v1/users/roles/{role}/permissions` (AdminController; payload shapes in `services/user-service/CLAUDE.md`) |
+| `SYSTEM_AUDIT` | ✅ | SUPER_ADMIN, DIRECTOR | `GET /v1/users/audit` (AdminController; reads `hrms_user.audit_logs`) |
 
 ---
 

@@ -4,10 +4,14 @@ import kz.aitu.hrms.user.entity.Permission;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
 @Repository
 public interface PermissionRepository extends JpaRepository<Permission, UUID> {
     Optional<Permission> findByCode(String code);
+
+    /** Catalog order for the admin matrix: grouped by module, then code. */
+    List<Permission> findAllByOrderByModuleAscCodeAsc();
 }

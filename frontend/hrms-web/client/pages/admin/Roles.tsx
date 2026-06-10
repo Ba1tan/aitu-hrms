@@ -62,6 +62,26 @@ const FALLBACK_PERMISSIONS: PermissionEntry[] = [
   { code: "SYSTEM_AUDIT", module: "System" },
 ];
 
+// Backend seeds `module` as lowercase codes (employee, report, system…).
+// Map them to friendly headers; unknown modules fall back to Title Case.
+const MODULE_LABELS: Record<string, string> = {
+  system: "System",
+  employee: "Employees",
+  organization: "Organization",
+  attendance: "Attendance",
+  leave: "Leave",
+  payroll: "Payroll",
+  report: "Reports",
+  integration: "Integration",
+};
+
+function moduleLabel(module: string): string {
+  return (
+    MODULE_LABELS[module.toLowerCase()] ??
+    module.charAt(0).toUpperCase() + module.slice(1).toLowerCase()
+  );
+}
+
 const FALLBACK_ROLES = [
   "SUPER_ADMIN",
   "DIRECTOR",
@@ -263,7 +283,7 @@ function ModuleSection({
     <>
       <tr className="bg-muted/20">
         <td colSpan={roles.length + 1} className="px-3 py-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-          {module}
+          {moduleLabel(module)}
         </td>
       </tr>
       {items.map((p) => (

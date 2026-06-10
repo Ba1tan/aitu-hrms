@@ -34,6 +34,10 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .cors(AbstractHttpConfigurer::disable) // CORS handled by api-gateway
                 .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                // Return 401 (not Spring's default 403) for unauthenticated requests so the
+                // frontend's refresh/logout recovery kicks in on a stale/expired token.
+                .exceptionHandling(e -> e.authenticationEntryPoint((req, res, ex) ->
+                        res.sendError(jakarta.servlet.http.HttpServletResponse.SC_UNAUTHORIZED)))
                 .authorizeHttpRequests(a -> a
                         .requestMatchers(PUBLIC_ENDPOINTS).permitAll()
                         .anyRequest().authenticated())

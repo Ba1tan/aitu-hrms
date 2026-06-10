@@ -15,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @Slf4j
@@ -25,6 +26,7 @@ public class PayrollAdditionService {
     private final PayrollAdditionRepository additionRepo;
     private final PayrollPeriodRepository periodRepo;
     private final PayrollMapper mapper;
+    private final EventPublisher events;
 
     @Transactional(readOnly = true)
     public List<AdditionDtos.Response> list(UUID periodId, UUID employeeId) {
@@ -55,27 +57,35 @@ public class PayrollAdditionService {
                 .amount(req.getAmount())
                 .taxable(req.getIsTaxable() == null || req.getIsTaxable())
                 .build();
-        return mapper.toAdditionResponse(additionRepo.save(a));
+        PayrollAddition saved = additionRepo.save(a);
+        AdditionDtos.Response resp = mapper.toAdditionResponse(saved);
+        events.audit("CREATE", "PAYROLL_ADDITION", saved.getId(), null, resp);
+        return resp;
     }
 
     @Transactional
     public AdditionDtos.Response update(UUID id, AdditionDtos.UpdateRequest req) {
         PayrollAddition a = require(id);
         requireOpenPeriod(a.getPeriodId());
+        AdditionDtos.Response before = mapper.toAdditionResponse(a);
         if (req.getType() != null) a.setType(req.getType());
         if (req.getCategory() != null) a.setCategory(req.getCategory());
         if (req.getDescription() != null) a.setDescription(req.getDescription());
         if (req.getAmount() != null) a.setAmount(req.getAmount());
         if (req.getIsTaxable() != null) a.setTaxable(req.getIsTaxable());
-        return mapper.toAdditionResponse(additionRepo.save(a));
+        AdditionDtos.Response after = mapper.toAdditionResponse(additionRepo.save(a));
+        events.audit("UPDATE", "PAYROLL_ADDITION", id, before, after);
+        return after;
     }
 
     @Transactional
     public void delete(UUID id) {
         PayrollAddition a = require(id);
         requireOpenPeriod(a.getPeriodId());
+        AdditionDtos.Response before = mapper.toAdditionResponse(a);
         a.setDeleted(true);
         additionRepo.save(a);
+        events.audit("DELETE", "PAYROLL_ADDITION", id, before, null);
     }
 
     @Transactional
@@ -97,6 +107,10 @@ public class PayrollAdditionService {
                     .build();
             ids.add(additionRepo.save(a).getId());
         }
+        events.audit("CREATE", "PAYROLL_ADDITION", null, null,
+                Map.of("periodId", req.getPeriodId(), "type", String.valueOf(req.getType()),
+                        "category", String.valueOf(req.getCategory()),
+                        "amount", String.valueOf(req.getAmount()), "count", ids.size()));
         return AdditionDtos.BulkResponse.builder().created(ids.size()).ids(ids).build();
     }
 

@@ -23,6 +23,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -128,7 +129,7 @@ public class PayslipGenerationService {
                 .completedAt(LocalDateTime.now())
                 .build());
 
-        return PeriodDtos.GenerateResponse.builder()
+        PeriodDtos.GenerateResponse resp = PeriodDtos.GenerateResponse.builder()
                 .async(false)
                 .generated(generated)
                 .skipped(skipped)
@@ -137,6 +138,10 @@ public class PayslipGenerationService {
                 .totalNetPayout(totalNet)
                 .errorDetails(errorDetails)
                 .build();
+        events.audit("PROCESS", "PAYROLL_PERIOD", period.getId(), null,
+                Map.of("generated", generated, "skipped", skipped, "errors", errors,
+                        "totalGross", totalGross, "totalNet", totalNet));
+        return resp;
     }
 
     /**

@@ -16,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @Slf4j
@@ -68,6 +69,12 @@ public class SalaryHistoryServiceImpl implements SalaryHistoryService {
                 .effectiveDate(req.getEffectiveDate())
                 .reason(req.getReason())
                 .build());
+
+        eventPublisher.audit("SALARY_CHANGE", "EMPLOYEE", emp.getId(),
+                Map.of("baseSalary", String.valueOf(previous)),
+                Map.of("baseSalary", req.getNewSalary().toString(),
+                        "effectiveDate", String.valueOf(req.getEffectiveDate()),
+                        "reason", String.valueOf(req.getReason())));
 
         log.info("Salary changed for {}: {} → {}", emp.getEmployeeNumber(), previous, req.getNewSalary());
         return mapper.toSalaryHistoryResponse(saved);

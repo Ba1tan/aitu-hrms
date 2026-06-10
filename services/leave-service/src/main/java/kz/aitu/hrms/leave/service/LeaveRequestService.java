@@ -158,8 +158,10 @@ public class LeaveRequestService {
                 .daysRequested(days)
                 .build());
 
-        return mapper.toRequest(request, employeeLookup.fullName(employeeId),
+        LeaveRequestDtos.Response resp = mapper.toRequest(request, employeeLookup.fullName(employeeId),
                 approverRef(employeeId));
+        events.audit("CREATE", "LEAVE_REQUEST", request.getId(), null, resp);
+        return resp;
     }
 
     @Transactional(readOnly = true)
@@ -229,8 +231,10 @@ public class LeaveRequestService {
                 .leaveType(type.getName())
                 .build());
 
-        return mapper.toRequest(req, employeeLookup.fullName(req.getEmployeeId()),
+        LeaveRequestDtos.Response resp = mapper.toRequest(req, employeeLookup.fullName(req.getEmployeeId()),
                 approverRef(req.getEmployeeId()));
+        events.audit("APPROVE", "LEAVE_REQUEST", req.getId(), null, resp);
+        return resp;
     }
 
     @Transactional
@@ -254,8 +258,10 @@ public class LeaveRequestService {
                 .comment(req.getReviewComment())
                 .build());
 
-        return mapper.toRequest(req, employeeLookup.fullName(req.getEmployeeId()),
+        LeaveRequestDtos.Response resp = mapper.toRequest(req, employeeLookup.fullName(req.getEmployeeId()),
                 approverRef(req.getEmployeeId()));
+        events.audit("REJECT", "LEAVE_REQUEST", req.getId(), null, resp);
+        return resp;
     }
 
     /**
@@ -298,8 +304,10 @@ public class LeaveRequestService {
         req.setReviewedBy(CurrentUser.userId());
         req.setReviewedAt(LocalDateTime.now(ZoneId.of(zoneId)));
         req = requestRepo.save(req);
-        return mapper.toRequest(req, employeeLookup.fullName(req.getEmployeeId()),
+        LeaveRequestDtos.Response resp = mapper.toRequest(req, employeeLookup.fullName(req.getEmployeeId()),
                 approverRef(req.getEmployeeId()));
+        events.audit("CANCEL", "LEAVE_REQUEST", req.getId(), null, resp);
+        return resp;
     }
 
     @Transactional(readOnly = true)

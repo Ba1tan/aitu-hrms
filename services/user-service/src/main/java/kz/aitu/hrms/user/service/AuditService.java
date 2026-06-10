@@ -3,6 +3,7 @@ package kz.aitu.hrms.user.service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
+import kz.aitu.hrms.common.event.AuditEvent;
 import kz.aitu.hrms.user.entity.AuditLog;
 import kz.aitu.hrms.user.repository.AuditLogRepository;
 import lombok.RequiredArgsConstructor;
@@ -37,6 +38,28 @@ public class AuditService {
                 .newValue(toJson(newValue))
                 .ipAddress(req == null ? null : extractIp(req))
                 .userAgent(req == null ? null : req.getHeader("User-Agent"))
+                .build();
+        auditLogRepository.save(entry);
+    }
+
+    /**
+     * Persist an audit row produced by another service (consumed off
+     * {@code audit.recorded}). {@code oldValue}/{@code newValue} arrive already
+     * serialized as JSON, so they are stored verbatim. {@code createdAt} is set
+     * at persist time (near {@code occurredAt}) by {@code @CreationTimestamp}.
+     */
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void record(AuditEvent event) {
+        AuditLog entry = AuditLog.builder()
+                .userId(event.getActorId())
+                .userEmail(event.getActorEmail())
+                .action(event.getAction() == null ? "UNKNOWN" : event.getAction())
+                .entityType(event.getEntityType() == null ? "UNKNOWN" : event.getEntityType())
+                .entityId(event.getEntityId())
+                .oldValue(event.getOldValue())
+                .newValue(event.getNewValue())
+                .ipAddress(event.getIpAddress())
+                .userAgent(event.getUserAgent())
                 .build();
         auditLogRepository.save(entry);
     }

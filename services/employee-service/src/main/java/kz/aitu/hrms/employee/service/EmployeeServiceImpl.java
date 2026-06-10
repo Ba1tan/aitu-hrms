@@ -92,7 +92,9 @@ public class EmployeeServiceImpl implements EmployeeService {
         if (Boolean.TRUE.equals(req.getCreateAccount()) && saved.getEmail() != null) {
             publishCreated(saved);
         }
-        return mapper.toResponse(saved);
+        EmployeeDtos.EmployeeResponse resp = mapper.toResponse(saved);
+        eventPublisher.audit("CREATE", "EMPLOYEE", saved.getId(), null, resp);
+        return resp;
     }
 
     @Override
@@ -157,6 +159,7 @@ public class EmployeeServiceImpl implements EmployeeService {
     @Transactional
     public EmployeeDtos.EmployeeResponse update(UUID id, EmployeeDtos.UpdateEmployeeRequest req) {
         Employee emp = requireEmployee(id);
+        EmployeeDtos.EmployeeResponse before = mapper.toResponse(emp);
 
         if (req.getFirstName() != null) emp.setFirstName(req.getFirstName());
         if (req.getLastName() != null) emp.setLastName(req.getLastName());
@@ -194,7 +197,9 @@ public class EmployeeServiceImpl implements EmployeeService {
             }
             emp.setManager(requireEmployee(req.getManagerId()));
         }
-        return mapper.toResponse(emp);
+        EmployeeDtos.EmployeeResponse after = mapper.toResponse(emp);
+        eventPublisher.audit("UPDATE", "EMPLOYEE", id, before, after);
+        return after;
     }
 
     @Override
@@ -204,8 +209,12 @@ public class EmployeeServiceImpl implements EmployeeService {
         if (req.getStatus() == EmploymentStatus.TERMINATED) {
             throw new BusinessException("Use POST /terminate to end employment");
         }
+        String oldStatus = emp.getStatus() == null ? null : emp.getStatus().name();
         emp.setStatus(req.getStatus());
         log.info("Employee {} status → {}", emp.getEmployeeNumber(), req.getStatus());
+        eventPublisher.audit("UPDATE", "EMPLOYEE", id,
+                Map.of("status", String.valueOf(oldStatus)),
+                Map.of("status", req.getStatus().name()));
         return mapper.toResponse(emp);
     }
 
@@ -213,8 +222,10 @@ public class EmployeeServiceImpl implements EmployeeService {
     @Transactional
     public void delete(UUID id) {
         Employee emp = requireEmployee(id);
+        EmployeeDtos.EmployeeSummary before = mapper.toSummary(emp);
         emp.setDeleted(true);
         log.info("Employee soft-deleted: {}", emp.getEmployeeNumber());
+        eventPublisher.audit("DELETE", "EMPLOYEE", id, before, null);
     }
 
     @Override
@@ -234,7 +245,9 @@ public class EmployeeServiceImpl implements EmployeeService {
                 .terminationDate(req.getTerminationDate())
                 .reason(req.getReason())
                 .build());
-        return mapper.toResponse(emp);
+        EmployeeDtos.EmployeeResponse resp = mapper.toResponse(emp);
+        eventPublisher.audit("TERMINATE", "EMPLOYEE", id, null, resp);
+        return resp;
     }
 
     @Override

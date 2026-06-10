@@ -34,6 +34,7 @@ public class SyncOrchestrator {
     private final SettingsService settingsService;
     private final IntegrationEventPublisher eventPublisher;
     private final SyncJobMapper syncJobMapper;
+    private final AuditPublisher auditPublisher;
 
     @Transactional
     public SyncTriggerResponseDto trigger(UUID periodId, UUID triggeredBy) {
@@ -49,6 +50,9 @@ public class SyncOrchestrator {
 
         SyncJob job = jobService.create(periodId, SyncTarget.ONE_C, triggeredBy.toString());
         performSync(job);
+        auditPublisher.audit("SYNC", "SYNC_JOB", job.getId(),
+                null, java.util.Map.of("periodId", periodId, "target", "ONE_C",
+                        "status", String.valueOf(job.getStatus())));
         return SyncTriggerResponseDto.from(job);
     }
 
@@ -59,6 +63,10 @@ public class SyncOrchestrator {
             throw new BusinessException("Only FAILED or RETRYING jobs can be retried manually");
         }
         performSync(job);
+        auditPublisher.audit("RETRY", "SYNC_JOB", job.getId(),
+                null, java.util.Map.of("periodId", job.getPeriodId(),
+                        "status", String.valueOf(job.getStatus()),
+                        "retryCount", job.getRetryCount()));
         return syncJobMapper.toDto(job);
     }
 

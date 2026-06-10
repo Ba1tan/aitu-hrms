@@ -19,6 +19,7 @@ public class BankFileService {
     private final List<BankFileGenerator> generators;
     private final PayrollClient payrollClient;
     private final SettingsService settings;
+    private final AuditPublisher auditPublisher;
 
     public void generate(UUID periodId, String format, OutputStream out) throws IOException {
         BankFileGenerator generator = generators.stream()
@@ -32,5 +33,8 @@ public class BankFileService {
 
         CompanySettingSnapshot snapshot = settings.snapshot();
         generator.write(payslips, snapshot, out);
+
+        auditPublisher.audit("BANK_FILE", "BANK_FILE", periodId, null,
+                java.util.Map.of("periodId", periodId, "format", format, "payslips", payslips.size()));
     }
 }

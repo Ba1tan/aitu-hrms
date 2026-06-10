@@ -32,16 +32,50 @@ import { formatDateTime, todayIso } from "../../lib/format";
 
 const ANY = "__any__";
 
-const ACTIONS = ["CREATE", "UPDATE", "DELETE", "APPROVE", "LOGIN", "LOGOUT"];
+const ACTIONS = [
+  "CREATE",
+  "UPDATE",
+  "DELETE",
+  "APPROVE",
+  "REJECT",
+  "CANCEL",
+  "TERMINATE",
+  "SALARY_CHANGE",
+  "PROCESS",
+  "PAY",
+  "LOCK",
+  "ADJUST",
+  "RECALCULATE",
+  "BULK_ABSENT",
+  "CARRYOVER",
+  "SYNC",
+  "RETRY",
+  "BANK_FILE",
+  "SETUP_COMPLETED",
+  "LOGIN",
+  "LOGIN_FAILED",
+  "LOGIN_LOCKED",
+  "LOGOUT",
+];
 const ENTITY_TYPES = [
   "USER",
+  "ROLE_PERMISSION",
   "EMPLOYEE",
+  "EMPLOYEE_DOCUMENT",
   "DEPARTMENT",
   "POSITION",
+  "ATTENDANCE",
+  "HOLIDAY",
+  "WORK_SCHEDULE",
+  "LEAVE_REQUEST",
+  "LEAVE_TYPE",
+  "LEAVE_BALANCE",
   "PAYROLL_PERIOD",
   "PAYSLIP",
-  "LEAVE_REQUEST",
+  "PAYROLL_ADDITION",
   "SETTING",
+  "SYNC_JOB",
+  "BANK_FILE",
 ];
 
 export default function AdminAuditLog() {

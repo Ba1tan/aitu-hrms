@@ -61,6 +61,7 @@ Status:
 | `payroll.period.approved` | `PayrollPeriodApprovedEvent` | payroll-service | notification-service 🟡 (per-employee payslip-ready), integration-hub 🟡 (1C sync trigger) | ✅ (publisher only) |
 | `user.account.created` | `UserAccountCreatedEvent` | user-service | notification-service 🟡 (welcome email + temp password) | ✅ (publisher only) |
 | `user.password.reset-requested` | `PasswordResetRequestedEvent` | user-service | notification-service 🟡 (reset link email) | ✅ (publisher only) |
+| `audit.recorded` | `AuditEvent` (hrms-common) | employee-, attendance-, leave-, payroll-service, integration-hub | user-service (`user.audit.recorded`) → persists to `hrms_user.audit_logs` | ✅ |
 
 ### Pending events (reserved names — Askar should add when implementing)
 
@@ -227,6 +228,31 @@ Status:
 }
 ```
 
+### `AuditEvent`
+
+System-wide audit trail. Any service emits this on a sensitive write; user-service
+consumes it into `hrms_user.audit_logs` (the single table the admin audit-log
+endpoint reads). Built via `kz.aitu.hrms.common.audit.AuditEvents.build(...)`,
+which pulls the actor from the `AuthenticatedUser` principal and IP/user-agent
+from the current request. user-service's own actions are written directly (no
+round-trip). `oldValue`/`newValue` are pre-serialized JSON strings.
+
+```json
+{
+  "actorId":       "UUID|null",
+  "actorEmail":    "string|null",
+  "action":        "CREATE|UPDATE|DELETE|APPROVE|REJECT|CANCEL|TERMINATE|SALARY_CHANGE|PROCESS|PAY|LOCK|ADJUST|RECALCULATE|BULK_ABSENT|CARRYOVER|SYNC|RETRY|BANK_FILE|SETUP_COMPLETED",
+  "entityType":    "EMPLOYEE|DEPARTMENT|POSITION|ATTENDANCE|HOLIDAY|WORK_SCHEDULE|LEAVE_REQUEST|LEAVE_TYPE|LEAVE_BALANCE|PAYROLL_PERIOD|PAYSLIP|PAYROLL_ADDITION|SETTING|SYNC_JOB|BANK_FILE|EMPLOYEE_DOCUMENT",
+  "entityId":      "UUID|null",
+  "oldValue":      "string(JSON)|null",
+  "newValue":      "string(JSON)|null",
+  "ipAddress":     "string|null",
+  "userAgent":     "string|null",
+  "sourceService": "string (e.g. employee-service)",
+  "occurredAt":    "ISO datetime"
+}
+```
+
 ---
 
 ## 4. Consumer queues currently bound
@@ -238,6 +264,7 @@ Status:
 | `payroll.employee.salary.changed` | payroll-service | `employee.salary.changed` |
 | `leave.employee.created` | leave-service | `employee.created` |
 | `attendance.leave.approved` | attendance-service | `leave.approved` |
+| `user.audit.recorded` | user-service | `audit.recorded` |
 
 Pending services should pre-declare their queues in their own `RabbitConfig`
 following the same naming convention. See §1 for the convention.

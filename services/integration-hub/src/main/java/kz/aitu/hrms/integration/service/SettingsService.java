@@ -22,6 +22,7 @@ public class SettingsService {
     private final CompanySettingRepository repo;
     private final SettingsAuditRepository auditRepo;
     private final TextEncryptor encryptor;
+    private final AuditPublisher auditPublisher;
 
     @Transactional(readOnly = true)
     public List<SettingDto> getAll(String category) {
@@ -104,14 +105,20 @@ public class SettingsService {
         setting.setUpdatedBy(actor.getEmail());
         repo.save(setting);
 
+        String newValue = isEncryptedKey(key) ? "REDACTED" : value;
         auditRepo.save(SettingsAudit.builder()
                 .userId(actor.getUserId())
                 .userEmail(actor.getEmail())
                 .action("UPDATE_SETTING")
                 .settingKey(key)
                 .oldValue(oldValue)
-                .newValue(isEncryptedKey(key) ? "REDACTED" : value)
+                .newValue(newValue)
                 .build());
+
+        // Mirror into the system-wide audit log (hrms_user.audit_logs).
+        auditPublisher.audit("UPDATE", "SETTING", null,
+                java.util.Map.of("key", key, "value", oldValue),
+                java.util.Map.of("key", key, "value", newValue));
 
         return toPublicDto(setting);
     }

@@ -35,6 +35,7 @@ public class RabbitConfig {
     public static final String RK_PAYROLL_JOB_STARTED      = "payroll.job.started";
     public static final String RK_PAYROLL_JOB_COMPLETED    = "payroll.job.completed";
     public static final String RK_PAYROLL_PERIOD_APPROVED  = "payroll.period.approved";
+    public static final String RK_AUDIT                    = "audit.recorded";
 
     public static final String RK_EMPLOYEE_CREATED         = "employee.created";
     public static final String RK_EMPLOYEE_SALARY_CHANGED  = "employee.salary.changed";

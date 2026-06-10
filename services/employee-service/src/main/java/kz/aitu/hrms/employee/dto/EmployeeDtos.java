@@ -65,6 +65,13 @@ public class EmployeeDtos {
         @Size(max = 1000)
         private String address;
 
+        @Pattern(regexp = "KZ[0-9]{2}[A-Z0-9]{16}",
+                message = "bankAccount must be a valid KZ IBAN (KZ + 2 digits + 16 chars)")
+        private String bankAccount;
+
+        @Size(max = 100)
+        private String bankName;
+
         private Boolean createAccount;
     }
 
@@ -87,6 +94,10 @@ public class EmployeeDtos {
         private Boolean isResident;
         private Boolean isPensioner;
         @Size(max = 1000) private String address;
+        @Pattern(regexp = "KZ[0-9]{2}[A-Z0-9]{16}",
+                message = "bankAccount must be a valid KZ IBAN (KZ + 2 digits + 16 chars)")
+        private String bankAccount;
+        @Size(max = 100) private String bankName;
     }
 
     @Data
@@ -131,6 +142,8 @@ public class EmployeeDtos {
         private boolean isResident;
         private boolean isPensioner;
         private String address;
+        private String bankAccount;
+        private String bankName;
         private DepartmentDtos.DepartmentSummary department;
         private PositionDtos.PositionSummary position;
         private ManagerSummary manager;

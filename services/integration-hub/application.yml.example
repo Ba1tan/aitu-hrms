@@ -72,7 +72,7 @@ app:
         multiplier:      2.0
 
     bank:
-      default-format: ${BANK_FILE_FORMAT:KASPI_TSV}   # KASPI_TSV | HALYK_MT940 | JUSAN_CSV
+      default-format: ${BANK_FILE_FORMAT:KASPI_TSV}   # KASPI_TSV | HALYK_CSV | JUSAN_CSV
       output-dir:     ${BANK_FILE_DIR:/data/hrms/bank-files}
 
   services:

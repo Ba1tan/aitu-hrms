@@ -100,6 +100,14 @@ public class Employee extends BaseEntity {
     @Column(columnDefinition = "text")
     private String address;
 
+    /** Employee bank account in KZ IBAN form (KZ + 2 check digits + 16 chars). Used for payroll bank files. */
+    @Column(name = "bank_account", length = 34)
+    private String bankAccount;
+
+    /** Free-text bank name (e.g. Kaspi, Halyk, Jusan) used as a hint for the bank-file format. */
+    @Column(name = "bank_name", length = 100)
+    private String bankName;
+
     public String getFullName() {
         if (middleName != null && !middleName.isBlank()) {
             return lastName + " " + firstName + " " + middleName;

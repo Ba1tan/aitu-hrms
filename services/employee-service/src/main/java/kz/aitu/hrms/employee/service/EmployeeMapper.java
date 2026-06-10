@@ -41,6 +41,8 @@ public class EmployeeMapper {
                 .isResident(e.isResident())
                 .isPensioner(e.isPensioner())
                 .address(e.getAddress())
+                .bankAccount(e.getBankAccount())
+                .bankName(e.getBankName())
                 .department(toDepartmentSummary(e.getDepartment()))
                 .position(toPositionSummary(e.getPosition()))
                 .manager(toManagerSummary(e.getManager()))

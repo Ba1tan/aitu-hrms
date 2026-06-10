@@ -80,6 +80,8 @@ public class EmployeeServiceImpl implements EmployeeService {
                 .resident(req.getIsResident() == null || req.getIsResident())
                 .pensioner(Boolean.TRUE.equals(req.getIsPensioner()))
                 .address(req.getAddress())
+                .bankAccount(req.getBankAccount())
+                .bankName(req.getBankName())
                 .build();
 
         if (req.getDepartmentId() != null) emp.setDepartment(requireDepartment(req.getDepartmentId()));
@@ -173,6 +175,8 @@ public class EmployeeServiceImpl implements EmployeeService {
         if (req.getIsResident() != null) emp.setResident(req.getIsResident());
         if (req.getIsPensioner() != null) emp.setPensioner(req.getIsPensioner());
         if (req.getAddress() != null) emp.setAddress(req.getAddress());
+        if (req.getBankAccount() != null) emp.setBankAccount(req.getBankAccount());
+        if (req.getBankName() != null) emp.setBankName(req.getBankName());
 
         if (req.getEmail() != null && !req.getEmail().equals(emp.getEmail())) {
             if (employeeRepository.existsByEmailAndDeletedFalse(req.getEmail())) {

@@ -39,10 +39,9 @@ public class BankFileController {
 
     private String fileExtension(String format) {
         return switch (format) {
-            case "KASPI_TSV"  -> "tsv";
-            case "HALYK_MT940" -> "mt940";
-            case "JUSAN_CSV"  -> "csv";
-            default -> "dat";
+            case "KASPI_TSV" -> "tsv";
+            case "HALYK_CSV", "JUSAN_CSV" -> "csv";
+            default -> "csv";
         };
     }
 }

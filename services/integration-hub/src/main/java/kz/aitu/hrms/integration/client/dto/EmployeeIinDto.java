@@ -13,4 +13,7 @@ public class EmployeeIinDto {
     private UUID employeeId;
     private String iin;
     private String fullName;
+    /** KZ IBAN — populated from the employee-service detail response. */
+    private String bankAccount;
+    private String bankName;
 }

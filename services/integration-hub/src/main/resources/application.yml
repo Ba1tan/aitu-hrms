@@ -2,6 +2,9 @@ server:
   port: 8089
   servlet:
     context-path: /api
+  # Honor X-Forwarded-* from the edge proxy/gateway so request.getRemoteAddr()
+  # (and audit IP capture) resolves to the real client, not the Docker peer.
+  forward-headers-strategy: framework
 
 spring:
   application:

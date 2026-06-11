@@ -52,10 +52,10 @@ public class SettingsService {
         // timezone, locale_default, currency, tax_resident.
         if (key.startsWith("company.")) return true;
         return key.equals("attendance.check_in_methods")
-                || key.equals("attendance.require_face")
                 || key.equals("attendance.work_schedule_default_id")
                 || key.equals("notification.sms_provider")
-                || key.equals("payroll.payslip_release_day");
+                // Read service-to-service by leave-service to cap carryover.
+                || key.equals("leave.annual_carryover_max_pct");
     }
 
     private SettingDto toPublicDto(CompanySetting s) {

@@ -3,6 +3,7 @@ package kz.aitu.hrms.leave.service;
 import kz.aitu.hrms.common.exception.BusinessException;
 import kz.aitu.hrms.common.exception.ResourceNotFoundException;
 import kz.aitu.hrms.leave.client.EmployeeClient;
+import kz.aitu.hrms.leave.client.SettingsClient;
 import kz.aitu.hrms.leave.dto.LeaveBalanceDtos;
 import kz.aitu.hrms.leave.entity.BalanceAdjustment;
 import kz.aitu.hrms.leave.entity.LeaveBalance;
@@ -36,12 +37,15 @@ public class LeaveBalanceService {
     private final EmployeeLookup employeeLookup;
     private final LeaveMapper mapper;
     private final EventPublisher events;
+    private final SettingsClient settingsClient;
 
     @Value("${app.zone:Asia/Almaty}")
     private String zoneId;
 
     @Value("${app.leave.carryover-max-percent:0.5}")
     private double carryoverMaxPercent;
+
+    private static final String CARRYOVER_PCT_KEY = "leave.annual_carryover_max_pct";
 
     private int currentYear() {
         return LocalDate.now(ZoneId.of(zoneId)).getYear();
@@ -225,13 +229,15 @@ public class LeaveBalanceService {
                     .build();
         }
 
+        double carryoverPct = resolveCarryoverPercent();
+
         List<UUID> typeIds = eligible.stream().map(LeaveType::getId).toList();
         List<LeaveBalance> all = balanceRepo.findByYearAndTypes(fromYear, typeIds);
 
         for (LeaveBalance prev : all) {
             LeaveType type = prev.getLeaveType();
             int unused = Math.max(0, prev.getRemainingDays());
-            int percentCap = (int) Math.floor(prev.getEntitledDays() * carryoverMaxPercent);
+            int percentCap = (int) Math.floor(prev.getEntitledDays() * carryoverPct);
             int typeCap = type.getCarryoverMaxDays() > 0 ? type.getCarryoverMaxDays() : Integer.MAX_VALUE;
             int toCarry = Math.min(unused, Math.min(percentCap, typeCap));
             if (toCarry <= 0) continue;
@@ -258,6 +264,37 @@ public class LeaveBalanceService {
                 .build();
         events.audit("CARRYOVER", "LEAVE_BALANCE", null, null, resp);
         return resp;
+    }
+
+    /**
+     * Carryover cap as a fraction of entitlement. Prefers the company setting
+     * {@code leave.annual_carryover_max_pct} (integer percent, e.g. {@code 50})
+     * served by integration-hub; falls back to
+     * {@code app.leave.carryover-max-percent} when the service is unreachable or
+     * the value is unset/out of range. Read once per carryover run.
+     */
+    private double resolveCarryoverPercent() {
+        try {
+            SettingsClient.Envelope<List<SettingsClient.SettingDto>> body = settingsClient.getPublic();
+            List<SettingsClient.SettingDto> settings = body == null ? null : body.data();
+            if (settings != null) {
+                for (SettingsClient.SettingDto s : settings) {
+                    if (!CARRYOVER_PCT_KEY.equals(s.key())) continue;
+                    if (s.value() == null || s.value().isBlank()) break;
+                    int pct = Integer.parseInt(s.value().trim());
+                    if (pct >= 0 && pct <= 100) {
+                        return pct / 100.0;
+                    }
+                    log.warn("{}={} is out of range [0,100]; using fallback {}",
+                            CARRYOVER_PCT_KEY, pct, carryoverMaxPercent);
+                    break;
+                }
+            }
+        } catch (Exception e) {
+            log.warn("Could not read {} from integration-hub; using fallback {}: {}",
+                    CARRYOVER_PCT_KEY, carryoverMaxPercent, e.getMessage());
+        }
+        return carryoverMaxPercent;
     }
 
     /**

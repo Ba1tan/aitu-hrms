@@ -61,12 +61,14 @@ app:
   zone: Asia/Almaty
 
   leave:
-    # Default: max 50% of annual leave can be carried over to the next year.
+    # Fallback cap (50%) used only when the company setting
+    # `leave.annual_carryover_max_pct` can't be read from integration-hub.
     carryover-max-percent: 0.5
 
   services:
     user-service-uri: ${USER_SERVICE_URI:http://localhost:8081}
     employee-service-uri: ${EMPLOYEE_SERVICE_URI:http://localhost:8082}
+    integration-hub-uri: ${INTEGRATION_HUB_URI:http://localhost:8089}
 
 management:
   endpoints:

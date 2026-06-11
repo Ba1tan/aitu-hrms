@@ -36,3 +36,4 @@ app:
   services:
     user-service-uri: http://localhost:8081
     employee-service-uri: http://localhost:8082
+    integration-hub-uri: http://localhost:8089

@@ -49,7 +49,6 @@ class SetupServiceTest {
         mockKey("company.locale_default", "ru");
         mockKey("company.tax_resident", "true");
         mockKey("attendance.check_in_methods", "[\"WEB\"]");
-        mockKey("attendance.require_face", "false");
         mockKey("attendance.work_schedule_default_id", UUID.randomUUID().toString());
     }
 
@@ -61,7 +60,7 @@ class SetupServiceTest {
 
         assertThat(status.isConfigured()).isFalse();
         assertThat(status.getMissingRequired()).isNotEmpty();
-        assertThat(status.getTotalRequired()).isEqualTo(10);
+        assertThat(status.getTotalRequired()).isEqualTo(9);
     }
 
     @Test

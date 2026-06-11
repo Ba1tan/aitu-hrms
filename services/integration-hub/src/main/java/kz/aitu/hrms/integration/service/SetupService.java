@@ -23,7 +23,7 @@ public class SetupService {
             "company.name", "company.bin", "company.legal_address",
             "company.timezone", "company.currency", "company.locale_default",
             "company.tax_resident", "attendance.check_in_methods",
-            "attendance.require_face", "attendance.work_schedule_default_id"
+            "attendance.work_schedule_default_id"
     );
 
     private final CompanySettingRepository repo;

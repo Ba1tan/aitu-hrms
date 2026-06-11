@@ -78,7 +78,7 @@ under "Admin UI endpoints — payload shapes".
 
 ### Attendance (20)
 
-**Config-driven:** Frontend reads `GET /v1/settings` → `attendance.check_in_methods` to decide which check-in UI to show. If includes `WEB` → show button on dashboard. If includes `FACE` → show camera button. If `attendance.require_face=true` → face only.
+**Config-driven:** Frontend reads `GET /v1/settings` → `attendance.check_in_methods` to decide which check-in UI to show. Supported methods: `WEB` (dashboard button), `MANUAL` (HR entry), `MOBILE`.
 
 | Method | Path | Permission | Notes |
 |--------|------|------------|-------|
@@ -427,11 +427,10 @@ Response 200: empty (or echo the new matrix row).
 ```typescript
 // Fetch settings to determine which check-in UI to show
 const settings = await api.get('/v1/settings');
-const methods = settings.data['attendance.check_in_methods']; // "FACE,WEB,MANUAL"
-const requireFace = settings.data['attendance.require_face'] === 'true';
+const methods = settings.data['attendance.check_in_methods']; // ["WEB","MANUAL"]
 
-const showWebButton = methods.includes('WEB') && !requireFace;
-const showFaceButton = methods.includes('FACE');
+const showWebButton = methods.includes('WEB');
+const showManualEntry = methods.includes('MANUAL');
 ```
 
 **POST `/v1/attendance/check-in/face`** — Face recognition (no JWT needed, face IS the auth)

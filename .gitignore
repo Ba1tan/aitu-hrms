@@ -35,8 +35,23 @@ docker/backups/
 *.jar
 *.war
 docs/dev-phases/
+
+### AI agent / assistant files (kept locally, not tracked)
 .claude/
 CLAUDE.md
+AGENTS.md
+
+### Per-service internal specs (duplicate the CLAUDE.md twins; kept locally)
+services/*/AI_ML_SERVICE.md
+services/*/API_GATEWAY.md
+services/*/ATTENDANCE_SERVICE.md
+services/*/EMPLOYEE_SERVICE.md
+services/*/INTEGRATION_HUB.md
+services/*/LEAVE_SERVICE.md
+services/*/NOTIFICATION_SERVICE.md
+services/*/PAYROLL_SERVICE.md
+services/*/REPORTING_SERVICE.md
+services/*/USER_SERVICE.md
 
 ### Node / frontend
 node_modules/

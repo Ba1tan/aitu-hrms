@@ -1,119 +1,255 @@
-# HRMS — Microservices Monorepo
+# HRMS — HR Management System with Automated Payroll
 
-> Project overview & root brain. Each service has its own per-service spec
-> at `services/{name}/{SERVICE}.md` (e.g. `services/payroll-service/PAYROLL_SERVICE.md`).
+A microservices-based HR platform for Kazakhstan SMEs (10–500 employees), covering
+employee records, attendance, leave, and fully automated Kazakhstan payroll with
+1C and bank-file integration.
 
-## Project
+**Production:** https://hrms.nursnerv.uk
 
-| Field | Value |
-|-------|-------|
-| **Name** | HRMS with Automated Payroll & AI |
-| **Target** | Kazakhstan SMEs (10–500 employees) |
-| **Team** | Nursultan (Tech Lead/DevOps/Payroll/AI), Askar (Employee/Leave/Attendance), Nurbol (Frontend) |
-| **Production** | https://hrms.nursnerv.uk |
+---
 
-## Services (10)
+## Table of contents
 
-| Service | Port | Owner | Status |
-|---------|------|-------|--------|
-| api-gateway | 8080 | Nursultan | Done |
-| user-service | 8081 | Nursultan | Done |
-| employee-service | 8082 | Askar | Done |
-| attendance-service | 8083 | Askar | Done |
-| leave-service | 8084 | Askar | Done |
-| payroll-service | 8085 | Nursultan | Done |
-| ai-ml-service | 8086 | Nursultan | Building new (Python) |
-| reporting-service | 8087 | Nursultan | Building new — owns dashboard endpoint |
-| notification-service | 8088 | Askar | Building new |
-| integration-hub | 8089 | Nursultan | Building new |
+- [Architecture](#architecture)
+- [Tech stack](#tech-stack)
+- [Repository layout](#repository-layout)
+- [Prerequisites](#prerequisites)
+- [Quick start (local development)](#quick-start-local-development)
+- [Building](#building)
+- [Running the full stack with Docker](#running-the-full-stack-with-docker)
+- [Configuration](#configuration)
+- [First-run setup](#first-run-setup)
+- [Kazakhstan payroll](#kazakhstan-payroll)
+- [Testing](#testing)
+- [Deployment](#deployment)
+- [Documentation](#documentation)
+- [Contributing](#contributing)
 
-## Shared Infra
+---
 
-- **PostgreSQL 16** — one cluster, schema-per-service
-- **Redis 7** — JWT blacklist, caching, rate limiting
-- **RabbitMQ 3** — async events between services
-- **Docker Compose** — dev/staging/prod
+## Architecture
 
-## Repo Structure
+Nine Spring Boot services behind a single API gateway, plus a React frontend.
+Each service owns its own PostgreSQL schema; services communicate synchronously
+via the gateway/Feign and asynchronously via RabbitMQ events.
+
+| Service | Port | Responsibility |
+|---|---|---|
+| api-gateway | 8080 | Routing, auth filter, rate limiting (Spring Cloud Gateway) |
+| user-service | 8081 | Authentication, JWT, RBAC, users, audit log |
+| employee-service | 8082 | Employees, departments, positions, documents |
+| attendance-service | 8083 | Check-in/out, work schedules, holidays, summaries |
+| leave-service | 8084 | Leave types, requests, balances, carryover |
+| payroll-service | 8085 | KZ tax calculation, payslips, payroll periods |
+| reporting-service | 8087 | XLSX/PDF reports, dashboard aggregation |
+| notification-service | 8088 | In-app, email, and push notifications |
+| integration-hub | 8089 | 1C:Enterprise sync, bank payment files, company settings |
 
 ```
-hrms/
-├── README.md                          ← this file
-├── docker-compose.yml                 ← dev infra (pg, redis, rabbit)
-├── docker-compose.microservices.yml   ← all services
+            ┌─────────┐     ┌─────────────┐
+ client ──▶ │  nginx  │ ──▶ │ api-gateway │ ──▶ 8081..8089 microservices
+            └─────────┘     └─────────────┘            │
+                                                        ├── PostgreSQL 16 (schema-per-service)
+                                                        ├── Redis 7 (JWT blacklist, cache, rate limit)
+                                                        └── RabbitMQ 3 (async events)
+```
+
+## Tech stack
+
+- **Backend:** Java 17, Spring Boot 3, Spring Cloud Gateway, Spring Security (JWT)
+- **Data:** PostgreSQL 16 (one cluster, schema per service), Flyway migrations
+- **Messaging / cache:** RabbitMQ 3, Redis 7
+- **Frontend:** React + TypeScript (Vite), TanStack Query
+- **Build / deploy:** Maven, Docker, Docker Compose, GitHub Actions (CI per service)
+
+## Repository layout
+
+```
+hrms-backend/
+├── docker-compose.microservices.yml   # full stack (all services + infra)
+├── env.example                         # copy to .env and fill in
 ├── services/
-│   ├── api-gateway/                   ← Spring Cloud Gateway      (API_GATEWAY.md)
-│   ├── user-service/                  ← Auth, RBAC, users         (USER_SERVICE.md)
-│   ├── employee-service/              ← Employees, depts, docs    (EMPLOYEE_SERVICE.md)
-│   ├── attendance-service/            ← Check-in/out, holidays    (ATTENDANCE_SERVICE.md)
-│   ├── leave-service/                 ← Leave types, requests     (LEAVE_SERVICE.md)
-│   ├── payroll-service/               ← KZ tax calc, payslips     (PAYROLL_SERVICE.md)
-│   ├── ai-ml-service/                 ← Python FastAPI, ML        (AI_ML_SERVICE.md)
-│   ├── reporting-service/             ← XLSX/PDF + dashboard      (REPORTING_SERVICE.md)
-│   ├── notification-service/          ← DB/email/push             (NOTIFICATION_SERVICE.md)
-│   └── integration-hub/               ← 1C sync, bank files       (INTEGRATION_HUB.md)
-├── hrms-common/                       ← shared Java library (DTOs, events, JWT)
-├── frontend/                          ← Nurbol's domain (React) — frontend/hrms-web/AGENTS.md
-├── docs/
-│   ├── API_CONTRACT.md                ← full endpoint spec for frontend
-│   ├── HRMS_ENTERPRISE_ARCHITECTURE.md ← system shape, infra, data flow
-│   ├── PERMISSIONS.md                 ← canonical role / permission catalog ★
-│   ├── EVENTS.md                      ← canonical RabbitMQ event catalog ★
-│   ├── MIGRATIONS.md                  ← Flyway conventions ★
-│   ├── OPERATIONS.md                  ← deploy, observability, backup, runbook ★
-│   ├── COMPLIANCE.md                  ← KZ PDPL, retention, biometric consent ★
-│   ├── TESTING.md                     ← per-layer test strategy ★
-│   └── INTEGRATIONS.md                ← 1C, banks, FCM, SMTP contracts ★
-└── .github/workflows/
+│   ├── hrms-common/                    # shared Java library (DTOs, events, JWT, security)
+│   ├── api-gateway/
+│   ├── user-service/
+│   ├── employee-service/
+│   ├── attendance-service/
+│   ├── leave-service/
+│   ├── payroll-service/
+│   ├── reporting-service/
+│   ├── notification-service/
+│   └── integration-hub/
+├── frontend/hrms-web/                  # React web client
+├── proxy/nginx/nginx.conf              # reverse proxy (production)
+├── bruno/                              # API collection (Bruno) for manual testing
+├── docs/                               # architecture & domain documentation
+└── .github/workflows/                  # CI pipelines
 ```
 
-★ = authoritative source of truth for that domain. If a service spec
-disagrees, the doc above wins — open a PR to update the service doc.
+Per-service details — endpoints, permissions, and events — are documented
+centrally in the [`docs/`](#documentation) folder (`API_CONTRACT.md`,
+`PERMISSIONS.md`, `EVENTS.md`).
 
-## Kazakhstan Payroll 2026
+## Prerequisites
+
+- **JDK 17**
+- **Maven 3.9+**
+- **Docker** and **Docker Compose** (for infra and the full stack)
+- **Node.js 18+** (for the frontend)
+
+## Quick start (local development)
+
+Run shared infrastructure in Docker and individual services from your IDE/CLI.
+
+```bash
+# 1. Clone
+git clone https://github.com/<owner>/hrms-backend.git
+cd hrms-backend
+
+# 2. Environment
+cp env.example .env          # edit secrets (DB, Redis, RabbitMQ, JWT_SECRET)
+
+# 3. Start infrastructure only
+docker compose -f docker-compose.microservices.yml up -d postgres redis rabbitmq
+
+# 4. Build the shared library once (required before any service compiles)
+cd services/hrms-common && mvn install && cd ../..
+
+# 5. Run a service
+cd services/user-service && mvn spring-boot:run
+```
+
+Repeat step 5 for any services you need. Start `api-gateway` last; it routes to
+the rest. The frontend dev server:
+
+```bash
+cd frontend/hrms-web
+npm install
+npm run dev
+```
+
+## Building
+
+`hrms-common` must be installed to your local Maven repository before any
+dependent service will compile:
+
+```bash
+cd services/hrms-common && mvn install
+```
+
+Then build any service:
+
+```bash
+cd services/payroll-service && mvn clean package
+```
+
+## Running the full stack with Docker
+
+The compose file runs all services plus PostgreSQL, Redis, and RabbitMQ. It pulls
+published images by default; build locally with `--build` if you prefer.
+
+```bash
+cp env.example .env          # set image tags / secrets / host ports
+docker compose -f docker-compose.microservices.yml up -d
+```
+
+Published host ports (configurable in `.env`):
+
+- `GATEWAY_PORT` (default `8090`) → api-gateway
+- `NGINX_PORT` (default `8092`) → nginx reverse proxy (production profile)
+- `FRONTEND_PORT` → frontend (staging only; left empty in production)
+
+## Configuration
+
+All runtime configuration is via environment variables — see **`env.example`**
+for the full list. Key ones:
+
+| Variable | Purpose |
+|---|---|
+| `DB_NAME`, `DB_USERNAME`, `DB_PASSWORD` | PostgreSQL credentials |
+| `REDIS_PASSWORD` | Redis auth |
+| `RABBITMQ_USER`, `RABBITMQ_PASS` | RabbitMQ auth |
+| `JWT_SECRET` | Base64 secret, ≥32 bytes — `openssl rand -base64 32` |
+| `JWT_ACCESS_EXPIRY`, `JWT_REFRESH_EXPIRY` | Token lifetimes (ms) |
+| `MAIL_*` | SMTP for password reset / notifications |
+
+Secrets such as the 1C password are encrypted at rest (AES-256-GCM, key derived
+from `JWT_SECRET`). Never commit a real `.env`.
+
+## First-run setup
+
+A fresh deployment has no company configuration — only a seeded `SUPER_ADMIN`
+account and the Kazakhstan public-holiday calendar. After the first login, the
+frontend checks `GET /api/v1/settings/setup-status`; if setup is incomplete and
+the user is `SUPER_ADMIN`, it redirects to a guided `/setup` wizard that captures
+company details, work schedule, attendance methods, and integration settings.
+
+See `docs/API_CONTRACT.md` (settings endpoints) for the required setting keys
+and the `/v1/settings/setup-status` / `/v1/settings/complete-setup` contracts.
+
+## Kazakhstan payroll
+
+All monetary calculations use `BigDecimal` (never floating point). 2026 constants:
+`МРП = 4325`, `МЗП = 85000`.
 
 ```
-МРП=4325  МЗП=85000
-1. earned = gross × (worked/total)
-2. OPV = earned×10% (cap 50×МЗП, skip if pensioner)
-3. ВОСМС = earned×2% (cap 20×МЗП)
-4. deduction = 30×МРП (residents) +882×МРП(disab3) +5000×МРП(disab1/2)
-5. taxable = earned−OPV−ВОСМС−deduction (floor 0)
-6. IPN = taxable×10% (resident) or 20% (non-resident)
-7. net = earned−OPV−ВОСМС−IPN+allowances−deductions
-Employer: SO=(earned−OPV)×5%  SN=earned×6%  ОПВР=earned×3.5%
+1. earned   = gross × (worked days / total days)
+2. ОПВ      = earned × 10%        (cap 50×МЗП; skipped for pensioners)
+3. ВОСМС    = earned × 2%         (cap 20×МЗП)
+4. deduction= 30×МРП (residents) + 882×МРП (disability gr.3) + 5000×МРП (gr.1/2)
+5. taxable  = earned − ОПВ − ВОСМС − deduction        (floor 0)
+6. ИПН      = taxable × 10% (resident) or 20% (non-resident)
+7. net      = earned − ОПВ − ВОСМС − ИПН + allowances − deductions
+
+Employer contributions:
+  СО  = (earned − ОПВ) × 5%
+  СН  = earned × 6%
+  ОПВР= earned × 3.5%
 ```
 
-## Git Workflow
+## Testing
 
-- `main` → production
-- `develop` → staging  
-- `feature/{service}-{desc}` → PR to develop
-- Commits: `feat(payroll): add anomaly flagging`
+```bash
+cd services/{name} && mvn verify
+```
 
-## How to Work on a Service
+Tests run against an in-memory H2 database in PostgreSQL-compatibility mode with
+Flyway disabled (schema via `ddl-auto: create-drop`). See `docs/TESTING.md` for
+the slice/integration conventions. The `bruno/` collection covers manual,
+end-to-end API checks.
 
-1. Read this file
-2. `cd services/{name}` and read its per-service spec (e.g. `PAYROLL_SERVICE.md`)
-3. Skim `docs/PERMISSIONS.md` and `docs/EVENTS.md` for any code/event names you need
-4. Start infra: `docker compose up -d postgres redis rabbitmq`
-5. Run the service: `cd services/{name} && mvn spring-boot:run`
-6. Test: `mvn verify` — see `docs/TESTING.md` for slice/integration conventions
+## Deployment
 
-## How to Build a Pending Service (handoff path)
+Production runs the Docker Compose stack behind a reverse proxy. The recommended
+edge is Nginx Proxy Manager (TLS termination) in front of the bundled
+`proxy/nginx/nginx.conf`, which routes `/api/*` to the gateway and everything
+else to the frontend.
 
-1. Read the service's `services/{name}/{SERVICE}.md` — that's the spec
-2. Copy `application.yml.example` → `src/main/resources/application.yml`
-3. Add the schema's `V1__init_{name}_schema.sql` per `docs/MIGRATIONS.md`
-4. Use existing permission codes from `docs/PERMISSIONS.md` — don't invent new ones
-5. Use existing event payloads from `docs/EVENTS.md` — same rule
-6. CI is already wired in `.github/workflows/{name}-ci.yml` — it activates as soon as `pom.xml` + `Dockerfile` exist
+> **Client IP behind the proxy:** the bundled nginx uses the `realip` module to
+> recover the real client IP from `X-Forwarded-For`. If you add another proxy
+> layer, make sure each hop forwards `X-Forwarded-For` / `X-Real-IP`, otherwise
+> audit logs and rate limiting will key off the proxy address.
 
-## Bootstrapping a New Tenant
+CI builds and publishes a container image per service on push (see
+`.github/workflows/`). See `docs/OPERATIONS.md` for the full deploy, backup, and
+observability runbook.
 
-A fresh deploy has no company config — only seeded SUPER_ADMIN + KZ holidays.
-First-start configuration is handled by the frontend `/setup` wizard:
+## Documentation
 
-- **Backend contract:** `services/integration-hub/INTEGRATION_HUB.md` "First-start configuration" — required setting keys, `/v1/settings/setup-status`, `/v1/settings/complete-setup`
-- **Frontend wizard:** `frontend/hrms-web/AGENTS.md` "First-start setup wizard"
-- After login, frontend hits `setup-status`; if `configured=false` and role is SUPER_ADMIN, redirect to `/setup`
+| Document | Contents |
+|---|---|
+| `docs/HRMS_ENTERPRISE_ARCHITECTURE.md` | System shape, infrastructure, data flow |
+| `docs/API_CONTRACT.md` | Full endpoint specification |
+| `docs/PERMISSIONS.md` | Roles and permission catalog |
+| `docs/EVENTS.md` | RabbitMQ event catalog |
+| `docs/MIGRATIONS.md` | Flyway conventions |
+| `docs/OPERATIONS.md` | Deploy, observability, backup, runbook |
+| `docs/COMPLIANCE.md` | KZ PDPL, data retention |
+| `docs/TESTING.md` | Test strategy per layer |
+| `docs/INTEGRATIONS.md` | 1C, banks, FCM, SMTP contracts |
+
+## Contributing
+
+- Branches: `main` → production, `develop` → staging, `feature/{service}-{desc}` → PR to `develop`.
+- Commit style: Conventional Commits, e.g. `feat(payroll): add anomaly flagging`.
+- A service's `pom.xml` + `Dockerfile` activate its CI workflow automatically.

@@ -73,7 +73,7 @@ class IntegrationHubFlowIntegrationTest {
                         .with(authentication(adminAuth)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.configured").value(false))
-                .andExpect(jsonPath("$.data.totalRequired").value(10));
+                .andExpect(jsonPath("$.data.totalRequired").value(9));
     }
 
     @Test
@@ -87,7 +87,6 @@ class IntegrationHubFlowIntegrationTest {
         seedSetting("company.locale_default", "ru", "company");
         seedSetting("company.tax_resident", "true", "company");
         seedSetting("attendance.check_in_methods", "[\"WEB\"]", "attendance");
-        seedSetting("attendance.require_face", "false", "attendance");
         seedSetting("attendance.work_schedule_default_id", UUID.randomUUID().toString(), "attendance");
 
         // complete-setup should succeed

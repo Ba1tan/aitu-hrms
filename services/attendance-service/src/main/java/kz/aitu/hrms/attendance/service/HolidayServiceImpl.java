@@ -9,6 +9,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 
@@ -23,7 +24,13 @@ public class HolidayServiceImpl implements HolidayService {
     @Override
     @Transactional(readOnly = true)
     public List<HolidayDtos.HolidayResponse> list(Integer year) {
-        return holidayRepo.findByYear(year).stream()
+        // Filter by year via an explicit date range — portable across databases.
+        // (A SQL YEAR() function exists in H2 but NOT in PostgreSQL, where it
+        //  would throw and surface to the UI as an empty calendar.)
+        List<Holiday> holidays = (year == null)
+                ? holidayRepo.findAllActive()
+                : holidayRepo.findBetween(LocalDate.of(year, 1, 1), LocalDate.of(year, 12, 31));
+        return holidays.stream()
                 .map(mapper::toHoliday)
                 .toList();
     }

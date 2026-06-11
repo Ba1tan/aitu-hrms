@@ -2,8 +2,8 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { CheckCircle2, PartyPopper } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import {
+  schedulesApi,
   settingsApi,
   setupApi,
 } from "../../../shared/api";
@@ -39,6 +39,10 @@ export default function StepReview() {
     queryKey: ["setup-status"],
     queryFn: () => setupApi.status().then((r) => r.data),
   });
+  const schedulesQuery = useQuery({
+    queryKey: ["schedules"],
+    queryFn: () => schedulesApi.list().then((r) => r.data),
+  });
 
   const finishMutation = useMutation({
     mutationFn: () => setupApi.complete().then((r) => r.data),
@@ -70,6 +74,13 @@ export default function StepReview() {
 
   const settings = settingsQuery.data ?? {};
   const status = statusQuery.data;
+
+  // The setting stores the schedule's UUID; show its human name instead.
+  const scheduleId = settings["attendance.work_schedule_default_id"];
+  const scheduleLabel = scheduleId
+    ? (schedulesQuery.data?.find((s) => s.id === scheduleId)?.name ??
+       (schedulesQuery.isLoading ? "…" : "—"))
+    : undefined;
 
   const missing = status?.missingRequired ?? [];
   const isReady = missing.length === 0;
@@ -127,7 +138,7 @@ export default function StepReview() {
               "Способы отметки",
               settings["attendance.check_in_methods"],
             ],
-            ["График по умолчанию", settings["attendance.work_schedule_default_id"]],
+            ["График по умолчанию", scheduleLabel],
           ]}
         />
         <ReviewBlock
@@ -176,18 +187,11 @@ export default function StepReview() {
             </div>
             <div className="text-[13px] opacity-90">
               {isReady
-                ? "Нажмите «Завершить настройку», чтобы перейти в систему."
+                ? "Нажмите «Завершить», чтобы перейти в систему."
                 : "Заполните обязательные поля в указанных выше шагах."}
             </div>
           </div>
         </div>
-        <Button
-          variant={isReady ? "secondary" : "outline"}
-          onClick={() => finishMutation.mutate()}
-          disabled={!isReady || finishMutation.isPending}
-        >
-          {finishMutation.isPending ? "Завершение…" : "Завершить настройку"}
-        </Button>
       </div>
 
       <SetupNav

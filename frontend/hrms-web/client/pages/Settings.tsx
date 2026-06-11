@@ -64,12 +64,6 @@ const CATALOG: SettingDef[] = [
     type: "string",
   },
   {
-    key: "payroll.payslip_release_day",
-    label: "День публикации расчётных листов",
-    type: "int",
-    hint: "1–28",
-  },
-  {
     key: "leave.annual_carryover_max_pct",
     label: "Макс. перенос отпуска, %",
     type: "int",

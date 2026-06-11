@@ -89,8 +89,7 @@ required key keeps `GET /v1/settings/setup-status` returning `configured:false`.
 
 | Key | Type | Default | Description |
 |---|---|---|---|
-| `payroll.payslip_release_day` | int(1-28) | `5` | Day of month payslips become visible to employees |
-| `leave.annual_carryover_max_pct` | int(0-100) | `50` | See `services/leave-service/LEAVE_SERVICE.md` carryover rule |
+| `leave.annual_carryover_max_pct` | int(0-100) | `50` | Read at runtime by leave-service (via `/settings/public`) to cap carryover; see `services/leave-service/CLAUDE.md` |
 | `integration.1c_base_url` | string | — | If empty, 1C sync is disabled |
 | `integration.1c_username` | string | — | Plain |
 | `integration.1c_password` | string | — | **Encrypted at rest** with `JWT_SECRET`-derived key |
@@ -102,7 +101,7 @@ required key keeps `GET /v1/settings/setup-status` returning `configured:false`.
 ```json
 {
   "configured":      false,
-  "totalRequired":   10,
+  "totalRequired":   9,
   "missingRequired": ["company.bin", "company.legal_address", "attendance.work_schedule_default_id"],
   "explicitlyCompleted": false   // mirrors setup.completed
 }
